@@ -6,8 +6,16 @@ model/02_train_point_model.py
 
 Objectif
 --------
-Entraîner un premier modèle POINT robuste à partir de :
+Entraîner le modèle POINT (joueur marque au moins 1 point) de façon robuste
+à partir de :
 - data/final/base_features_context_v2.csv
+
+Principes de sécurité
+---------------------
+- validation temporelle uniquement
+- aucune feature du match courant
+- aucune cible ou quasi-cible dans les features
+- listes de features explicites (whitelist), pas de collecte automatique fragile
 
 Sorties
 -------
@@ -18,21 +26,6 @@ Sorties
 - outputs/predictions_validation_point_enrichi_v2.csv
 - outputs/predictions_test_point_enrichi_v2.csv
 - outputs/02_train_point_model_summary.json
-
-Principe
---------
-- cible = joueur marque au moins 1 point
-- validation temporelle obligatoire
-- pas de split aléatoire
-- exclusion prudente des colonnes de fuite évidente
-- baseline = sous-ensemble plus simple de features
-- enrichi = ensemble plus large de features numériques sûres
-
-Important
----------
-Cette version est volontairement robuste et prudente.
-Elle ne prétend pas être une copie exacte du notebook historique.
-Elle sert à remettre le pipeline GitHub sur des rails propres, sans fuite de données.
 """
 
 from __future__ import annotations
@@ -63,6 +56,7 @@ RANDOM_STATE = 42
 
 TARGET_CANDIDATES = [
     "target_point_1p",
+    "a_marque_un_point",
     "target_points_1p",
     "target_point",
     "label_point_1p",
@@ -95,16 +89,75 @@ META_CANDIDATES = [
     "season_source",
 ]
 
-LEAKAGE_EXACT_COLUMNS = {
-    # identifiants / dates
-    "id_match",
-    "date_match",
-    "date_match_match",
-    "date",
-    "match_date",
-    "game_date",
-    "date_game",
-    # résultats du match courant / fusion
+# Features validées comme connues avant match.
+# Le PP du match courant ne doit jamais entrer directement dans le modèle :
+# seul son historique pré-match (ex: pp_moy_5) est autorisé.
+BASELINE_FEATURE_WHITELIST = [
+    "is_home_player",
+    "saison",
+    "nb_matchs_avant_match",
+    "jours_repos_raw",
+    "is_premier_match_joueur",
+    "jours_repos",
+    "tirs_moy_5",
+    "toi_moy_5",
+    "pp_moy_5",
+    "points_moy_5",
+    "buts_moy_5",
+    "passes_moy_5",
+    "tirs_moy_10",
+    "toi_moy_10",
+    "points_moy_10",
+    "buts_moy_10",
+    "nb_matchs_joues_10",
+    "hist_ok_5",
+    "hist_ok_10",
+    "tirs_par_60_5",
+    "points_par_60_5",
+    "buts_par_60_5",
+    "jours_repos_team",
+    "consecutive_away_games",
+    "nb_matchs_vs_adv_avant",
+    "points_vs_adv_5",
+    "buts_vs_adv_5",
+    "tirs_vs_adv_5",
+    "points_vs_adv_shrunk",
+    "buts_vs_adv_shrunk",
+    "tirs_vs_adv_shrunk",
+    "jours_absence_pre_match",
+    "absence_longue_flag",
+    "retour_episode",
+    "matchs_depuis_retour_avant_match",
+    "toi_pre_absence_ref",
+    "pp_pre_absence_ref",
+    "toi_moy_retour_2_avant_match",
+    "pp_moy_retour_2_avant_match",
+    "ratio_toi_retour_vs_pre_absence",
+    "ratio_pp_retour_vs_pre_absence",
+    "eligible_post_retour",
+]
+
+ENRICHED_EXTRA_WHITELIST = [
+    "is_home_team",
+    "team_back_to_back",
+    "team_back_to_back_away",
+    "team_winrate_5",
+    "team_gf_moy_5",
+    "team_ga_moy_5",
+]
+
+# Colonnes interdites, même si elles existent dans la base.
+FORBIDDEN_FEATURE_COLUMNS = {
+    # cible / quasi-cible
+    "target_point_1p",
+    "target_points_1p",
+    "target_point",
+    "label_point_1p",
+    "y_point",
+    "point_1p",
+    "a_marque_un_point",
+    "a_marque_un_but",
+    # résultats du match courant
     "buts",
     "passes",
     "points",
@@ -115,50 +168,43 @@ LEAKAGE_EXACT_COLUMNS = {
     "penalty_minutes",
     "buts_domicile",
     "buts_exterieur",
+    "buts_match_equipe",
+    "buts_match_adversaire",
+    "victoire_equipe",
+    "defaite_equipe",
+    "diff_buts_equipe",
     "status",
+    # qualité / fusion
     "_merge",
     "match_trouve",
     "team_attendue_match",
     "adversaire_attendu_match",
     "check_team_ok",
     "check_opp_ok",
-    # textes / labels bruts
+    "team_context_found",
+    "check_home_team_context_ok",
+    # identifiants / dates / textes
+    "id_match",
+    "id_joueur",
+    "date_match",
+    "date_match_match",
+    "date",
+    "match_date",
+    "game_date",
+    "date_game",
     "team_player_match",
     "adversaire_match",
     "team_name_match",
     "opponent_name_match",
     "nom",
     "player_name",
+    "position",
+    "home_road_flag",
+    "season_source",
+    # ids équipes bruts
+    "id_equipe_domicile",
+    "id_equipe_exterieur",
 }
-
-LEAKAGE_KEYWORDS = [
-    "target",
-    "label",
-    "implied_prob",
-    "probabilite_implicite",
-    "odds",
-    "cote",
-    "edge",
-]
-
-CONTEXT_KEYWORDS = [
-    "opponent",
-    "adversaire",
-    "opp_",
-    "team_",
-    "is_home",
-    "home_road",
-    "domicile",
-    "exterieur",
-    "rest",
-    "days_rest",
-    "back_to_back",
-    "b2b",
-    "fatigue",
-    "travel",
-    "confront",
-    "context",
-]
 
 
 def require_file(path: Path) -> None:
@@ -220,64 +266,43 @@ def normalize_boolean_like_columns(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def is_numeric_like(series: pd.Series) -> bool:
-    if pd.api.types.is_numeric_dtype(series):
-        return True
-    if pd.api.types.is_bool_dtype(series):
-        return True
-    return False
+def resolve_feature_list(
+    df: pd.DataFrame,
+    requested_cols: List[str],
+    target_col: str,
+    date_col: str,
+) -> Tuple[List[str], List[str], List[str]]:
+    kept: List[str] = []
+    missing: List[str] = []
+    forbidden_requested: List[str] = []
 
-
-def has_leakage_keyword(col: str) -> bool:
-    col_low = col.lower()
-    return any(keyword in col_low for keyword in LEAKAGE_KEYWORDS)
-
-
-def has_context_keyword(col: str) -> bool:
-    col_low = col.lower()
-    return any(keyword in col_low for keyword in CONTEXT_KEYWORDS)
-
-
-def collect_candidate_feature_columns(df: pd.DataFrame, target_col: str, date_col: str) -> List[str]:
-    candidate_cols: List[str] = []
-
-    protected_exclusions = set(LEAKAGE_EXACT_COLUMNS)
-    protected_exclusions.add(target_col)
-    protected_exclusions.add(date_col)
-
-    for col in df.columns:
-        if col in protected_exclusions:
+    for col in requested_cols:
+        if col in FORBIDDEN_FEATURE_COLUMNS or col == target_col or col == date_col:
+            forbidden_requested.append(col)
             continue
-        if has_leakage_keyword(col):
+        if col not in df.columns:
+            missing.append(col)
             continue
-        if col.startswith("Unnamed:"):
-            continue
-        if not is_numeric_like(df[col]):
-            continue
-        candidate_cols.append(col)
+        kept.append(col)
 
-    if not candidate_cols:
-        raise ValueError("Aucune feature numérique candidate trouvée après filtrage prudent.")
-
-    return candidate_cols
+    return kept, missing, forbidden_requested
 
 
-def split_feature_sets(all_feature_cols: List[str]) -> Tuple[List[str], List[str]]:
-    enriched = list(all_feature_cols)
+def assert_no_forbidden_features(feature_cols: List[str], target_col: str, date_col: str) -> None:
+    bad = sorted(
+        {
+            col for col in feature_cols
+            if col in FORBIDDEN_FEATURE_COLUMNS or col == target_col or col == date_col
+        }
+    )
+    if bad:
+        raise ValueError(
+            "Features interdites détectées dans la liste finale : "
+            + ", ".join(bad)
+        )
 
-    baseline = [
-        col for col in all_feature_cols
-        if not has_context_keyword(col)
-    ]
 
-    # Sécurité : si le baseline devient trop petit, on retombe sur l'ensemble enrichi.
-    if len(baseline) < 8:
-        baseline = list(enriched)
-
-    return baseline, enriched
-
-
-def build_temporal_splits(df: pd.DataFrame, date_col: str) -> Dict[str, pd.DataFrame]:
+def build_temporal_splits(df: pd.DataFrame, date_col: str) -> Dict[str, Any]:
     unique_dates = sorted(df[date_col].dropna().dt.strftime("%Y-%m-%d").unique().tolist())
 
     if len(unique_dates) < 12:
@@ -345,10 +370,11 @@ def keep_train_valid_features_only(
     X_train: pd.DataFrame,
     X_valid: pd.DataFrame,
     X_test: pd.DataFrame,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, List[str]]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, List[str], List[str]]:
     not_all_nan = ~X_train.isna().all(axis=0)
     variable = X_train.nunique(dropna=True) > 1
     kept_cols = X_train.columns[not_all_nan & variable].tolist()
+    dropped_cols = [c for c in X_train.columns if c not in kept_cols]
 
     if len(kept_cols) < 5:
         raise ValueError(
@@ -360,6 +386,7 @@ def keep_train_valid_features_only(
         X_valid[kept_cols].copy(),
         X_test[kept_cols].copy(),
         kept_cols,
+        dropped_cols,
     )
 
 
@@ -387,7 +414,11 @@ def safe_average_precision(y_true: np.ndarray, proba: np.ndarray) -> float:
     return float(average_precision_score(y_true, proba))
 
 
-def precision_and_lift_top_k(y_true: np.ndarray, proba: np.ndarray, top_ratio: float = 0.10) -> Tuple[float, float, int]:
+def precision_and_lift_top_k(
+    y_true: np.ndarray,
+    proba: np.ndarray,
+    top_ratio: float = 0.10,
+) -> Tuple[float, float, int]:
     if len(y_true) == 0:
         return float("nan"), float("nan"), 0
 
@@ -421,6 +452,7 @@ def evaluate_split(
         "split": split_name,
         "rows": int(len(y_array)),
         "positive_rate": float(np.mean(y_array)),
+        "mean_predicted_proba": float(np.mean(proba)),
         "brier_score": float(brier_score_loss(y_array, proba)),
         "log_loss": float(log_loss(y_array, proba, labels=[0, 1])),
         "roc_auc": safe_roc_auc(y_array, proba),
@@ -474,11 +506,17 @@ def train_one_variant(
     target_col: str,
     date_col: str,
 ) -> Dict[str, Any]:
+    assert_no_forbidden_features(feature_cols, target_col=target_col, date_col=date_col)
+
     X_train = to_numeric_frame(train_df, feature_cols)
     X_valid = to_numeric_frame(valid_df, feature_cols)
     X_test = to_numeric_frame(test_df, feature_cols)
 
-    X_train, X_valid, X_test, kept_cols = keep_train_valid_features_only(X_train, X_valid, X_test)
+    X_train, X_valid, X_test, kept_cols, dropped_cols = keep_train_valid_features_only(
+        X_train, X_valid, X_test
+    )
+
+    assert_no_forbidden_features(kept_cols, target_col=target_col, date_col=date_col)
 
     y_train = train_df[target_col].astype(int)
     y_valid = valid_df[target_col].astype(int)
@@ -528,6 +566,7 @@ def train_one_variant(
 
     return {
         "feature_cols_kept": kept_cols,
+        "feature_cols_dropped_train_only": dropped_cols,
         "metrics": metrics_all,
         "pred_valid": pred_valid,
         "pred_test": pred_test,
@@ -541,7 +580,7 @@ def main() -> None:
     print("02_train_point_model.py")
     print(f"Input : {FEATURES_PATH}")
 
-    df = pd.read_csv(FEATURES_PATH)
+    df = pd.read_csv(FEATURES_PATH, low_memory=False)
     df = normalize_boolean_like_columns(df)
 
     print(f"Lignes chargées : {len(df)}")
@@ -550,8 +589,24 @@ def main() -> None:
     df, target_col = find_target_column(df)
     df, date_col = find_date_column(df)
 
-    candidate_feature_cols = collect_candidate_feature_columns(df, target_col=target_col, date_col=date_col)
-    baseline_cols, enriched_cols = split_feature_sets(candidate_feature_cols)
+    baseline_requested = list(BASELINE_FEATURE_WHITELIST)
+    enriched_requested = list(dict.fromkeys(BASELINE_FEATURE_WHITELIST + ENRICHED_EXTRA_WHITELIST))
+
+    baseline_cols, baseline_missing, baseline_forbidden_requested = resolve_feature_list(
+        df, baseline_requested, target_col=target_col, date_col=date_col
+    )
+    enriched_cols, enriched_missing, enriched_forbidden_requested = resolve_feature_list(
+        df, enriched_requested, target_col=target_col, date_col=date_col
+    )
+
+    if len(baseline_cols) < 8:
+        raise ValueError(
+            "Trop peu de features baseline disponibles après filtrage sûr. "
+            f"Disponibles : {len(baseline_cols)}"
+        )
+
+    if len(enriched_cols) < len(baseline_cols):
+        raise ValueError("Le set enrichi ne doit pas être plus petit que le baseline.")
 
     splits = build_temporal_splits(df, date_col=date_col)
     train_df = splits["train"]
@@ -569,10 +624,30 @@ def main() -> None:
     print(f"Période test       : {split_meta['test_start']} -> {split_meta['test_end']}")
 
     print("")
-    print("=== FEATURES ===")
-    print(f"Candidats sûrs total : {len(candidate_feature_cols)}")
-    print(f"Baseline            : {len(baseline_cols)}")
-    print(f"Enrichi             : {len(enriched_cols)}")
+    print("=== FEATURES VALIDÉES ===")
+    print(f"Baseline demandées : {len(baseline_requested)}")
+    print(f"Baseline gardées   : {len(baseline_cols)}")
+    print(f"Enrichi demandé    : {len(enriched_requested)}")
+    print(f"Enrichi gardé      : {len(enriched_cols)}")
+
+    if baseline_missing:
+        print("")
+        print("Colonnes baseline absentes (non bloquant) :")
+        for c in baseline_missing:
+            print(f"- {c}")
+
+    if enriched_missing:
+        print("")
+        print("Colonnes enrichies absentes (non bloquant) :")
+        for c in enriched_missing:
+            print(f"- {c}")
+
+    if baseline_forbidden_requested or enriched_forbidden_requested:
+        raise ValueError(
+            "La whitelist contient une colonne interdite. "
+            f"Baseline interdites : {baseline_forbidden_requested} | "
+            f"Enrichi interdites : {enriched_forbidden_requested}"
+        )
 
     baseline_result = train_one_variant(
         variant_name="baseline",
@@ -618,14 +693,20 @@ def main() -> None:
         "date_column_used": date_col,
         "split_meta": split_meta,
         "feature_sets": {
-            "candidate_total": int(len(candidate_feature_cols)),
-            "baseline_requested": int(len(baseline_cols)),
-            "enriched_requested": int(len(enriched_cols)),
+            "baseline_requested": int(len(baseline_requested)),
+            "enriched_requested": int(len(enriched_requested)),
+            "baseline_available_after_safe_filter": int(len(baseline_cols)),
+            "enriched_available_after_safe_filter": int(len(enriched_cols)),
             "baseline_kept_train_only": int(len(baseline_result["feature_cols_kept"])),
             "enriched_kept_train_only": int(len(enriched_result["feature_cols_kept"])),
+            "baseline_missing": baseline_missing,
+            "enriched_missing": enriched_missing,
             "baseline_features": baseline_result["feature_cols_kept"],
             "enriched_features": enriched_result["feature_cols_kept"],
+            "baseline_dropped_train_only": baseline_result["feature_cols_dropped_train_only"],
+            "enriched_dropped_train_only": enriched_result["feature_cols_dropped_train_only"],
         },
+        "forbidden_feature_columns": sorted(FORBIDDEN_FEATURE_COLUMNS),
         "outputs": {
             "metrics_modele_point_v2.csv": str(metrics_baseline_path),
             "metrics_modele_point_enrichi_v2.csv": str(metrics_enriched_path),
@@ -638,7 +719,8 @@ def main() -> None:
             "Validation temporelle utilisée",
             "Aucun split aléatoire",
             "Calibration laissée au script 03",
-            "Version robuste GitHub, pas copie garantie du notebook historique",
+            "Features choisies via whitelist explicite connue avant match",
+            "Colonnes du match courant et cible exclues explicitement",
         ],
     }
 
