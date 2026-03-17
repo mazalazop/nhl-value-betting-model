@@ -92,6 +92,35 @@ def calc_consecutive_away(is_home_series: pd.Series) -> pd.Series:
     return pd.Series(out, index=is_home_series.index)
 
 
+def parse_mmss_to_minutes(value):
+    if pd.isna(value):
+        return np.nan
+
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        return float(value)
+
+    s = str(value).strip()
+    if s == "" or s.lower() in {"nan", "none", "null"}:
+        return np.nan
+
+    if ":" in s:
+        parts = s.split(":")
+        try:
+            if len(parts) == 2:
+                mm, ss = parts
+                return float(mm) + float(ss) / 60.0
+            if len(parts) == 3:
+                hh, mm, ss = parts
+                return float(hh) * 60.0 + float(mm) + float(ss) / 60.0
+        except ValueError:
+            return np.nan
+
+    try:
+        return float(s)
+    except ValueError:
+        return np.nan
+
+
 def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
     colonnes_obligatoires = [
         "id_joueur",
@@ -131,8 +160,6 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
         "passes",
         "points",
         "tirs",
-        "temps_de_glace",
-        "temps_pp",
         "plus_moins",
         "penalty_minutes",
         "buts_domicile",
@@ -141,6 +168,9 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in cols_num:
         df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    for c in ["temps_de_glace", "temps_pp"]:
+        df[c] = df[c].apply(parse_mmss_to_minutes)
 
     nb_match_non_trouve = int((df["match_trouve"] != 1).sum())
     nb_team_bad = int((df["check_team_ok"] != True).sum())
