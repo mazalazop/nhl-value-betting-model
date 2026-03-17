@@ -238,8 +238,6 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "passes",
         "points",
         "tirs",
-        "temps_de_glace",
-        "temps_pp",
         "a_marque_un_point",
         "a_marque_un_but",
         "is_home_player",
@@ -263,6 +261,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in cols_num:
         df[c] = pd.to_numeric(df[c], errors="coerce")
+        
+    for c in ["temps_de_glace", "temps_pp"]:
+        df[c] = df[c].apply(parse_mmss_to_minutes)
 
     df = df.sort_values(["id_joueur", "date_match", "id_match"], na_position="last").reset_index(
         drop=True
