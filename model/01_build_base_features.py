@@ -1,3 +1,6 @@
+
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -13,6 +16,8 @@ FINAL_DIR = DATA_DIR / "final"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 
 INPUT_BASE_MATCH_FUSIONNEE = RAW_DIR / "base_match_fusionnee.csv"
+INPUT_PP_STATS_GAME = RAW_DIR / "pp_stats_game.csv"
+
 OUTPUT_BASE_CANONIQUE = FINAL_DIR / "base_canonique_v2.csv"
 OUTPUT_BASE_FEATURES = FINAL_DIR / "base_features_v2.csv"
 OUTPUT_BASE_FEATURES_CONTEXT = FINAL_DIR / "base_features_context_v2.csv"
@@ -57,10 +62,6 @@ def rolling_count_shifted(
     )
 
 
-def safe_divide(a: pd.Series, b: pd.Series) -> np.ndarray:
-    return np.where((b.notna()) & (b > 0), a / b, 0.0)
-
-
 def rolling_mean_shifted_group(
     df: pd.DataFrame,
     group_cols: list[str],
@@ -74,9 +75,25 @@ def rolling_mean_shifted_group(
     )
 
 
+def safe_divide(num: pd.Series, den: pd.Series) -> pd.Series:
+    num = pd.to_numeric(num, errors="coerce")
+    den = pd.to_numeric(den, errors="coerce")
+
+    out = pd.Series(0.0, index=num.index, dtype=float)
+    mask = num.notna() & den.notna() & (den > 0)
+    out.loc[mask] = num.loc[mask] / den.loc[mask]
+    return out
+
+
 def safe_ratio(num: pd.Series, den: pd.Series) -> pd.Series:
-    den = den.replace(0, np.nan)
-    return (num / den).replace([np.inf, -np.inf], np.nan)
+    num = pd.to_numeric(num, errors="coerce")
+    den = pd.to_numeric(den, errors="coerce")
+
+    out = pd.Series(np.nan, index=num.index, dtype=float)
+    mask = num.notna() & den.notna() & (den != 0)
+    out.loc[mask] = num.loc[mask] / den.loc[mask]
+    out = out.replace([np.inf, -np.inf], np.nan)
+    return out
 
 
 def calc_consecutive_away(is_home_series: pd.Series) -> pd.Series:
@@ -119,6 +136,121 @@ def parse_mmss_to_minutes(value):
         return float(s)
     except ValueError:
         return np.nan
+
+
+def parse_pp_time_to_minutes_from_stats(value):
+    if pd.isna(value):
+        return np.nan
+
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        return float(value) / 60.0
+
+    s = str(value).strip()
+    if s == "" or s.lower() in {"nan", "none", "null"}:
+        return np.nan
+
+    if ":" in s:
+        return parse_mmss_to_minutes(s)
+
+    try:
+        return float(s) / 60.0
+    except ValueError:
+        return np.nan
+
+
+def charger_pp_stats_officiels(path_pp: Path) -> tuple[pd.DataFrame, dict]:
+    if not path_pp.exists():
+        raise FileNotFoundError(
+            f"Fichier introuvable : {path_pp}\n"
+            "Place pp_stats_game.csv dans data/raw/. "
+            "Ce fichier n'est pas poussé sur GitHub et sert désormais de source officielle pour temps_pp."
+        )
+
+    pp = pd.read_csv(path_pp, low_memory=False)
+    verifier_colonnes(pp, ["id_joueur", "id_match", "ppTimeOnIce"])
+
+    pp = pp.copy()
+    pp["id_joueur"] = pd.to_numeric(pp["id_joueur"], errors="coerce")
+    pp["id_match"] = pd.to_numeric(pp["id_match"], errors="coerce")
+
+    nb_rows_before = int(len(pp))
+    pp = pp[pp["id_joueur"].notna() & pp["id_match"].notna()].copy()
+    nb_rows_after_keys = int(len(pp))
+    nb_rows_invalid_keys = nb_rows_before - nb_rows_after_keys
+
+    nb_duplicates = int(pp.duplicated(subset=["id_joueur", "id_match"]).sum())
+    if nb_duplicates > 0:
+        doublons = pp.loc[pp.duplicated(subset=["id_joueur", "id_match"], keep=False), ["id_joueur", "id_match"]]
+        exemple = doublons.head(10).to_dict(orient="records")
+        raise ValueError(
+            "Doublons détectés dans pp_stats_game.csv sur (id_joueur, id_match). "
+            f"Exemples : {exemple}"
+        )
+
+    pp["temps_pp"] = pp["ppTimeOnIce"].apply(parse_pp_time_to_minutes_from_stats)
+    nb_temps_pp_non_null = int(pp["temps_pp"].notna().sum())
+
+    if nb_temps_pp_non_null == 0:
+        raise ValueError(
+            "Aucune valeur exploitable trouvée dans ppTimeOnIce. "
+            "La source PP ne peut pas être utilisée telle quelle."
+        )
+
+    pp_for_merge = pp[["id_joueur", "id_match", "temps_pp"]].copy()
+
+    summary = {
+        "pp_file": str(path_pp),
+        "pp_rows_read": nb_rows_before,
+        "pp_rows_after_valid_keys": nb_rows_after_keys,
+        "pp_rows_invalid_keys_dropped": nb_rows_invalid_keys,
+        "pp_duplicate_key_rows": nb_duplicates,
+        "pp_rows_with_temps_pp": nb_temps_pp_non_null,
+    }
+    return pp_for_merge, summary
+
+
+def charger_source_avec_pp() -> tuple[pd.DataFrame, dict]:
+    if not INPUT_BASE_MATCH_FUSIONNEE.exists():
+        raise FileNotFoundError(
+            f"Fichier introuvable : {INPUT_BASE_MATCH_FUSIONNEE}\n"
+            "Place base_match_fusionnee.csv dans data/raw/."
+        )
+
+    source = pd.read_csv(INPUT_BASE_MATCH_FUSIONNEE, low_memory=False)
+    verifier_colonnes(source, ["id_joueur", "id_match"])
+
+    source = source.copy()
+    source["id_joueur"] = pd.to_numeric(source["id_joueur"], errors="coerce")
+    source["id_match"] = pd.to_numeric(source["id_match"], errors="coerce")
+
+    source = source.drop(columns=["temps_pp"], errors="ignore")
+
+    pp_for_merge, pp_summary = charger_pp_stats_officiels(INPUT_PP_STATS_GAME)
+
+    source = source.merge(
+        pp_for_merge,
+        on=["id_joueur", "id_match"],
+        how="left",
+        validate="many_to_one",
+    )
+
+    pp_found_mask = source["temps_pp"].notna()
+    pp_rows_merged = int(pp_found_mask.sum())
+    pp_rows_missing_after_merge = int((~pp_found_mask).sum())
+    pp_merge_coverage = float(pp_found_mask.mean()) if len(source) > 0 else 0.0
+
+    source["temps_pp"] = source["temps_pp"].fillna(0.0)
+
+    merge_summary = {
+        "input_base_file": str(INPUT_BASE_MATCH_FUSIONNEE),
+        "input_rows": int(len(source)),
+        "pp_rows_merged": pp_rows_merged,
+        "pp_rows_missing_after_merge": pp_rows_missing_after_merge,
+        "pp_merge_coverage": pp_merge_coverage,
+    }
+    merge_summary.update(pp_summary)
+
+    return source, merge_summary
 
 
 def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
@@ -243,6 +375,8 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "is_home_player",
         "team_player_match",
         "adversaire_match",
+        "temps_de_glace",
+        "temps_pp",
     ]
     verifier_colonnes(df, colonnes_obligatoires)
 
@@ -261,7 +395,7 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in cols_num:
         df[c] = pd.to_numeric(df[c], errors="coerce")
-        
+
     for c in ["temps_de_glace", "temps_pp"]:
         df[c] = df[c].apply(parse_mmss_to_minutes)
 
@@ -610,13 +744,8 @@ def write_summary(payload: dict) -> None:
 def main() -> None:
     ensure_directories()
 
-    if not INPUT_BASE_MATCH_FUSIONNEE.exists():
-        raise FileNotFoundError(
-            f"Fichier introuvable : {INPUT_BASE_MATCH_FUSIONNEE}\n"
-            "Place base_match_fusionnee.csv dans data/raw/."
-        )
+    df_source, pp_summary = charger_source_avec_pp()
 
-    df_source = pd.read_csv(INPUT_BASE_MATCH_FUSIONNEE)
     base_canonique = build_base_canonique(df_source)
     base_features = creer_features_temporelles_v2(base_canonique)
     base_features_context = enrichir_contexte_v2(base_features, config={})
@@ -628,6 +757,7 @@ def main() -> None:
     summary = {
         "status": "ok",
         "input_file": str(INPUT_BASE_MATCH_FUSIONNEE),
+        "pp_file": str(INPUT_PP_STATS_GAME),
         "outputs": [
             str(OUTPUT_BASE_CANONIQUE),
             str(OUTPUT_BASE_FEATURES),
@@ -639,15 +769,17 @@ def main() -> None:
         "cols_base_canonique": int(len(base_canonique.columns)),
         "cols_base_features": int(len(base_features.columns)),
         "cols_base_features_context": int(len(base_features_context.columns)),
+        "pp_integration": pp_summary,
     }
     write_summary(summary)
 
     print("01_build_base_features.py")
-    print(f"Input : {INPUT_BASE_MATCH_FUSIONNEE}")
-    print(f"Output : {OUTPUT_BASE_CANONIQUE}")
-    print(f"Output : {OUTPUT_BASE_FEATURES}")
-    print(f"Output : {OUTPUT_BASE_FEATURES_CONTEXT}")
-    print(f"Summary : {SUMMARY_PATH}")
+    print(f"Input base : {INPUT_BASE_MATCH_FUSIONNEE}")
+    print(f"Input PP   : {INPUT_PP_STATS_GAME}")
+    print(f"Output     : {OUTPUT_BASE_CANONIQUE}")
+    print(f"Output     : {OUTPUT_BASE_FEATURES}")
+    print(f"Output     : {OUTPUT_BASE_FEATURES_CONTEXT}")
+    print(f"Summary    : {SUMMARY_PATH}")
 
 
 if __name__ == "__main__":
