@@ -144,7 +144,7 @@ def build_url(start_date: date, end_date: date, game_type_id: int) -> str:
     cayenne_exp = build_cayenne_exp(start_date, end_date, game_type_id)
 
     query = (
-        f"isAggregate=true"
+        f"isAggregate=false"
         f"&isGame=true"
         f"&sort={quote(sort, safe='')}"
         f"&start=0"
