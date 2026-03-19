@@ -17,7 +17,9 @@ Principes
 ---------
 - aucune donnée du match futur n'est utilisée comme cible déguisée
 - seules des features connues avant match sont construites
-- la partie "upcoming" s'appuie bien sur matchs.csv (matchs futurs) + joueurs.csv (rosters)
+- l'univers des joueurs à prédire est construit d'abord depuis l'historique réel du pipeline
+  avant la date cible, et non depuis un référentiel large de roster
+- joueurs.csv sert seulement de lookup complémentaire pour nom / position / équipe
 - le modèle POINT est réentraîné localement dans ce script, car le repo ne persiste pas encore
   d'artefact modèle/calibrateur prêt à recharger
 - calibration sigmoid temporellement propre sur une fenêtre récente antérieure à la date cible
@@ -33,10 +35,15 @@ Usage
 Par défaut :
     python model/05_predict_upcoming_games.py
 
-Le script choisit alors la date FUT la plus proche dans matchs.csv.
+Le script choisit alors la date FUT la plus proche dans matchs.csv, puis garde comme
+candidats les joueurs dont la DERNIÈRE apparition historique avant cette date
+correspond à une équipe du slate, avec un filtre de récence configurable.
 
 Pour forcer une date :
     python model/05_predict_upcoming_games.py --target-date 2026-03-19
+
+Pour ajuster la récence des candidats :
+    python model/05_predict_upcoming_games.py --target-date 2026-03-19 --recent-lookback-days 45
 """
 
 from __future__ import annotations
@@ -67,6 +74,7 @@ PRED_UPCOMING_CAL_PATH = OUTPUTS_DIR / "predictions_upcoming_point_enrichi_calib
 SUMMARY_PATH = OUTPUTS_DIR / "05_predict_upcoming_games_summary.json"
 
 RANDOM_STATE = 42
+DEFAULT_RECENT_LOOKBACK_DAYS = 45
 
 TARGET_CANDIDATES = [
     "target_point_1p",
@@ -230,6 +238,13 @@ def normalize_position(value: Any) -> Optional[str]:
     return mapping.get(value, value)
 
 
+def normalize_name(value: Any) -> Optional[str]:
+    if value is None or pd.isna(value):
+        return None
+    value = str(value).strip()
+    return value or None
+
+
 def safe_mean_last_n(series: pd.Series, n: int) -> float:
     s = pd.to_numeric(series, errors="coerce").dropna()
     if len(s) == 0:
@@ -384,20 +399,16 @@ def load_matchs() -> pd.DataFrame:
     return df.sort_values(["date_match", "id_match"]).reset_index(drop=True)
 
 
-def load_joueurs(include_goalies: bool = False) -> pd.DataFrame:
+def load_joueurs() -> pd.DataFrame:
     df = pd.read_csv(JOUEURS_PATH, low_memory=False)
     verifier_colonnes(df, ["id_joueur", "nom", "position", "id_equipe"])
     df = df.copy()
     df["id_joueur"] = pd.to_numeric(df["id_joueur"], errors="coerce")
     df = df[df["id_joueur"].notna()].copy()
     df["id_joueur"] = df["id_joueur"].astype(int)
-    df["nom"] = df["nom"].astype(str).str.strip()
+    df["nom"] = df["nom"].apply(normalize_name)
     df["position"] = df["position"].apply(normalize_position)
     df["id_equipe"] = df["id_equipe"].apply(normalize_team_code)
-
-    if not include_goalies:
-        df = df[df["position"] != "G"].copy()
-
     df = df.drop_duplicates(subset=["id_joueur"], keep="first").reset_index(drop=True)
     return df
 
@@ -428,7 +439,13 @@ def load_history() -> Tuple[pd.DataFrame, str, str]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
     for col in ["team_player_match", "adversaire_match"]:
-        df[col] = df[col].astype(str).str.strip().str.upper()
+        df[col] = df[col].apply(normalize_team_code)
+
+    if "nom" in df.columns:
+        df["nom"] = df["nom"].apply(normalize_name)
+
+    if "position" in df.columns:
+        df["position"] = df["position"].apply(normalize_position)
 
     return df.reset_index(drop=True), target_col, date_col
 
@@ -756,11 +773,88 @@ def compute_player_features_for_future_row(
     return row
 
 
+def build_recent_player_pool(
+    history: pd.DataFrame,
+    joueurs_lookup: pd.DataFrame,
+    target_date: pd.Timestamp,
+    slate_teams: List[str],
+    include_goalies: bool = False,
+    recent_lookback_days: int = DEFAULT_RECENT_LOOKBACK_DAYS,
+) -> pd.DataFrame:
+    hist = history[history["date_match"] < target_date].copy()
+    if hist.empty:
+        raise ValueError("Aucun historique disponible avant la date cible pour construire l'univers futur.")
+
+    hist = hist.sort_values(["date_match", "id_match", "id_joueur"]).reset_index(drop=True)
+
+    latest = hist.groupby("id_joueur", as_index=False).tail(1).copy()
+    latest["team_player_match"] = latest["team_player_match"].apply(normalize_team_code)
+    latest = latest[latest["team_player_match"].isin(slate_teams)].copy()
+
+    latest["days_since_last_game"] = (
+        target_date.normalize() - pd.to_datetime(latest["date_match"], errors="coerce").dt.normalize()
+    ).dt.days
+
+    latest = latest[
+        latest["days_since_last_game"].notna()
+        & (latest["days_since_last_game"] >= 0)
+        & (latest["days_since_last_game"] <= recent_lookback_days)
+    ].copy()
+
+    joueurs_lookup = joueurs_lookup.copy()
+    joueurs_lookup = joueurs_lookup.rename(
+        columns={
+            "nom": "nom_lookup",
+            "position": "position_lookup",
+            "id_equipe": "id_equipe_lookup",
+        }
+    )
+
+    latest = latest.merge(
+        joueurs_lookup[["id_joueur", "nom_lookup", "position_lookup", "id_equipe_lookup"]],
+        on="id_joueur",
+        how="left",
+        validate="one_to_one",
+    )
+
+    if "nom" in latest.columns:
+        latest["nom"] = latest["nom"].apply(normalize_name)
+    else:
+        latest["nom"] = None
+
+    if "position" in latest.columns:
+        latest["position"] = latest["position"].apply(normalize_position)
+    else:
+        latest["position"] = None
+
+    latest["nom"] = latest["nom"].fillna(latest["nom_lookup"])
+    latest["position"] = latest["position"].fillna(latest["position_lookup"])
+
+    if not include_goalies:
+        latest = latest[latest["position"] != "G"].copy()
+
+    latest["nom"] = latest["nom"].fillna(latest["id_joueur"].astype(str))
+    latest["position"] = latest["position"].fillna("UNK")
+
+    latest = latest.sort_values(
+        ["team_player_match", "days_since_last_game", "date_match", "id_match", "id_joueur"],
+        ascending=[True, True, False, False, True],
+    ).reset_index(drop=True)
+
+    if latest.empty:
+        raise ValueError(
+            "Aucun joueur candidat après filtrage par équipe / récence. "
+            "Élargis éventuellement --recent-lookback-days."
+        )
+
+    return latest
+
+
 def build_upcoming_universe(
     future_matches: pd.DataFrame,
-    joueurs: pd.DataFrame,
     history: pd.DataFrame,
     matchs_all: pd.DataFrame,
+    player_pool: pd.DataFrame,
 ) -> pd.DataFrame:
     schedule_team_rows = build_schedule_team_rows(matchs_all)
     completed_team_rows = build_completed_team_rows(matchs_all)
@@ -783,7 +877,7 @@ def build_upcoming_universe(
             (home_team, away_team, 1),
             (away_team, home_team, 0),
         ]:
-            roster_team = joueurs[joueurs["id_equipe"] == team_code].copy()
+            roster_team = player_pool[player_pool["team_player_match"] == team_code].copy()
 
             for _, player in roster_team.iterrows():
                 player_id = int(player["id_joueur"])
@@ -819,13 +913,14 @@ def build_upcoming_universe(
                     "team_player_match": team_code,
                     "adversaire_match": opp_code,
                     "is_home_player": float(is_home),
+                    "days_since_last_game": pd.to_numeric(player.get("days_since_last_game"), errors="coerce"),
                 }
                 out_row.update(base_row)
                 out_row.update(team_ctx)
                 rows.append(out_row)
 
     if not rows:
-        raise ValueError("Aucune ligne upcoming construite. Vérifie les rosters et les matchs FUT.")
+        raise ValueError("Aucune ligne upcoming construite. Vérifie le player pool et les matchs FUT.")
 
     df = pd.DataFrame(rows)
 
@@ -987,12 +1082,18 @@ def parse_args() -> argparse.Namespace:
         "--target-date",
         type=str,
         default=None,
-        help="Date cible au format YYYY-MM-DD. Par défaut : première date FUT disponible.",
+        help="Date cible au format YYYY-MM-DD. Par défaut : première date FUT disponible à partir d'aujourd'hui.",
     )
     parser.add_argument(
         "--include-goalies",
         action="store_true",
         help="Inclure les gardiens dans l'univers de prédiction.",
+    )
+    parser.add_argument(
+        "--recent-lookback-days",
+        type=int,
+        default=DEFAULT_RECENT_LOOKBACK_DAYS,
+        help="Récence maximale (en jours) depuis la dernière apparition historique du joueur pour l'inclure dans le slate.",
     )
     return parser.parse_args()
 
@@ -1011,7 +1112,7 @@ def main() -> None:
     print(f"Input history : {FEATURES_HISTORY_PATH}")
 
     matchs = load_matchs()
-    joueurs = load_joueurs(include_goalies=args.include_goalies)
+    joueurs = load_joueurs()
     history, target_col, date_col = load_history()
 
     target_date = choose_target_date(matchs=matchs, target_date_str=args.target_date)
@@ -1021,11 +1122,25 @@ def main() -> None:
     if history_before_target.empty:
         raise ValueError("Aucune ligne historique disponible avant la date cible.")
 
+    teams = sorted(
+        set(future_matches["id_equipe_domicile"].astype(str).str.upper().tolist())
+        | set(future_matches["id_equipe_exterieur"].astype(str).str.upper().tolist())
+    )
+
+    player_pool = build_recent_player_pool(
+        history=history_before_target,
+        joueurs_lookup=joueurs,
+        target_date=target_date,
+        slate_teams=teams,
+        include_goalies=args.include_goalies,
+        recent_lookback_days=int(args.recent_lookback_days),
+    )
+
     upcoming_universe = build_upcoming_universe(
         future_matches=future_matches,
-        joueurs=joueurs,
         history=history_before_target,
         matchs_all=matchs,
+        player_pool=player_pool,
     )
 
     model, calibrator, fit_summary = fit_point_model_and_calibrator(
@@ -1051,9 +1166,9 @@ def main() -> None:
     pred_raw.to_csv(PRED_UPCOMING_RAW_PATH, index=False)
     pred_cal.to_csv(PRED_UPCOMING_CAL_PATH, index=False)
 
-    teams = sorted(
-        set(future_matches["id_equipe_domicile"].astype(str).str.upper().tolist())
-        | set(future_matches["id_equipe_exterieur"].astype(str).str.upper().tolist())
+    players_per_team = (
+        player_pool["team_player_match"].value_counts().sort_index().to_dict()
+        if not player_pool.empty else {}
     )
 
     summary = {
@@ -1063,7 +1178,10 @@ def main() -> None:
         "future_players_rows": int(len(upcoming_universe)),
         "future_teams": teams,
         "include_goalies": bool(args.include_goalies),
+        "recent_lookback_days": int(args.recent_lookback_days),
         "history_rows_before_target": int(len(history_before_target)),
+        "player_pool_rows": int(len(player_pool)),
+        "player_pool_per_team": players_per_team,
         "target_column_used": target_col,
         "date_column_used": date_col,
         "fit_summary": fit_summary,
@@ -1072,11 +1190,12 @@ def main() -> None:
             "predictions_upcoming_point_enrichi_calibre_v2.csv": str(PRED_UPCOMING_CAL_PATH),
         },
         "notes": [
-            "Universe future construit depuis matchs.csv FUT + joueurs.csv",
+            "Universe future construit depuis la dernière apparition historique connue avant la date cible",
+            "joueurs.csv utilisé comme lookup complémentaire, pas comme roster large principal",
             "Aucune colonne de résultat futur utilisée",
             "Réentraînement local nécessaire car le repo ne sauvegarde pas encore d'artefact modèle POINT",
             "Calibration sigmoid ajustée sur une fenêtre historique récente antérieure à la date cible",
-            "Par défaut, le script prédit uniquement la première date FUT disponible",
+            "Par défaut, le script prédit uniquement la première date FUT disponible à partir d'aujourd'hui",
         ],
     }
     write_json(SUMMARY_PATH, summary)
@@ -1089,6 +1208,11 @@ def main() -> None:
     print("=== FUTURE MATCHES ===")
     print(f"rows : {len(future_matches)}")
     print(f"teams: {teams}")
+
+    print("")
+    print("=== PLAYER POOL ===")
+    print(f"rows : {len(player_pool)}")
+    print(f"lookback_days : {args.recent_lookback_days}")
 
     print("")
     print("=== FUTURE UNIVERSE ===")
