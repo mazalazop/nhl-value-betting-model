@@ -327,6 +327,7 @@ def keep_train_valid_features_only(
 def choose_target_date(matchs: pd.DataFrame, target_date_str: Optional[str]) -> pd.Timestamp:
     matchs = matchs.copy()
     matchs["date_match"] = pd.to_datetime(matchs["date_match"], errors="coerce")
+
     fut = matchs[matchs["status"].astype(str).str.upper() == "FUT"].copy()
     fut = fut[fut["date_match"].notna()].copy()
 
@@ -334,12 +335,31 @@ def choose_target_date(matchs: pd.DataFrame, target_date_str: Optional[str]) -> 
         raise ValueError("Aucun match FUT trouvé dans matchs.csv.")
 
     if target_date_str is None:
-        return pd.Timestamp(fut["date_match"].min().normalize())
+        today = pd.Timestamp.today().normalize()
+        fut_upcoming = fut[fut["date_match"].dt.normalize() >= today].copy()
+
+        if fut_upcoming.empty:
+            raise ValueError(
+                "Aucun match FUT à partir d'aujourd'hui dans matchs.csv. "
+                "Des lignes FUT anciennes existent peut-être encore dans la source."
+            )
+
+        return pd.Timestamp(fut_upcoming["date_match"].min().normalize())
 
     target_date = pd.to_datetime(target_date_str, errors="coerce")
     if pd.isna(target_date):
         raise ValueError(f"Date cible invalide : {target_date_str}")
-    return pd.Timestamp(target_date.normalize())
+
+    target_date = pd.Timestamp(target_date.normalize())
+
+    if not ((fut["date_match"].dt.normalize() == target_date).any()):
+        dates_disponibles = sorted(fut["date_match"].dt.strftime("%Y-%m-%d").unique().tolist())[:20]
+        raise ValueError(
+            f"Aucun match FUT trouvé pour la date cible {target_date.date()}. "
+            f"Exemples de dates FUT disponibles : {dates_disponibles}"
+        )
+
+    return target_date
 
 
 def load_matchs() -> pd.DataFrame:
