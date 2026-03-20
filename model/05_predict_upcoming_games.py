@@ -7,43 +7,27 @@ model/05_predict_upcoming_games.py
 Objectif
 --------
 Produire des prédictions POINT (joueur marque au moins 1 point) pour les matchs à venir,
-à partir de sources amont prouvées dans le repo :
+à partir de sources amont du repo :
 
 - data/raw/matchs.csv
 - data/raw/joueurs.csv
 - data/final/base_features_context_v2.csv
+- data/raw/team_standings_daily.csv (optionnel mais recommandé)
 
 Principes
 ---------
-- aucune donnée du match futur n'est utilisée comme cible déguisée
-- seules des features connues avant match sont construites
-- l'univers des joueurs à prédire est construit d'abord depuis l'historique réel du pipeline
-  avant la date cible, et non depuis un référentiel large de roster
-- joueurs.csv sert seulement de lookup complémentaire pour nom / position / équipe
-- le modèle POINT est réentraîné localement dans ce script, car le repo ne persiste pas encore
-  d'artefact modèle/calibrateur prêt à recharger
-- calibration sigmoid temporellement propre sur une fenêtre récente antérieure à la date cible
+- aucune donnée du match futur n'est utilisée comme cible déguisée ;
+- seules des features connues avant match sont construites ;
+- l'univers des joueurs à prédire est construit d'abord depuis l'historique réel du pipeline ;
+- le modèle POINT est réentraîné localement dans ce script ;
+- calibration sigmoid temporellement propre sur une fenêtre récente antérieure à la date cible ;
+- prise en compte du contexte standings / fin de saison quand team_standings_daily.csv existe.
 
 Sorties
 -------
 - outputs/predictions_upcoming_point_enrichi_v2.csv
 - outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
 - outputs/05_predict_upcoming_games_summary.json
-
-Usage
------
-Par défaut :
-    python model/05_predict_upcoming_games.py
-
-Le script choisit alors la date FUT la plus proche dans matchs.csv, puis garde comme
-candidats les joueurs dont la DERNIÈRE apparition historique avant cette date
-correspond à une équipe du slate, avec un filtre de récence configurable.
-
-Pour forcer une date :
-    python model/05_predict_upcoming_games.py --target-date 2026-03-19
-
-Pour ajuster la récence des candidats :
-    python model/05_predict_upcoming_games.py --target-date 2026-03-19 --recent-lookback-days 45
 """
 
 from __future__ import annotations
@@ -68,6 +52,7 @@ OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 MATCHS_PATH = RAW_DIR / "matchs.csv"
 JOUEURS_PATH = RAW_DIR / "joueurs.csv"
 FEATURES_HISTORY_PATH = FINAL_DIR / "base_features_context_v2.csv"
+TEAM_STANDINGS_PATH = RAW_DIR / "team_standings_daily.csv"
 
 PRED_UPCOMING_RAW_PATH = OUTPUTS_DIR / "predictions_upcoming_point_enrichi_v2.csv"
 PRED_UPCOMING_CAL_PATH = OUTPUTS_DIR / "predictions_upcoming_point_enrichi_calibre_v2.csv"
@@ -75,6 +60,30 @@ SUMMARY_PATH = OUTPUTS_DIR / "05_predict_upcoming_games_summary.json"
 
 RANDOM_STATE = 42
 DEFAULT_RECENT_LOOKBACK_DAYS = 45
+
+DEFAULT_TEAM_GF = 2.8
+DEFAULT_TEAM_GA = 2.8
+DEFAULT_TEAM_WINRATE = 0.5
+DEFAULT_LAST10_HIT_RATE = 0.45
+DEFAULT_LAST20_HIT_RATE = 0.45
+DEFAULT_SEASON_HIT_RATE = 0.45
+DEFAULT_POINTS_PER_GAME = 0.55
+DEFAULT_WILDCARD_DISTANCE = 0.0
+DEFAULT_CONFERENCE_RANK = 8.5
+DEFAULT_DIVISION_RANK = 4.5
+DEFAULT_GAMES_REMAINING = 82.0
+
+LONG_ABSENCE_DAYS = 10
+RETURN_TOI_MIN = 15.0
+RETURN_RATIO_TOI_MIN = 0.75
+HISTORICAL_CURRENT_WEIGHT_DEFAULT = 0.60
+HISTORICAL_CURRENT_WEIGHT_RETURN = 0.80
+
+TEAM_CODE_ALIASES = {
+    "ARI": "UTA",
+    "PHX": "UTA",
+    "PHO": "UTA",
+}
 
 TARGET_CANDIDATES = [
     "target_point_1p",
@@ -106,6 +115,7 @@ META_OUTPUT_COLUMNS = [
     "is_home_player",
 ]
 
+# Cohérent avec 02_train_point_model.py
 FEATURE_WHITELIST = [
     "is_home_player",
     "saison",
@@ -123,14 +133,13 @@ FEATURE_WHITELIST = [
     "toi_moy_10",
     "points_moy_10",
     "buts_moy_10",
+    "passes_moy_10",
     "nb_matchs_joues_10",
     "hist_ok_5",
     "hist_ok_10",
     "tirs_par_60_5",
     "points_par_60_5",
     "buts_par_60_5",
-    "jours_repos_team",
-    "consecutive_away_games",
     "nb_matchs_vs_adv_avant",
     "points_vs_adv_5",
     "buts_vs_adv_5",
@@ -139,22 +148,56 @@ FEATURE_WHITELIST = [
     "buts_vs_adv_shrunk",
     "tirs_vs_adv_shrunk",
     "jours_absence_pre_match",
+    "games_missed_proxy",
     "absence_longue_flag",
     "retour_episode",
+    "return_from_absence_flag",
     "matchs_depuis_retour_avant_match",
     "toi_pre_absence_ref",
     "pp_pre_absence_ref",
-    "toi_moy_retour_2_avant_match",
-    "pp_moy_retour_2_avant_match",
+    "toi_moy_retour_3_avant_match",
+    "pp_moy_retour_3_avant_match",
     "ratio_toi_retour_vs_pre_absence",
     "ratio_pp_retour_vs_pre_absence",
-    "eligible_post_retour",
+    "return_stabilized_flag",
+    "historical_current_weight",
+    "historical_prev_weight",
+    "point_hit_rate_last_5",
+    "point_hit_rate_last_10",
+    "point_hit_rate_last_20",
+    "point_hit_rate_season_pre",
+    "point_hit_rate_prev_season",
+    "point_hit_rate_weighted_pre",
+    "points_per_game_season_pre",
+    "points_per_game_prev_season",
+    "points_per_game_weighted_pre",
+    "recent_vs_expected_gap",
+    "current_point_streak_pre",
+    "current_no_point_streak_pre",
+    "max_point_streak_last_2_seasons_pre",
+    "max_no_point_streak_last_2_seasons_pre",
+    "count_5plus_point_streaks_last_2_seasons_pre",
     "is_home_team",
+    "jours_repos_team",
     "team_back_to_back",
     "team_back_to_back_away",
+    "consecutive_away_games",
     "team_winrate_5",
     "team_gf_moy_5",
     "team_ga_moy_5",
+    "team_games_played_pre_approx",
+    "games_played_team_pre",
+    "games_remaining_team_pre",
+    "team_points_pre",
+    "conference_rank_pre",
+    "division_rank_pre",
+    "conference_cutoff_points_pre",
+    "wildcard_distance_pre",
+    "point_pctg_pre",
+    "goal_differential_pre",
+    "l10_points_pre",
+    "late_season_flag",
+    "playoff_pressure_simple",
 ]
 
 REQUIRED_HISTORY_COLUMNS = [
@@ -171,9 +214,21 @@ REQUIRED_HISTORY_COLUMNS = [
     "tirs",
     "temps_de_glace",
     "temps_pp",
-    "retour_episode",
-    "toi_pre_absence_ref",
-    "pp_pre_absence_ref",
+]
+
+EXTRA_OUTPUT_COLUMNS = [
+    "days_since_last_game",
+    "point_hit_rate_last_10",
+    "point_hit_rate_last_20",
+    "point_hit_rate_weighted_pre",
+    "recent_vs_expected_gap",
+    "current_point_streak_pre",
+    "current_no_point_streak_pre",
+    "hard_exclude_hot_streak_pre",
+    "games_remaining_team_pre",
+    "team_points_pre",
+    "wildcard_distance_pre",
+    "playoff_pressure_simple",
 ]
 
 DEFAULTS = {
@@ -182,17 +237,48 @@ DEFAULTS = {
     "team_back_to_back": 0.0,
     "team_back_to_back_away": 0.0,
     "consecutive_away_games": 0.0,
-    "team_winrate_5": 0.5,
-    "team_gf_moy_5": 2.8,
-    "team_ga_moy_5": 2.8,
+    "team_winrate_5": DEFAULT_TEAM_WINRATE,
+    "team_gf_moy_5": DEFAULT_TEAM_GF,
+    "team_ga_moy_5": DEFAULT_TEAM_GA,
+    "team_games_played_pre_approx": 0.0,
     "points_vs_adv_shrunk": 0.0,
     "buts_vs_adv_shrunk": 0.0,
     "tirs_vs_adv_shrunk": 0.0,
     "jours_absence_pre_match": 3.0,
+    "games_missed_proxy": 0.0,
     "matchs_depuis_retour_avant_match": 0.0,
-    "eligible_post_retour": 0.0,
-    "ratio_toi_retour_vs_pre_absence": 0.0,
-    "ratio_pp_retour_vs_pre_absence": 0.0,
+    "return_from_absence_flag": 0.0,
+    "return_stabilized_flag": 0.0,
+    "historical_current_weight": HISTORICAL_CURRENT_WEIGHT_DEFAULT,
+    "historical_prev_weight": 1.0 - HISTORICAL_CURRENT_WEIGHT_DEFAULT,
+    "point_hit_rate_last_5": DEFAULT_LAST10_HIT_RATE,
+    "point_hit_rate_last_10": DEFAULT_LAST10_HIT_RATE,
+    "point_hit_rate_last_20": DEFAULT_LAST20_HIT_RATE,
+    "point_hit_rate_season_pre": DEFAULT_SEASON_HIT_RATE,
+    "point_hit_rate_prev_season": DEFAULT_SEASON_HIT_RATE,
+    "point_hit_rate_weighted_pre": DEFAULT_SEASON_HIT_RATE,
+    "points_per_game_season_pre": DEFAULT_POINTS_PER_GAME,
+    "points_per_game_prev_season": DEFAULT_POINTS_PER_GAME,
+    "points_per_game_weighted_pre": DEFAULT_POINTS_PER_GAME,
+    "recent_vs_expected_gap": 0.0,
+    "current_point_streak_pre": 0.0,
+    "current_no_point_streak_pre": 0.0,
+    "max_point_streak_last_2_seasons_pre": 0.0,
+    "max_no_point_streak_last_2_seasons_pre": 0.0,
+    "count_5plus_point_streaks_last_2_seasons_pre": 0.0,
+    "hard_exclude_hot_streak_pre": 0.0,
+    "games_played_team_pre": 0.0,
+    "games_remaining_team_pre": DEFAULT_GAMES_REMAINING,
+    "team_points_pre": np.nan,
+    "conference_rank_pre": DEFAULT_CONFERENCE_RANK,
+    "division_rank_pre": DEFAULT_DIVISION_RANK,
+    "conference_cutoff_points_pre": np.nan,
+    "wildcard_distance_pre": DEFAULT_WILDCARD_DISTANCE,
+    "point_pctg_pre": np.nan,
+    "goal_differential_pre": np.nan,
+    "l10_points_pre": np.nan,
+    "late_season_flag": 0.0,
+    "playoff_pressure_simple": 0.0,
 }
 
 
@@ -227,6 +313,7 @@ def normalize_team_code(value: Any) -> Optional[str]:
     if value is None or pd.isna(value):
         return None
     value = str(value).strip().upper()
+    value = TEAM_CODE_ALIASES.get(value, value)
     return value or None
 
 
@@ -245,6 +332,31 @@ def normalize_name(value: Any) -> Optional[str]:
     return value or None
 
 
+def parse_mmss_to_minutes(value: Any) -> float:
+    if pd.isna(value):
+        return np.nan
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        return float(value)
+    s = str(value).strip()
+    if s == "" or s.lower() in {"nan", "none", "null"}:
+        return np.nan
+    if ":" in s:
+        parts = s.split(":")
+        try:
+            if len(parts) == 2:
+                mm, ss = parts
+                return float(mm) + float(ss) / 60.0
+            if len(parts) == 3:
+                hh, mm, ss = parts
+                return float(hh) * 60.0 + float(mm) + float(ss) / 60.0
+        except ValueError:
+            return np.nan
+    try:
+        return float(s)
+    except ValueError:
+        return np.nan
+
+
 def safe_mean_last_n(series: pd.Series, n: int) -> float:
     s = pd.to_numeric(series, errors="coerce").dropna()
     if len(s) == 0:
@@ -252,16 +364,11 @@ def safe_mean_last_n(series: pd.Series, n: int) -> float:
     return float(s.tail(n).mean())
 
 
-def safe_count_last_n(series: pd.Series, n: int) -> int:
-    s = pd.to_numeric(series, errors="coerce").dropna()
-    return int(min(len(s), n))
-
-
 def safe_ratio(num: float, den: float) -> float:
     if den is None or pd.isna(den) or den == 0:
-        return 0.0
+        return np.nan
     if num is None or pd.isna(num):
-        return 0.0
+        return np.nan
     return float(num / den)
 
 
@@ -299,10 +406,8 @@ def compute_sample_weights(y: pd.Series) -> np.ndarray:
     y_array = y.astype(int).to_numpy()
     positives = int(y_array.sum())
     negatives = int(len(y_array) - positives)
-
     if positives == 0 or negatives == 0:
         return np.ones(len(y_array), dtype=float)
-
     pos_weight = negatives / positives
     return np.where(y_array == 1, pos_weight, 1.0).astype(float)
 
@@ -339,6 +444,39 @@ def keep_train_valid_features_only(
     return X_train[kept_cols].copy(), X_score[kept_cols].copy(), kept_cols, dropped_cols
 
 
+def normalize_season_code(value: Any) -> Optional[str]:
+    if value is None or pd.isna(value):
+        return None
+    s = str(value).strip()
+    if s.endswith(".0"):
+        s = s[:-2]
+    if len(s) < 8:
+        return None
+    return s[:8]
+
+
+def previous_season_code(value: Any) -> Optional[str]:
+    s = normalize_season_code(value)
+    if s is None:
+        return None
+    try:
+        start = int(s[:4]) - 1
+        end = int(s[4:8]) - 1
+        return f"{start}{end}"
+    except ValueError:
+        return None
+
+
+def parse_season_start_year(value: Any) -> Optional[int]:
+    s = normalize_season_code(value)
+    if s is None:
+        return None
+    try:
+        return int(s[:4])
+    except ValueError:
+        return None
+
+
 def choose_target_date(matchs: pd.DataFrame, target_date_str: Optional[str]) -> pd.Timestamp:
     matchs = matchs.copy()
     matchs["date_match"] = pd.to_datetime(matchs["date_match"], errors="coerce")
@@ -352,13 +490,11 @@ def choose_target_date(matchs: pd.DataFrame, target_date_str: Optional[str]) -> 
     if target_date_str is None:
         today = pd.Timestamp.today().normalize()
         fut_upcoming = fut[fut["date_match"].dt.normalize() >= today].copy()
-
         if fut_upcoming.empty:
             raise ValueError(
                 "Aucun match FUT à partir d'aujourd'hui dans matchs.csv. "
                 "Des lignes FUT anciennes existent peut-être encore dans la source."
             )
-
         return pd.Timestamp(fut_upcoming["date_match"].min().normalize())
 
     target_date = pd.to_datetime(target_date_str, errors="coerce")
@@ -395,7 +531,7 @@ def load_matchs() -> pd.DataFrame:
     df = df.copy()
     df["date_match"] = pd.to_datetime(df["date_match"], errors="coerce")
     for col in ["id_equipe_domicile", "id_equipe_exterieur", "status"]:
-        df[col] = df[col].astype(str).str.strip().str.upper()
+        df[col] = df[col].apply(normalize_team_code)
     return df.sort_values(["date_match", "id_match"]).reset_index(drop=True)
 
 
@@ -436,7 +572,14 @@ def load_history() -> Tuple[pd.DataFrame, str, str]:
         "pp_pre_absence_ref",
     ]:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+            if col in {"temps_de_glace", "temps_pp"}:
+                df[col] = df[col].apply(parse_mmss_to_minutes)
+            else:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    if "season_source" not in df.columns:
+        df["season_source"] = df["saison"]
+    df["season_source"] = df["season_source"].apply(normalize_season_code)
 
     for col in ["team_player_match", "adversaire_match"]:
         df[col] = df[col].apply(normalize_team_code)
@@ -448,6 +591,105 @@ def load_history() -> Tuple[pd.DataFrame, str, str]:
         df["position"] = df["position"].apply(normalize_position)
 
     return df.reset_index(drop=True), target_col, date_col
+
+
+def _compute_conference_cutoff_points(group: pd.DataFrame) -> float:
+    conf_seq = pd.to_numeric(group.get("conference_sequence"), errors="coerce")
+    points = pd.to_numeric(group.get("points"), errors="coerce")
+
+    mask = conf_seq.notna() & points.notna() & (conf_seq == 8)
+    if mask.any():
+        return float(points.loc[mask].iloc[0])
+
+    points_sorted = points.dropna().sort_values(ascending=False).tolist()
+    if len(points_sorted) >= 8:
+        return float(points_sorted[7])
+    if len(points_sorted) > 0:
+        return float(points_sorted[-1])
+    return np.nan
+
+
+def load_standings_optional() -> Tuple[Optional[pd.DataFrame], Dict[str, Any], Dict[str, pd.DataFrame]]:
+    if not TEAM_STANDINGS_PATH.exists():
+        return None, {
+            "standings_loaded": False,
+            "standings_file": str(TEAM_STANDINGS_PATH),
+            "reason": "file_missing",
+        }, {}
+
+    standings = pd.read_csv(TEAM_STANDINGS_PATH, low_memory=False)
+    required = [
+        "date_snapshot",
+        "team_abbrev",
+        "conference_abbrev",
+        "division_abbrev",
+        "games_played",
+        "games_remaining",
+        "points",
+        "conference_sequence",
+        "division_sequence",
+    ]
+    verifier_colonnes(standings, required)
+
+    standings = standings.copy()
+    standings["date_snapshot"] = pd.to_datetime(standings["date_snapshot"], errors="coerce")
+    standings = standings[standings["date_snapshot"].notna()].copy()
+    standings["team_abbrev"] = standings["team_abbrev"].apply(normalize_team_code)
+    standings["conference_abbrev"] = standings["conference_abbrev"].astype(str).str.upper().str.strip()
+    standings["division_abbrev"] = standings["division_abbrev"].astype(str).str.upper().str.strip()
+
+    numeric_cols = [
+        "games_played",
+        "games_remaining",
+        "points",
+        "conference_sequence",
+        "division_sequence",
+        "wildcard_sequence",
+        "point_pctg",
+        "goal_differential",
+        "l10_points",
+    ]
+    for col in numeric_cols:
+        if col in standings.columns:
+            standings[col] = pd.to_numeric(standings[col], errors="coerce")
+
+    standings = standings.sort_values(
+        ["date_snapshot", "conference_abbrev", "conference_sequence", "team_abbrev"]
+    ).reset_index(drop=True)
+
+    conf_cutoff = (
+        standings.dropna(subset=["conference_abbrev"])
+        .groupby(["date_snapshot", "conference_abbrev"], dropna=False)
+        .apply(_compute_conference_cutoff_points)
+        .reset_index(name="conference_cutoff_points")
+    )
+    standings = standings.merge(
+        conf_cutoff,
+        on=["date_snapshot", "conference_abbrev"],
+        how="left",
+        validate="many_to_one",
+    )
+    standings["wildcard_distance"] = pd.to_numeric(standings["points"], errors="coerce") - pd.to_numeric(
+        standings["conference_cutoff_points"], errors="coerce"
+    )
+    standings["standings_lookup_date"] = standings["date_snapshot"]
+    standings = standings.sort_values(["team_abbrev", "standings_lookup_date"]).reset_index(drop=True)
+
+    standings_by_team = {
+        str(team): grp.sort_values("standings_lookup_date").reset_index(drop=True)
+        for team, grp in standings.groupby("team_abbrev", sort=False)
+    }
+
+    summary = {
+        "standings_loaded": True,
+        "standings_file": str(TEAM_STANDINGS_PATH),
+        "standings_rows": int(len(standings)),
+        "standings_dates": int(standings["date_snapshot"].nunique()),
+        "standings_teams": int(standings["team_abbrev"].nunique()),
+        "standings_min_date": standings["date_snapshot"].min().strftime("%Y-%m-%d") if len(standings) else None,
+        "standings_max_date": standings["date_snapshot"].max().strftime("%Y-%m-%d") if len(standings) else None,
+    }
+    return standings, summary, standings_by_team
 
 
 def select_future_matches(matchs: pd.DataFrame, target_date: pd.Timestamp) -> pd.DataFrame:
@@ -466,19 +708,13 @@ def build_schedule_team_rows(matchs: pd.DataFrame) -> pd.DataFrame:
     base_cols = ["id_match", "date_match", "id_equipe_domicile", "id_equipe_exterieur"]
     verifier_colonnes(matchs, base_cols)
     home = matchs[base_cols].rename(
-        columns={
-            "id_equipe_domicile": "team_code",
-            "id_equipe_exterieur": "opp_code",
-        }
+        columns={"id_equipe_domicile": "team_code", "id_equipe_exterieur": "opp_code"}
     )
     home = home[["id_match", "date_match", "team_code", "opp_code"]].copy()
     home["is_home_team"] = 1
 
     away = matchs[base_cols].rename(
-        columns={
-            "id_equipe_exterieur": "team_code",
-            "id_equipe_domicile": "opp_code",
-        }
+        columns={"id_equipe_exterieur": "team_code", "id_equipe_domicile": "opp_code"}
     )
     away = away[["id_match", "date_match", "team_code", "opp_code"]].copy()
     away["is_home_team"] = 0
@@ -526,14 +762,59 @@ def build_completed_team_rows(matchs: pd.DataFrame) -> pd.DataFrame:
     return out.sort_values(["team_code", "date_match", "id_match"]).reset_index(drop=True)
 
 
+def lookup_standings_pre_game(
+    team_code: Optional[str],
+    game_date: pd.Timestamp,
+    standings_by_team: Dict[str, pd.DataFrame],
+) -> Dict[str, Any]:
+    defaults = {
+        "games_played_team_pre": np.nan,
+        "games_remaining_team_pre": np.nan,
+        "team_points_pre": np.nan,
+        "conference_rank_pre": np.nan,
+        "division_rank_pre": np.nan,
+        "conference_cutoff_points_pre": np.nan,
+        "wildcard_distance_pre": np.nan,
+        "point_pctg_pre": np.nan,
+        "goal_differential_pre": np.nan,
+        "l10_points_pre": np.nan,
+    }
+    if team_code is None:
+        return defaults
+
+    team_df = standings_by_team.get(team_code)
+    if team_df is None or team_df.empty:
+        return defaults
+
+    lookup_date = pd.Timestamp(game_date).normalize() - pd.Timedelta(days=1)
+    team_df = team_df[team_df["standings_lookup_date"] <= lookup_date]
+    if team_df.empty:
+        return defaults
+
+    row = team_df.iloc[-1]
+    return {
+        "games_played_team_pre": pd.to_numeric(row.get("games_played"), errors="coerce"),
+        "games_remaining_team_pre": pd.to_numeric(row.get("games_remaining"), errors="coerce"),
+        "team_points_pre": pd.to_numeric(row.get("points"), errors="coerce"),
+        "conference_rank_pre": pd.to_numeric(row.get("conference_sequence"), errors="coerce"),
+        "division_rank_pre": pd.to_numeric(row.get("division_sequence"), errors="coerce"),
+        "conference_cutoff_points_pre": pd.to_numeric(row.get("conference_cutoff_points"), errors="coerce"),
+        "wildcard_distance_pre": pd.to_numeric(row.get("wildcard_distance"), errors="coerce"),
+        "point_pctg_pre": pd.to_numeric(row.get("point_pctg"), errors="coerce"),
+        "goal_differential_pre": pd.to_numeric(row.get("goal_differential"), errors="coerce"),
+        "l10_points_pre": pd.to_numeric(row.get("l10_points"), errors="coerce"),
+    }
+
+
 def compute_team_context_for_future_row(
-    team_code: str,
-    opp_code: str,
+    team_code: Optional[str],
+    opp_code: Optional[str],
     is_home_team: int,
     game_date: pd.Timestamp,
     game_id: Any,
     schedule_team_rows: pd.DataFrame,
     completed_team_rows: pd.DataFrame,
+    standings_by_team: Dict[str, pd.DataFrame],
 ) -> Dict[str, float]:
     schedule_hist = schedule_team_rows[
         (schedule_team_rows["team_code"] == team_code)
@@ -571,6 +852,8 @@ def compute_team_context_for_future_row(
         & (completed_team_rows["date_match"] < game_date)
     ].sort_values(["date_match", "id_match"])
 
+    team_games_played_pre_approx = float(len(completed_hist))
+
     if len(completed_hist) == 0:
         team_winrate_5 = DEFAULTS["team_winrate_5"]
         team_gf_moy_5 = DEFAULTS["team_gf_moy_5"]
@@ -584,7 +867,29 @@ def compute_team_context_for_future_row(
         team_gf_moy_5 = float(pd.to_numeric(tail5["gf"], errors="coerce").mean())
         team_ga_moy_5 = float(pd.to_numeric(tail5["ga"], errors="coerce").mean())
 
-    return {
+    standings_ctx = lookup_standings_pre_game(team_code=team_code, game_date=game_date, standings_by_team=standings_by_team)
+
+    games_played_team_pre = standings_ctx["games_played_team_pre"]
+    if pd.isna(games_played_team_pre):
+        games_played_team_pre = team_games_played_pre_approx
+
+    games_remaining_team_pre = standings_ctx["games_remaining_team_pre"]
+    if pd.isna(games_remaining_team_pre):
+        games_remaining_team_pre = max(0.0, 82.0 - team_games_played_pre_approx)
+
+    wildcard_distance_pre = standings_ctx["wildcard_distance_pre"]
+    if pd.isna(wildcard_distance_pre):
+        wildcard_distance_pre = DEFAULT_WILDCARD_DISTANCE
+
+    late_season_flag = float(1 if games_remaining_team_pre <= 20 else 0)
+    playoff_pressure_simple = 0.0
+    if late_season_flag == 1.0:
+        if -4 <= float(wildcard_distance_pre) <= 4:
+            playoff_pressure_simple = 1.0
+        elif float(wildcard_distance_pre) >= 8 or float(wildcard_distance_pre) <= -8:
+            playoff_pressure_simple = -1.0
+
+    out = {
         "is_home_team": float(is_home_team),
         "jours_repos_team": jours_repos_team,
         "team_back_to_back": team_back_to_back,
@@ -593,7 +898,91 @@ def compute_team_context_for_future_row(
         "team_winrate_5": team_winrate_5,
         "team_gf_moy_5": team_gf_moy_5,
         "team_ga_moy_5": team_ga_moy_5,
+        "team_games_played_pre_approx": team_games_played_pre_approx,
+        "games_played_team_pre": games_played_team_pre,
+        "games_remaining_team_pre": games_remaining_team_pre,
+        "team_points_pre": standings_ctx["team_points_pre"],
+        "conference_rank_pre": standings_ctx["conference_rank_pre"],
+        "division_rank_pre": standings_ctx["division_rank_pre"],
+        "conference_cutoff_points_pre": standings_ctx["conference_cutoff_points_pre"],
+        "wildcard_distance_pre": wildcard_distance_pre,
+        "point_pctg_pre": standings_ctx["point_pctg_pre"],
+        "goal_differential_pre": standings_ctx["goal_differential_pre"],
+        "l10_points_pre": standings_ctx["l10_points_pre"],
+        "late_season_flag": late_season_flag,
+        "playoff_pressure_simple": playoff_pressure_simple,
     }
+
+    for col, default_val in DEFAULTS.items():
+        if col in out and (out[col] is None or pd.isna(out[col])):
+            out[col] = default_val
+    return out
+
+
+def compute_last_two_seasons_streak_stats(hist_player: pd.DataFrame, target_season_code: Optional[str]) -> Tuple[int, int, int]:
+    if hist_player.empty:
+        return 0, 0, 0
+
+    temp = hist_player.copy()
+    temp["season_code"] = temp["season_source"].apply(normalize_season_code)
+
+    target_start = parse_season_start_year(target_season_code)
+    if target_start is not None:
+        temp["season_start_year"] = temp["season_code"].apply(parse_season_start_year)
+        temp = temp[temp["season_start_year"].notna() & (temp["season_start_year"] >= target_start - 1)].copy()
+
+    hits = (pd.to_numeric(temp["points"], errors="coerce").fillna(0) >= 1).astype(int).tolist()
+    if not hits:
+        return 0, 0, 0
+
+    max_hit = 0
+    max_no = 0
+    count_5plus = 0
+    hit_run = 0
+    no_run = 0
+    for value in hits:
+        if value == 1:
+            hit_run += 1
+            no_run = 0
+        else:
+            no_run += 1
+            hit_run = 0
+        if hit_run > max_hit:
+            max_hit = hit_run
+        if no_run > max_no:
+            max_no = no_run
+        if hit_run == 5:
+            count_5plus += 1
+    return int(max_hit), int(max_no), int(count_5plus)
+
+
+def compute_current_streaks(hist_player: pd.DataFrame, target_season_code: Optional[str]) -> Tuple[int, int]:
+    if hist_player.empty or target_season_code is None:
+        return 0, 0
+
+    temp = hist_player.copy()
+    temp["season_code"] = temp["season_source"].apply(normalize_season_code)
+    temp = temp[temp["season_code"] == target_season_code].copy()
+    if temp.empty:
+        return 0, 0
+
+    hits = (pd.to_numeric(temp["points"], errors="coerce").fillna(0) >= 1).astype(int).tolist()
+
+    current_point_streak = 0
+    for v in reversed(hits):
+        if v == 1:
+            current_point_streak += 1
+        else:
+            break
+
+    current_no_point_streak = 0
+    for v in reversed(hits):
+        if v == 0:
+            current_no_point_streak += 1
+        else:
+            break
+
+    return int(current_point_streak), int(current_no_point_streak)
 
 
 def compute_player_features_for_future_row(
@@ -601,19 +990,20 @@ def compute_player_features_for_future_row(
     player_id: int,
     game_date: pd.Timestamp,
     saison: Any,
-    team_code: str,
-    opp_code: str,
+    team_code: Optional[str],
+    opp_code: Optional[str],
     is_home_player: int,
 ) -> Dict[str, Any]:
-    hist_player = hist_player.sort_values(["date_match", "id_match"]).reset_index(drop=True)
+    hist_player = hist_player.sort_values(["date_match", "id_match"]).reset_index(drop=True).copy()
+    hist_player["season_source"] = hist_player["season_source"].apply(normalize_season_code)
+    target_season_code = normalize_season_code(saison)
     n_prev = int(len(hist_player))
 
-    if n_prev == 0:
-        last_date = None
-    else:
-        last_date = pd.Timestamp(hist_player["date_match"].iloc[-1])
+    last_date = pd.Timestamp(hist_player["date_match"].iloc[-1]) if n_prev > 0 else None
+    last_season_code = hist_player["season_source"].iloc[-1] if n_prev > 0 else None
+    same_season_prev = bool(last_season_code == target_season_code) if (last_season_code and target_season_code) else False
 
-    if last_date is None:
+    if last_date is None or not same_season_prev:
         jours_repos_raw = np.nan
         jours_repos = DEFAULTS["jours_repos"]
         jours_absence_pre_match = DEFAULTS["jours_absence_pre_match"]
@@ -623,21 +1013,31 @@ def compute_player_features_for_future_row(
         jours_repos = float(min(max(delta_days, 0.0), 14.0))
         jours_absence_pre_match = float(min(max(delta_days, 0.0), 90.0))
 
+    games_missed_proxy = float(max(jours_absence_pre_match - 4.0, 0.0))
+    absence_longue_flag = float(1.0 if same_season_prev and jours_absence_pre_match >= LONG_ABSENCE_DAYS else 0.0)
     is_premier_match_joueur = float(1 if n_prev == 0 else 0)
 
-    tirs_moy_5 = safe_mean_last_n(hist_player["tirs"], 5) if n_prev > 0 else 0.0
-    toi_moy_5 = safe_mean_last_n(hist_player["temps_de_glace"], 5) if n_prev > 0 else 0.0
-    pp_moy_5 = safe_mean_last_n(hist_player["temps_pp"], 5) if n_prev > 0 else 0.0
-    points_moy_5 = safe_mean_last_n(hist_player["points"], 5) if n_prev > 0 else 0.0
-    buts_moy_5 = safe_mean_last_n(hist_player["buts"], 5) if n_prev > 0 else 0.0
-    passes_moy_5 = safe_mean_last_n(hist_player["passes"], 5) if n_prev > 0 else 0.0
+    shots = pd.to_numeric(hist_player["tirs"], errors="coerce")
+    toi = pd.to_numeric(hist_player["temps_de_glace"], errors="coerce")
+    pp = pd.to_numeric(hist_player["temps_pp"], errors="coerce")
+    points = pd.to_numeric(hist_player["points"], errors="coerce")
+    goals = pd.to_numeric(hist_player["buts"], errors="coerce")
+    assists = pd.to_numeric(hist_player["passes"], errors="coerce")
 
-    tirs_moy_10 = safe_mean_last_n(hist_player["tirs"], 10) if n_prev > 0 else 0.0
-    toi_moy_10 = safe_mean_last_n(hist_player["temps_de_glace"], 10) if n_prev > 0 else 0.0
-    points_moy_10 = safe_mean_last_n(hist_player["points"], 10) if n_prev > 0 else 0.0
-    buts_moy_10 = safe_mean_last_n(hist_player["buts"], 10) if n_prev > 0 else 0.0
+    tirs_moy_5 = safe_mean_last_n(shots, 5) if n_prev > 0 else 0.0
+    toi_moy_5 = safe_mean_last_n(toi, 5) if n_prev > 0 else 0.0
+    pp_moy_5 = safe_mean_last_n(pp, 5) if n_prev > 0 else 0.0
+    points_moy_5 = safe_mean_last_n(points, 5) if n_prev > 0 else 0.0
+    buts_moy_5 = safe_mean_last_n(goals, 5) if n_prev > 0 else 0.0
+    passes_moy_5 = safe_mean_last_n(assists, 5) if n_prev > 0 else 0.0
 
-    nb_matchs_joues_10 = float(safe_count_last_n(hist_player["id_match"], 10))
+    tirs_moy_10 = safe_mean_last_n(shots, 10) if n_prev > 0 else 0.0
+    toi_moy_10 = safe_mean_last_n(toi, 10) if n_prev > 0 else 0.0
+    points_moy_10 = safe_mean_last_n(points, 10) if n_prev > 0 else 0.0
+    buts_moy_10 = safe_mean_last_n(goals, 10) if n_prev > 0 else 0.0
+    passes_moy_10 = safe_mean_last_n(assists, 10) if n_prev > 0 else 0.0
+
+    nb_matchs_joues_10 = float(min(n_prev, 10))
     hist_ok_5 = float(1 if n_prev >= 5 else 0)
     hist_ok_10 = float(1 if n_prev >= 10 else 0)
 
@@ -645,12 +1045,34 @@ def compute_player_features_for_future_row(
     points_par_60_5 = safe_ratio(points_moy_5 * 60.0, toi_moy_5)
     buts_par_60_5 = safe_ratio(buts_moy_5 * 60.0, toi_moy_5)
 
+    point_hits = (points.fillna(0) >= 1).astype(int)
+    point_hit_rate_last_5 = safe_mean_last_n(point_hits, 5) if n_prev > 0 else DEFAULT_LAST10_HIT_RATE
+    point_hit_rate_last_10 = safe_mean_last_n(point_hits, 10) if n_prev > 0 else DEFAULT_LAST10_HIT_RATE
+    point_hit_rate_last_20 = safe_mean_last_n(point_hits, 20) if n_prev > 0 else DEFAULT_LAST20_HIT_RATE
+
+    current_season_hist = hist_player[hist_player["season_source"] == target_season_code].copy()
+    season_games_before_match = len(current_season_hist)
+    if season_games_before_match > 0:
+        point_hit_rate_season_pre = float((pd.to_numeric(current_season_hist["points"], errors="coerce").fillna(0) >= 1).mean())
+        points_per_game_season_pre = float(pd.to_numeric(current_season_hist["points"], errors="coerce").mean())
+    else:
+        point_hit_rate_season_pre = np.nan
+        points_per_game_season_pre = np.nan
+
+    prev_season_code = previous_season_code(target_season_code)
+    prev_season_hist = hist_player[hist_player["season_source"] == prev_season_code].copy()
+    if len(prev_season_hist) > 0:
+        point_hit_rate_prev_season = float((pd.to_numeric(prev_season_hist["points"], errors="coerce").fillna(0) >= 1).mean())
+        points_per_game_prev_season = float(pd.to_numeric(prev_season_hist["points"], errors="coerce").mean())
+    else:
+        point_hit_rate_prev_season = np.nan
+        points_per_game_prev_season = np.nan
+
     hist_vs_opp = hist_player[hist_player["adversaire_match"] == opp_code].copy()
     nb_matchs_vs_adv_avant = float(len(hist_vs_opp))
-
-    points_vs_adv_5 = safe_mean_last_n(hist_vs_opp["points"], 5) if len(hist_vs_opp) > 0 else np.nan
-    buts_vs_adv_5 = safe_mean_last_n(hist_vs_opp["buts"], 5) if len(hist_vs_opp) > 0 else np.nan
-    tirs_vs_adv_5 = safe_mean_last_n(hist_vs_opp["tirs"], 5) if len(hist_vs_opp) > 0 else np.nan
+    points_vs_adv_5 = safe_mean_last_n(pd.to_numeric(hist_vs_opp["points"], errors="coerce"), 5) if len(hist_vs_opp) > 0 else np.nan
+    buts_vs_adv_5 = safe_mean_last_n(pd.to_numeric(hist_vs_opp["buts"], errors="coerce"), 5) if len(hist_vs_opp) > 0 else np.nan
+    tirs_vs_adv_5 = safe_mean_last_n(pd.to_numeric(hist_vs_opp["tirs"], errors="coerce"), 5) if len(hist_vs_opp) > 0 else np.nan
 
     k_shrink = 3.0
     points_emp = float(points_moy_10 if pd.isna(points_vs_adv_5) else points_vs_adv_5)
@@ -658,65 +1080,102 @@ def compute_player_features_for_future_row(
     tirs_emp = float(tirs_moy_10 if pd.isna(tirs_vs_adv_5) else tirs_vs_adv_5)
 
     points_vs_adv_shrunk = float(
-        (points_emp * nb_matchs_vs_adv_avant + points_moy_10 * k_shrink)
-        / (nb_matchs_vs_adv_avant + k_shrink)
+        (points_emp * nb_matchs_vs_adv_avant + points_moy_10 * k_shrink) / (nb_matchs_vs_adv_avant + k_shrink)
     )
     buts_vs_adv_shrunk = float(
-        (buts_emp * nb_matchs_vs_adv_avant + buts_moy_10 * k_shrink)
-        / (nb_matchs_vs_adv_avant + k_shrink)
+        (buts_emp * nb_matchs_vs_adv_avant + buts_moy_10 * k_shrink) / (nb_matchs_vs_adv_avant + k_shrink)
     )
     tirs_vs_adv_shrunk = float(
-        (tirs_emp * nb_matchs_vs_adv_avant + tirs_moy_10 * k_shrink)
-        / (nb_matchs_vs_adv_avant + k_shrink)
+        (tirs_emp * nb_matchs_vs_adv_avant + tirs_moy_10 * k_shrink) / (nb_matchs_vs_adv_avant + k_shrink)
     )
 
-    if n_prev == 0:
-        last_retour_episode = 0.0
-    else:
-        last_value = pd.to_numeric(hist_player["retour_episode"].iloc[-1], errors="coerce")
-        last_retour_episode = float(0.0 if pd.isna(last_value) else last_value)
+    last_retour_episode = 0.0
+    if n_prev > 0 and "retour_episode" in hist_player.columns:
+        last_val = pd.to_numeric(hist_player["retour_episode"].iloc[-1], errors="coerce")
+        last_retour_episode = float(0.0 if pd.isna(last_val) else last_val)
 
-    absence_longue_flag = float(1 if jours_absence_pre_match >= 10 else 0)
-    retour_episode = float(last_retour_episode + 1 if absence_longue_flag == 1 else last_retour_episode)
+    retour_episode = float(last_retour_episode + 1.0 if absence_longue_flag == 1.0 else last_retour_episode)
 
-    if n_prev == 0 or absence_longue_flag == 1:
+    if n_prev == 0 or absence_longue_flag == 1.0:
         matchs_depuis_retour_avant_match = 0.0
-    else:
-        same_episode_hist = hist_player[
-            pd.to_numeric(hist_player["retour_episode"], errors="coerce").fillna(0.0) == retour_episode
-        ]
-        matchs_depuis_retour_avant_match = float(len(same_episode_hist))
-
-    if absence_longue_flag == 1:
-        toi_pre_absence_ref = float(toi_moy_10)
-        pp_pre_absence_ref = float(pp_moy_5)
         episode_hist = hist_player.iloc[0:0].copy()
     else:
-        episode_hist = hist_player[
-            pd.to_numeric(hist_player["retour_episode"], errors="coerce").fillna(0.0) == retour_episode
-        ].copy()
+        if "retour_episode" in hist_player.columns:
+            episode_hist = hist_player[
+                pd.to_numeric(hist_player["retour_episode"], errors="coerce").fillna(0.0) == retour_episode
+            ].copy()
+        else:
+            episode_hist = hist_player.copy()
+        matchs_depuis_retour_avant_match = float(len(episode_hist))
 
-        toi_series = pd.to_numeric(episode_hist["toi_pre_absence_ref"], errors="coerce").dropna()
-        pp_series = pd.to_numeric(episode_hist["pp_pre_absence_ref"], errors="coerce").dropna()
-
+    if absence_longue_flag == 1.0:
+        toi_pre_absence_ref = float(toi_moy_10)
+        pp_pre_absence_ref = float(pp_moy_5)
+    else:
+        toi_series_source = episode_hist["toi_pre_absence_ref"] if "toi_pre_absence_ref" in episode_hist.columns else pd.Series(dtype=float)
+        pp_series_source = episode_hist["pp_pre_absence_ref"] if "pp_pre_absence_ref" in episode_hist.columns else pd.Series(dtype=float)
+        toi_series = pd.to_numeric(toi_series_source, errors="coerce").dropna()
+        pp_series = pd.to_numeric(pp_series_source, errors="coerce").dropna()
         toi_pre_absence_ref = float(toi_series.iloc[-1]) if len(toi_series) > 0 else np.nan
         pp_pre_absence_ref = float(pp_series.iloc[-1]) if len(pp_series) > 0 else np.nan
 
-    if len(episode_hist) == 0:
-        toi_moy_retour_2_avant_match = np.nan
-        pp_moy_retour_2_avant_match = np.nan
-    else:
-        toi_moy_retour_2_avant_match = safe_mean_last_n(episode_hist["temps_de_glace"], 2)
-        pp_moy_retour_2_avant_match = safe_mean_last_n(episode_hist["temps_pp"], 2)
+    toi_source = episode_hist["temps_de_glace"] if "temps_de_glace" in episode_hist.columns else pd.Series(dtype=float)
+    pp_source = episode_hist["temps_pp"] if "temps_pp" in episode_hist.columns else pd.Series(dtype=float)
+    toi_moy_retour_3_avant_match = safe_mean_last_n(pd.to_numeric(toi_source, errors="coerce"), 3) if len(episode_hist) > 0 else np.nan
+    pp_moy_retour_3_avant_match = safe_mean_last_n(pd.to_numeric(pp_source, errors="coerce"), 3) if len(episode_hist) > 0 else np.nan
 
-    ratio_toi_retour_vs_pre_absence = safe_ratio(toi_moy_retour_2_avant_match, toi_pre_absence_ref)
-    ratio_pp_retour_vs_pre_absence = safe_ratio(pp_moy_retour_2_avant_match, pp_pre_absence_ref)
+    ratio_toi_retour_vs_pre_absence = safe_ratio(toi_moy_retour_3_avant_match, toi_pre_absence_ref)
+    ratio_pp_retour_vs_pre_absence = safe_ratio(pp_moy_retour_3_avant_match, pp_pre_absence_ref)
 
-    eligible_post_retour = float(
+    return_from_absence_flag = float(1 if retour_episode > 0 else 0)
+    return_stabilized_flag = float(
         (retour_episode > 0)
-        and (matchs_depuis_retour_avant_match >= 2)
-        and ((0.0 if pd.isna(toi_moy_retour_2_avant_match) else toi_moy_retour_2_avant_match) >= 8.0)
-        and (ratio_toi_retour_vs_pre_absence >= 0.75)
+        and (matchs_depuis_retour_avant_match >= 3)
+        and ((0.0 if pd.isna(toi_moy_retour_3_avant_match) else toi_moy_retour_3_avant_match) >= RETURN_TOI_MIN)
+        and ((0.0 if pd.isna(ratio_toi_retour_vs_pre_absence) else ratio_toi_retour_vs_pre_absence) >= RETURN_RATIO_TOI_MIN)
+    )
+
+    historical_current_weight = float(
+        HISTORICAL_CURRENT_WEIGHT_RETURN if return_stabilized_flag == 1.0 else HISTORICAL_CURRENT_WEIGHT_DEFAULT
+    )
+    historical_prev_weight = float(1.0 - historical_current_weight)
+
+    if pd.notna(point_hit_rate_season_pre) and pd.notna(point_hit_rate_prev_season):
+        point_hit_rate_weighted_pre = historical_current_weight * point_hit_rate_season_pre + historical_prev_weight * point_hit_rate_prev_season
+    else:
+        point_hit_rate_weighted_pre = point_hit_rate_season_pre if pd.notna(point_hit_rate_season_pre) else point_hit_rate_prev_season
+    if pd.isna(point_hit_rate_weighted_pre):
+        point_hit_rate_weighted_pre = DEFAULT_SEASON_HIT_RATE
+
+    if pd.notna(points_per_game_season_pre) and pd.notna(points_per_game_prev_season):
+        points_per_game_weighted_pre = historical_current_weight * points_per_game_season_pre + historical_prev_weight * points_per_game_prev_season
+    else:
+        points_per_game_weighted_pre = points_per_game_season_pre if pd.notna(points_per_game_season_pre) else points_per_game_prev_season
+    if pd.isna(points_per_game_weighted_pre):
+        points_per_game_weighted_pre = DEFAULT_POINTS_PER_GAME
+
+    current_point_streak_pre, current_no_point_streak_pre = compute_current_streaks(
+        hist_player=hist_player,
+        target_season_code=target_season_code,
+    )
+    (
+        max_point_streak_last_2_seasons_pre,
+        max_no_point_streak_last_2_seasons_pre,
+        count_5plus_point_streaks_last_2_seasons_pre,
+    ) = compute_last_two_seasons_streak_stats(hist_player=hist_player, target_season_code=target_season_code)
+
+    recent_combo = 0.6 * (point_hit_rate_last_10 if not pd.isna(point_hit_rate_last_10) else point_hit_rate_last_20) + 0.4 * (
+        point_hit_rate_last_20 if not pd.isna(point_hit_rate_last_20) else point_hit_rate_last_10
+    )
+    if pd.isna(recent_combo):
+        recent_combo = DEFAULT_LAST10_HIT_RATE
+
+    recent_vs_expected_gap = float(point_hit_rate_weighted_pre - recent_combo)
+
+    hard_exclude_hot_streak_pre = float(
+        (current_point_streak_pre >= 5)
+        and (count_5plus_point_streaks_last_2_seasons_pre < 2)
+        and (current_point_streak_pre >= max_point_streak_last_2_seasons_pre)
     )
 
     row = {
@@ -740,6 +1199,7 @@ def compute_player_features_for_future_row(
         "toi_moy_10": toi_moy_10,
         "points_moy_10": points_moy_10,
         "buts_moy_10": buts_moy_10,
+        "passes_moy_10": passes_moy_10,
         "nb_matchs_joues_10": nb_matchs_joues_10,
         "hist_ok_5": hist_ok_5,
         "hist_ok_10": hist_ok_10,
@@ -754,22 +1214,41 @@ def compute_player_features_for_future_row(
         "buts_vs_adv_shrunk": buts_vs_adv_shrunk,
         "tirs_vs_adv_shrunk": tirs_vs_adv_shrunk,
         "jours_absence_pre_match": jours_absence_pre_match,
+        "games_missed_proxy": games_missed_proxy,
         "absence_longue_flag": absence_longue_flag,
         "retour_episode": retour_episode,
+        "return_from_absence_flag": return_from_absence_flag,
         "matchs_depuis_retour_avant_match": matchs_depuis_retour_avant_match,
         "toi_pre_absence_ref": toi_pre_absence_ref,
         "pp_pre_absence_ref": pp_pre_absence_ref,
-        "toi_moy_retour_2_avant_match": toi_moy_retour_2_avant_match,
-        "pp_moy_retour_2_avant_match": pp_moy_retour_2_avant_match,
+        "toi_moy_retour_3_avant_match": toi_moy_retour_3_avant_match,
+        "pp_moy_retour_3_avant_match": pp_moy_retour_3_avant_match,
         "ratio_toi_retour_vs_pre_absence": ratio_toi_retour_vs_pre_absence,
         "ratio_pp_retour_vs_pre_absence": ratio_pp_retour_vs_pre_absence,
-        "eligible_post_retour": eligible_post_retour,
+        "return_stabilized_flag": return_stabilized_flag,
+        "historical_current_weight": historical_current_weight,
+        "historical_prev_weight": historical_prev_weight,
+        "point_hit_rate_last_5": point_hit_rate_last_5,
+        "point_hit_rate_last_10": point_hit_rate_last_10,
+        "point_hit_rate_last_20": point_hit_rate_last_20,
+        "point_hit_rate_season_pre": point_hit_rate_season_pre,
+        "point_hit_rate_prev_season": point_hit_rate_prev_season,
+        "point_hit_rate_weighted_pre": point_hit_rate_weighted_pre,
+        "points_per_game_season_pre": points_per_game_season_pre,
+        "points_per_game_prev_season": points_per_game_prev_season,
+        "points_per_game_weighted_pre": points_per_game_weighted_pre,
+        "recent_vs_expected_gap": recent_vs_expected_gap,
+        "current_point_streak_pre": float(current_point_streak_pre),
+        "current_no_point_streak_pre": float(current_no_point_streak_pre),
+        "max_point_streak_last_2_seasons_pre": float(max_point_streak_last_2_seasons_pre),
+        "max_no_point_streak_last_2_seasons_pre": float(max_no_point_streak_last_2_seasons_pre),
+        "count_5plus_point_streaks_last_2_seasons_pre": float(count_5plus_point_streaks_last_2_seasons_pre),
+        "hard_exclude_hot_streak_pre": hard_exclude_hot_streak_pre,
     }
 
     for col, default_val in DEFAULTS.items():
         if col in row and (row[col] is None or pd.isna(row[col])):
             row[col] = default_val
-
     return row
 
 
@@ -786,7 +1265,6 @@ def build_recent_player_pool(
         raise ValueError("Aucun historique disponible avant la date cible pour construire l'univers futur.")
 
     hist = hist.sort_values(["date_match", "id_match", "id_joueur"]).reset_index(drop=True)
-
     latest = hist.groupby("id_joueur", as_index=False).tail(1).copy()
     latest["team_player_match"] = latest["team_player_match"].apply(normalize_team_code)
     latest = latest[latest["team_player_match"].isin(slate_teams)].copy()
@@ -801,15 +1279,9 @@ def build_recent_player_pool(
         & (latest["days_since_last_game"] <= recent_lookback_days)
     ].copy()
 
-    joueurs_lookup = joueurs_lookup.copy()
-    joueurs_lookup = joueurs_lookup.rename(
-        columns={
-            "nom": "nom_lookup",
-            "position": "position_lookup",
-            "id_equipe": "id_equipe_lookup",
-        }
+    joueurs_lookup = joueurs_lookup.copy().rename(
+        columns={"nom": "nom_lookup", "position": "position_lookup", "id_equipe": "id_equipe_lookup"}
     )
-
     latest = latest.merge(
         joueurs_lookup[["id_joueur", "nom_lookup", "position_lookup", "id_equipe_lookup"]],
         on="id_joueur",
@@ -817,16 +1289,8 @@ def build_recent_player_pool(
         validate="one_to_one",
     )
 
-    if "nom" in latest.columns:
-        latest["nom"] = latest["nom"].apply(normalize_name)
-    else:
-        latest["nom"] = None
-
-    if "position" in latest.columns:
-        latest["position"] = latest["position"].apply(normalize_position)
-    else:
-        latest["position"] = None
-
+    latest["nom"] = latest.get("nom").apply(normalize_name) if "nom" in latest.columns else None
+    latest["position"] = latest.get("position").apply(normalize_position) if "position" in latest.columns else None
     latest["nom"] = latest["nom"].fillna(latest["nom_lookup"])
     latest["position"] = latest["position"].fillna(latest["position_lookup"])
 
@@ -846,7 +1310,6 @@ def build_recent_player_pool(
             "Aucun joueur candidat après filtrage par équipe / récence. "
             "Élargis éventuellement --recent-lookback-days."
         )
-
     return latest
 
 
@@ -855,6 +1318,7 @@ def build_upcoming_universe(
     history: pd.DataFrame,
     matchs_all: pd.DataFrame,
     player_pool: pd.DataFrame,
+    standings_by_team: Dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
     schedule_team_rows = build_schedule_team_rows(matchs_all)
     completed_team_rows = build_completed_team_rows(matchs_all)
@@ -873,10 +1337,7 @@ def build_upcoming_universe(
         home_team = normalize_team_code(match["id_equipe_domicile"])
         away_team = normalize_team_code(match["id_equipe_exterieur"])
 
-        for team_code, opp_code, is_home in [
-            (home_team, away_team, 1),
-            (away_team, home_team, 0),
-        ]:
+        for team_code, opp_code, is_home in [(home_team, away_team, 1), (away_team, home_team, 0)]:
             roster_team = player_pool[player_pool["team_player_match"] == team_code].copy()
 
             for _, player in roster_team.iterrows():
@@ -901,6 +1362,7 @@ def build_upcoming_universe(
                     game_id=game_id,
                     schedule_team_rows=schedule_team_rows,
                     completed_team_rows=completed_team_rows,
+                    standings_by_team=standings_by_team,
                 )
 
                 out_row = {
@@ -923,11 +1385,9 @@ def build_upcoming_universe(
         raise ValueError("Aucune ligne upcoming construite. Vérifie le player pool et les matchs FUT.")
 
     df = pd.DataFrame(rows)
-
     for col in FEATURE_WHITELIST:
         if col not in df.columns:
             df[col] = np.nan
-
     return df.sort_values(["date_match", "id_match", "team_player_match", "nom"]).reset_index(drop=True)
 
 
@@ -978,13 +1438,13 @@ def fit_point_model_and_calibrator(
     target_date: pd.Timestamp,
 ) -> Tuple[HistGradientBoostingClassifier, LogisticRegression, Dict[str, Any]]:
     splits = build_temporal_fit_and_calib_splits(history=history, date_col=date_col, target_date=target_date)
+
     fit_df = splits["fit"]
     calib_df = splits["calib"]
     split_meta = splits["meta"]
 
     X_fit = to_numeric_frame(fit_df, FEATURE_WHITELIST)
     X_calib = to_numeric_frame(calib_df, FEATURE_WHITELIST)
-
     X_fit, X_calib, kept_cols, dropped_cols = keep_train_valid_features_only(X_fit, X_calib)
 
     y_fit = fit_df[target_col].astype(int)
@@ -1006,7 +1466,6 @@ def fit_point_model_and_calibrator(
     model.fit(X_fit, y_fit, sample_weight=compute_sample_weights(y_fit))
 
     calib_raw_proba = model.predict_proba(X_calib)[:, 1]
-
     calibrator = LogisticRegression(
         solver="lbfgs",
         max_iter=1000,
@@ -1050,7 +1509,7 @@ def build_prediction_outputs(
         .astype(int)
     )
 
-    cols_out = META_OUTPUT_COLUMNS + [
+    cols_out = META_OUTPUT_COLUMNS + EXTRA_OUTPUT_COLUMNS + [
         "model_variant",
         "calibration_method",
         "proba_point_1p_raw",
@@ -1107,13 +1566,15 @@ def main() -> None:
     ensure_output_dir()
 
     print("05_predict_upcoming_games.py")
-    print(f"Input matchs  : {MATCHS_PATH}")
-    print(f"Input joueurs : {JOUEURS_PATH}")
-    print(f"Input history : {FEATURES_HISTORY_PATH}")
+    print(f"Input matchs   : {MATCHS_PATH}")
+    print(f"Input joueurs  : {JOUEURS_PATH}")
+    print(f"Input history  : {FEATURES_HISTORY_PATH}")
+    print(f"Input standings: {TEAM_STANDINGS_PATH} (optionnel)")
 
     matchs = load_matchs()
     joueurs = load_joueurs()
     history, target_col, date_col = load_history()
+    _, standings_summary, standings_by_team = load_standings_optional()
 
     target_date = choose_target_date(matchs=matchs, target_date_str=args.target_date)
     future_matches = select_future_matches(matchs=matchs, target_date=target_date)
@@ -1141,6 +1602,7 @@ def main() -> None:
         history=history_before_target,
         matchs_all=matchs,
         player_pool=player_pool,
+        standings_by_team=standings_by_team,
     )
 
     model, calibrator, fit_summary = fit_point_model_and_calibrator(
@@ -1184,6 +1646,7 @@ def main() -> None:
         "player_pool_per_team": players_per_team,
         "target_column_used": target_col,
         "date_column_used": date_col,
+        "standings_summary": standings_summary,
         "fit_summary": fit_summary,
         "outputs": {
             "predictions_upcoming_point_enrichi_v2.csv": str(PRED_UPCOMING_RAW_PATH),
@@ -1195,7 +1658,7 @@ def main() -> None:
             "Aucune colonne de résultat futur utilisée",
             "Réentraînement local nécessaire car le repo ne sauvegarde pas encore d'artefact modèle POINT",
             "Calibration sigmoid ajustée sur une fenêtre historique récente antérieure à la date cible",
-            "Par défaut, le script prédit uniquement la première date FUT disponible à partir d'aujourd'hui",
+            "Le contexte standings / playoffs est injecté si team_standings_daily.csv est disponible",
         ],
     }
     write_json(SUMMARY_PATH, summary)
@@ -1218,6 +1681,13 @@ def main() -> None:
     print("=== FUTURE UNIVERSE ===")
     print(f"players rows : {len(upcoming_universe)}")
     print(f"goalies kept : {args.include_goalies}")
+
+    print("")
+    print("=== STANDINGS ===")
+    print(f"loaded : {standings_summary.get('standings_loaded')}")
+    if standings_summary.get("standings_loaded"):
+        print(f"dates  : {standings_summary.get('standings_dates')}")
+        print(f"teams  : {standings_summary.get('standings_teams')}")
 
     print("")
     print("=== FIT / CALIBRATION ===")
