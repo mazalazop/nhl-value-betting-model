@@ -173,6 +173,8 @@ def main() -> None:
 
     daily_dir = output_dir / "history" / "daily_bets"
     history_dir = output_dir / "history"
+    daily_dir.mkdir(parents=True, exist_ok=True)
+    history_dir.mkdir(parents=True, exist_ok=True)
 
     candidates_df = load_candidates(input_csv)
     run_date = choose_run_date(candidates_df, args.run_date)
