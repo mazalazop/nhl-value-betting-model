@@ -25,13 +25,11 @@ REQUIRED_INPUT_COLUMNS = [
     "bet_id",
     "run_date",
     "date_match",
-    "player_name",
     "team",
     "opponent",
     "odds_decimal",
     "model_probability",
     "edge_probability",
-    "ev_per_unit",
     "result",
     "bet_status",
 ]
@@ -79,12 +77,14 @@ def load_daily_bets(path: Path) -> pd.DataFrame:
         "edge_probability_pct_points",
         "ev_per_unit",
         "kelly_fraction",
+        "actual_stat_value",
+        "threshold",
     ]
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    for col in ["run_date", "date_match", "result", "bet_status"]:
+    for col in ["run_date", "date_match", "result", "bet_status", "settled_at"]:
         if col in df.columns:
             df[col] = df[col].fillna("")
 
@@ -130,17 +130,25 @@ def _format_float(value, ndigits: int = 3) -> str:
     return f"{float(value):.{ndigits}f}"
 
 
+def _display_player_series(df: pd.DataFrame) -> pd.Series:
+    if "player_name_bookmaker" in df.columns:
+        return df["player_name_bookmaker"]
+    return df["player_name"]
+
+
+def _display_edge_series(df: pd.DataFrame) -> pd.Series:
+    if "edge_probability_pct_points" in df.columns:
+        return df["edge_probability_pct_points"].map(lambda x: f"{float(x):.2f}" if not pd.isna(x) else "")
+    return df["edge_probability"].map(lambda x: f"{float(x) * 100:.2f}" if not pd.isna(x) else "")
+
+
 def build_daily_display_df(df: pd.DataFrame) -> pd.DataFrame:
     daily = df.copy()
 
-    # Vue utilisateur: seulement les picks recommandés si la colonne existe
     if "recommended_flag" in daily.columns:
-        daily = daily[daily["recommended_flag"].astype(str).str.lower().isin(["true", "1", "yes"]) | (daily["recommended_flag"] == True)]  # noqa: E712
+        mask = daily["recommended_flag"].astype(str).str.lower().isin(["true", "1", "yes"])
+        daily = daily[mask | (daily["recommended_flag"] == True)]  # noqa: E712
 
-    # Nom complet bookmaker pour l'affichage
-    display_player_col = "player_name_bookmaker" if "player_name_bookmaker" in daily.columns else "player_name"
-
-    # Tri demandé: proba modèle décroissante puis edge puis cote
     daily = daily.sort_values(
         by=["model_probability", "edge_probability", "odds_decimal"],
         ascending=[False, False, False],
@@ -149,56 +157,110 @@ def build_daily_display_df(df: pd.DataFrame) -> pd.DataFrame:
 
     daily["display_rank"] = range(1, len(daily) + 1)
 
-    edge_col = "edge_probability_pct_points" if "edge_probability_pct_points" in daily.columns else None
-
     out = pd.DataFrame({
         "display_rank": daily["display_rank"],
         "run_date": daily["run_date"],
         "date_match": daily["date_match"],
-        "player_name": daily[display_player_col],
+        "player_name": _display_player_series(daily),
         "team": daily["team"],
         "opponent": daily["opponent"],
         "market": daily["market"] if "market" in daily.columns else "",
         "odds_decimal": daily["odds_decimal"].map(lambda x: _format_float(x, 2)),
         "implied_probability_pct": daily["implied_probability"].map(_format_pct) if "implied_probability" in daily.columns else "",
         "model_probability_pct": daily["model_probability"].map(_format_pct),
-        "edge_probability_pct": (
-            daily[edge_col].map(lambda x: f"{float(x):.2f}" if not pd.isna(x) else "")
-            if edge_col else daily["edge_probability"].map(lambda x: f"{float(x) * 100:.2f}" if not pd.isna(x) else "")
-        ),
-        "ev_per_unit": daily["ev_per_unit"].map(lambda x: _format_float(x, 3)),
+        "edge_probability_pct": _display_edge_series(daily),
     })
-
     return out
 
 
-def merge_history(existing_history_df: pd.DataFrame, daily_bets_df: pd.DataFrame) -> pd.DataFrame:
-    daily = daily_bets_df.copy()
+HISTORY_OUTPUT_COLUMNS = [
+    "bet_id",
+    "run_date",
+    "date_match",
+    "player_name",
+    "team",
+    "opponent",
+    "bookmaker",
+    "market",
+    "stat",
+    "threshold",
+    "odds_decimal",
+    "implied_probability_pct",
+    "model_probability_pct",
+    "edge_probability_pct",
+    "bet_status",
+    "result",
+    "actual_stat_value",
+    "settled_at",
+]
 
-    # Harmoniser colonnes si l'onglet est vide ou partiel
+
+def build_history_display_df(df: pd.DataFrame) -> pd.DataFrame:
+    hist = df.copy()
+
+    hist = hist.sort_values(
+        by=["run_date", "model_probability", "edge_probability", "odds_decimal"],
+        ascending=[False, False, False, False],
+        na_position="last",
+    ).reset_index(drop=True)
+
+    out = pd.DataFrame({
+        "bet_id": hist["bet_id"],
+        "run_date": hist["run_date"],
+        "date_match": hist["date_match"],
+        "player_name": _display_player_series(hist),
+        "team": hist["team"],
+        "opponent": hist["opponent"],
+        "bookmaker": hist["bookmaker"] if "bookmaker" in hist.columns else "",
+        "market": hist["market"] if "market" in hist.columns else "",
+        "stat": hist["stat"] if "stat" in hist.columns else "",
+        "threshold": hist["threshold"].map(lambda x: _format_float(x, 0)) if "threshold" in hist.columns else "",
+        "odds_decimal": hist["odds_decimal"].map(lambda x: _format_float(x, 2)),
+        "implied_probability_pct": hist["implied_probability"].map(_format_pct) if "implied_probability" in hist.columns else "",
+        "model_probability_pct": hist["model_probability"].map(_format_pct),
+        "edge_probability_pct": _display_edge_series(hist),
+        "bet_status": hist["bet_status"],
+        "result": hist["result"],
+        "actual_stat_value": hist["actual_stat_value"].map(lambda x: _format_float(x, 0) if not pd.isna(x) else "") if "actual_stat_value" in hist.columns else "",
+        "settled_at": hist["settled_at"] if "settled_at" in hist.columns else "",
+    })
+
+    return out[HISTORY_OUTPUT_COLUMNS]
+
+
+def merge_history(existing_history_df: pd.DataFrame, daily_history_df: pd.DataFrame) -> pd.DataFrame:
+    daily = daily_history_df.copy()
+
     if existing_history_df is None or existing_history_df.empty:
         return daily
 
     existing = existing_history_df.copy()
-    all_cols = list(dict.fromkeys(list(existing.columns) + list(daily.columns)))
 
-    for col in all_cols:
+    for col in HISTORY_OUTPUT_COLUMNS:
         if col not in existing.columns:
             existing[col] = ""
         if col not in daily.columns:
             daily[col] = ""
 
-    existing = existing[all_cols]
-    daily = daily[all_cols]
+    existing = existing[HISTORY_OUTPUT_COLUMNS].copy()
+    daily = daily[HISTORY_OUTPUT_COLUMNS].copy()
 
     if "bet_id" not in existing.columns or "bet_id" not in daily.columns:
         return pd.concat([existing, daily], ignore_index=True)
 
-    existing_ids = set(existing["bet_id"].astype(str))
-    to_add = daily[~daily["bet_id"].astype(str).isin(existing_ids)].copy()
+    existing = existing.set_index(existing["bet_id"].astype(str), drop=False)
+    daily = daily.set_index(daily["bet_id"].astype(str), drop=False)
 
-    merged = pd.concat([existing, to_add], ignore_index=True)
-    return merged
+    existing.update(daily)
+    new_ids = [idx for idx in daily.index if idx not in existing.index]
+    if new_ids:
+        combined = pd.concat([existing, daily.loc[new_ids]], ignore_index=False)
+    else:
+        combined = existing
+
+    combined = combined.reset_index(drop=True)
+    combined = combined.sort_values(by=["run_date", "date_match", "player_name"], ascending=[False, False, True], na_position="last")
+    return combined[HISTORY_OUTPUT_COLUMNS].reset_index(drop=True)
 
 
 def df_to_sheet_values(df: pd.DataFrame) -> List[List[str]]:
@@ -211,7 +273,7 @@ def df_to_sheet_values(df: pd.DataFrame) -> List[List[str]]:
 def write_replace(ws, df: pd.DataFrame) -> None:
     ws.clear()
     values = df_to_sheet_values(df)
-    ws.update("A1", values, value_input_option="USER_ENTERED")
+    ws.update(values=values, range_name="A1", value_input_option="USER_ENTERED")
 
 
 def apply_basic_sheet_style(sh: gspread.Spreadsheet, ws, n_rows: int, n_cols: int) -> None:
@@ -241,10 +303,28 @@ def apply_basic_sheet_style(sh: gspread.Spreadsheet, ws, n_rows: int, n_cols: in
                         "textFormat": {
                             "foregroundColor": {"red": 1, "green": 1, "blue": 1},
                             "bold": True,
-                        }
+                        },
+                        "horizontalAlignment": "LEFT",
                     }
                 },
-                "fields": "userEnteredFormat(backgroundColor,textFormat.foregroundColor,textFormat.bold)",
+                "fields": "userEnteredFormat(backgroundColor,textFormat.foregroundColor,textFormat.bold,horizontalAlignment)",
+            }
+        },
+        {
+            "repeatCell": {
+                "range": {
+                    "sheetId": sheet_id,
+                    "startRowIndex": 1,
+                    "endRowIndex": max(n_rows, 1),
+                    "startColumnIndex": 0,
+                    "endColumnIndex": max(n_cols, 1),
+                },
+                "cell": {
+                    "userEnteredFormat": {
+                        "horizontalAlignment": "LEFT",
+                    }
+                },
+                "fields": "userEnteredFormat.horizontalAlignment",
             }
         },
         {
@@ -275,7 +355,6 @@ def apply_basic_sheet_style(sh: gspread.Spreadsheet, ws, n_rows: int, n_cols: in
         })
 
     sh.batch_update({"requests": requests})
-
 
 
 def clear_conditional_format_rules(sh: gspread.Spreadsheet, ws) -> None:
@@ -309,6 +388,7 @@ def clear_conditional_format_rules(sh: gspread.Spreadsheet, ws) -> None:
         })
     sh.batch_update({"requests": requests})
 
+
 def apply_history_conditional_formatting(sh: gspread.Spreadsheet, ws, history_df: pd.DataFrame) -> None:
     if history_df.empty:
         return
@@ -322,7 +402,6 @@ def apply_history_conditional_formatting(sh: gspread.Spreadsheet, ws, history_df
 
     result_idx = _col_index("result")
     if result_idx is not None:
-        # win -> vert
         requests.append({
             "addConditionalFormatRule": {
                 "rule": {
@@ -347,7 +426,6 @@ def apply_history_conditional_formatting(sh: gspread.Spreadsheet, ws, history_df
                 "index": 0,
             }
         })
-        # loss -> rouge
         requests.append({
             "addConditionalFormatRule": {
                 "rule": {
@@ -412,6 +490,7 @@ def main() -> None:
 
     daily_bets_df = load_daily_bets(input_csv)
     daily_display_df = build_daily_display_df(daily_bets_df)
+    daily_history_df = build_history_display_df(daily_bets_df)
 
     gc = authorize_gspread(credentials_json)
     sh = gc.open_by_key(args.sheet_id)
@@ -420,7 +499,7 @@ def main() -> None:
     history_ws = get_or_create_worksheet(sh, args.history_worksheet)
 
     existing_history_df = read_ws_as_df(history_ws)
-    merged_history_df = merge_history(existing_history_df, daily_bets_df)
+    merged_history_df = merge_history(existing_history_df, daily_history_df)
 
     write_replace(daily_ws, daily_display_df)
     write_replace(history_ws, merged_history_df)
