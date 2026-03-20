@@ -16,6 +16,8 @@ Principes de sécurité
 - aucune feature du match courant
 - aucune cible ou quasi-cible dans les features
 - listes de features explicites (whitelist), pas de collecte automatique fragile
+- intégration des nouvelles features pré-match issues de 01_build_base_features.py
+  (hit rates récents, streaks, retours d'absence stabilisés, contexte standings/playoffs)
 
 Sorties
 -------
@@ -93,6 +95,7 @@ META_CANDIDATES = [
 # Le PP du match courant ne doit jamais entrer directement dans le modèle :
 # seul son historique pré-match (ex: pp_moy_5) est autorisé.
 BASELINE_FEATURE_WHITELIST = [
+    # Contexte joueur / volume / usage
     "is_home_player",
     "saison",
     "nb_matchs_avant_match",
@@ -109,14 +112,14 @@ BASELINE_FEATURE_WHITELIST = [
     "toi_moy_10",
     "points_moy_10",
     "buts_moy_10",
+    "passes_moy_10",
     "nb_matchs_joues_10",
     "hist_ok_5",
     "hist_ok_10",
     "tirs_par_60_5",
     "points_par_60_5",
     "buts_par_60_5",
-    "jours_repos_team",
-    "consecutive_away_games",
+    # Historique vs adversaire
     "nb_matchs_vs_adv_avant",
     "points_vs_adv_5",
     "buts_vs_adv_5",
@@ -124,26 +127,64 @@ BASELINE_FEATURE_WHITELIST = [
     "points_vs_adv_shrunk",
     "buts_vs_adv_shrunk",
     "tirs_vs_adv_shrunk",
+    # Retour d'absence / stabilisation
     "jours_absence_pre_match",
+    "games_missed_proxy",
     "absence_longue_flag",
     "retour_episode",
+    "return_from_absence_flag",
     "matchs_depuis_retour_avant_match",
     "toi_pre_absence_ref",
     "pp_pre_absence_ref",
-    "toi_moy_retour_2_avant_match",
-    "pp_moy_retour_2_avant_match",
+    "toi_moy_retour_3_avant_match",
+    "pp_moy_retour_3_avant_match",
     "ratio_toi_retour_vs_pre_absence",
     "ratio_pp_retour_vs_pre_absence",
-    "eligible_post_retour",
+    "return_stabilized_flag",
+    "historical_current_weight",
+    "historical_prev_weight",
+    # Hit rates / streaks / sous-performance récente
+    "point_hit_rate_last_5",
+    "point_hit_rate_last_10",
+    "point_hit_rate_last_20",
+    "point_hit_rate_season_pre",
+    "point_hit_rate_prev_season",
+    "point_hit_rate_weighted_pre",
+    "points_per_game_season_pre",
+    "points_per_game_prev_season",
+    "points_per_game_weighted_pre",
+    "recent_vs_expected_gap",
+    "current_point_streak_pre",
+    "current_no_point_streak_pre",
+    "max_point_streak_last_2_seasons_pre",
+    "max_no_point_streak_last_2_seasons_pre",
+    "count_5plus_point_streaks_last_2_seasons_pre",
 ]
 
 ENRICHED_EXTRA_WHITELIST = [
+    # Contexte équipe
     "is_home_team",
+    "jours_repos_team",
     "team_back_to_back",
     "team_back_to_back_away",
+    "consecutive_away_games",
     "team_winrate_5",
     "team_gf_moy_5",
     "team_ga_moy_5",
+    "team_games_played_pre_approx",
+    # Standings / fin de saison / pression playoffs
+    "games_played_team_pre",
+    "games_remaining_team_pre",
+    "team_points_pre",
+    "conference_rank_pre",
+    "division_rank_pre",
+    "conference_cutoff_points_pre",
+    "wildcard_distance_pre",
+    "point_pctg_pre",
+    "goal_differential_pre",
+    "l10_points_pre",
+    "late_season_flag",
+    "playoff_pressure_simple",
 ]
 
 # Colonnes interdites, même si elles existent dans la base.
@@ -201,6 +242,11 @@ FORBIDDEN_FEATURE_COLUMNS = {
     "position",
     "home_road_flag",
     "season_source",
+    "standings_lookup_date_pre",
+    # règles métier de sélection, interdites dans l'entraînement
+    "hard_exclude_hot_streak_pre",
+    "is_value_bet",
+    "value_gap",
     # ids équipes bruts
     "id_equipe_domicile",
     "id_equipe_exterieur",
