@@ -1,43 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-model/06_match_model_to_unibet_odds.py
-
-Objectif
---------
-Joindre les prédictions modèle POINT 1+ du repo principal avec les cotes
-bookmaker normalisées issues du scraper Unibet.
-
-Entrées
--------
-- outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
-- normalized_points_odds.json (emplacement configurable)
-
-Sorties
--------
-- outputs/06_matched_point_edges.csv
-- outputs/06_matched_point_edges.json
-- outputs/06_unmatched_model_rows.csv
-- outputs/06_unmatched_bookmaker_rows.csv
-- outputs/06_matching_summary.json
-
-Principes
----------
-- matching conservateur, d'abord exact sur joueur + équipe + matchup
-- normalisation robuste des noms (accents, parenthèses, ponctuation)
-- aucun fuzzy matching agressif par défaut
-- fallback fuzzy autorisé seulement s'il est unique et très fort
-- toutes les lignes non matchées sont exportées pour audit
-"""
-
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
 import unicodedata
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -47,22 +19,15 @@ from difflib import SequenceMatcher
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-OUTPUTS_DIR = PROJECT_ROOT / "outputs"
-
-MODEL_PREDICTIONS_PATH = OUTPUTS_DIR / "predictions_upcoming_point_enrichi_calibre_v2.csv"
+DEFAULT_OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+DEFAULT_MODEL_CSV = DEFAULT_OUTPUTS_DIR / "predictions_upcoming_point_enrichi_calibre_v2.csv"
 
 ODDS_CANDIDATE_PATHS = [
-    OUTPUTS_DIR / "normalized_points_odds.json",
+    DEFAULT_OUTPUTS_DIR / "normalized_points_odds.json",
     PROJECT_ROOT / "normalized_points_odds.json",
     PROJECT_ROOT / "data" / "external" / "normalized_points_odds.json",
     PROJECT_ROOT / "data" / "bookmaker" / "normalized_points_odds.json",
 ]
-
-MATCHED_CSV_PATH = OUTPUTS_DIR / "06_matched_point_edges.csv"
-MATCHED_JSON_PATH = OUTPUTS_DIR / "06_matched_point_edges.json"
-UNMATCHED_MODEL_PATH = OUTPUTS_DIR / "06_unmatched_model_rows.csv"
-UNMATCHED_BOOKMAKER_PATH = OUTPUTS_DIR / "06_unmatched_bookmaker_rows.csv"
-SUMMARY_PATH = OUTPUTS_DIR / "06_matching_summary.json"
 
 REQUIRED_MODEL_COLUMNS = [
     "date_match",
@@ -142,7 +107,6 @@ TEAM_CODE_TO_NAMES = {
 }
 
 PLAYER_NAME_OVERRIDES = {
-    # bookmaker-specific qualifiers
     "sebastian aho fin": "sebastian aho",
     "sebastian aho (fin)": "sebastian aho",
 }
@@ -155,8 +119,8 @@ def require_file(path: Path) -> None:
         raise FileNotFoundError(f"Fichier introuvable : {path}")
 
 
-def ensure_output_dir() -> None:
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+def ensure_dir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
 
 
 def write_json(path: Path, payload: Dict[str, Any]) -> None:
@@ -183,8 +147,7 @@ def normalize_text(text: Any) -> str:
     value = value.replace("-", " ")
     value = PLAYER_NAME_OVERRIDES.get(value, value)
     value = re.sub(r"\b(jr|sr)\b", " ", value)
-    value = normalize_spaces(value)
-    return value
+    return normalize_spaces(value)
 
 
 def is_numeric_like_name(text: Any) -> bool:
@@ -207,16 +170,15 @@ def canonical_team_aliases(team_code: Any) -> List[str]:
 
 
 def matchup_key_from_team_names(team_a: Any, team_b: Any) -> Tuple[str, str]:
-    a = normalize_text(team_a)
-    b = normalize_text(team_b)
-    ordered = sorted([a, b])
+    ordered = sorted([normalize_text(team_a), normalize_text(team_b)])
     return ordered[0], ordered[1]
 
 
 def matchup_key_from_codes(team_code: Any, opp_code: Any) -> Tuple[str, str]:
-    team = canonical_team_primary(team_code)
-    opp = canonical_team_primary(opp_code)
-    return matchup_key_from_team_names(team, opp)
+    return matchup_key_from_team_names(
+        canonical_team_primary(team_code),
+        canonical_team_primary(opp_code),
+    )
 
 
 def find_odds_json_path(explicit_path: Optional[str]) -> Path:
@@ -224,11 +186,9 @@ def find_odds_json_path(explicit_path: Optional[str]) -> Path:
         path = Path(explicit_path)
         require_file(path)
         return path
-
     for path in ODDS_CANDIDATE_PATHS:
         if path.exists():
             return path
-
     raise FileNotFoundError(
         "Impossible de trouver normalized_points_odds.json. "
         "Chemins testés : " + ", ".join(str(p) for p in ODDS_CANDIDATE_PATHS)
@@ -238,7 +198,6 @@ def find_odds_json_path(explicit_path: Optional[str]) -> Path:
 def load_model_predictions(path: Path) -> pd.DataFrame:
     require_file(path)
     df = pd.read_csv(path, low_memory=False)
-
     missing = [c for c in REQUIRED_MODEL_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"Colonnes manquantes dans les prédictions modèle : {missing}")
@@ -250,7 +209,6 @@ def load_model_predictions(path: Path) -> pd.DataFrame:
 
     for col in ["id_match", "id_joueur", "rank_proba_sur_date", "rank_proba_sur_match"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-
     for col in ["proba_point_1p_calibree", "proba_point_1p_raw", "is_home_player"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
@@ -263,7 +221,6 @@ def load_model_predictions(path: Path) -> pd.DataFrame:
         lambda r: matchup_key_from_codes(r["team_player_match"], r["adversaire_match"]),
         axis=1,
     )
-
     return df
 
 
@@ -287,19 +244,15 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     df = df.copy()
     for col in ["threshold", "odds_decimal", "implied_probability"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-
     for col in ["home_team", "away_team", "team", "player_name"]:
         df[col] = df[col].astype(str)
 
     df["player_name_normalized_join"] = df["player_name"].apply(normalize_text)
     df["team_name_normalized_join"] = df["team"].apply(normalize_text)
-    df["home_team_normalized_join"] = df["home_team"].apply(normalize_text)
-    df["away_team_normalized_join"] = df["away_team"].apply(normalize_text)
     df["matchup_key"] = df.apply(
         lambda r: matchup_key_from_team_names(r["home_team"], r["away_team"]),
         axis=1,
     )
-
     return payload, df
 
 
@@ -308,14 +261,11 @@ def exact_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.Da
         (odds_df["matchup_key"] == model_row["matchup_key"])
         & (odds_df["player_name_normalized_join"] == model_row["player_name_normalized"])
     ].copy()
-
     if subset.empty:
         return subset
-
     aliases = set(model_row["team_aliases"] or [])
     if aliases:
         subset = subset[subset["team_name_normalized_join"].isin(aliases)].copy()
-
     return subset
 
 
@@ -327,7 +277,6 @@ def fuzzy_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.Da
         (odds_df["matchup_key"] == model_row["matchup_key"])
         & (odds_df["team_name_normalized_join"].isin(set(model_row["team_aliases"] or [])))
     ].copy()
-
     if subset.empty:
         return subset
 
@@ -337,7 +286,6 @@ def fuzzy_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.Da
     )
     subset = subset.sort_values(["fuzzy_score", "odds_decimal"], ascending=[False, True]).reset_index()
     subset = subset[subset["fuzzy_score"] >= FUZZY_MIN_SCORE].copy()
-
     if subset.empty:
         return subset
 
@@ -357,36 +305,78 @@ def kelly_fraction_decimal_odds(p: float, odds_decimal: float) -> float:
     return float(max(k, 0.0))
 
 
-def build_matched_row(model_row: pd.Series, odds_row: pd.Series, match_method: str, fuzzy_score: Optional[float]) -> Dict[str, Any]:
+def make_bet_id(
+    date_match: Optional[str],
+    bookmaker: Any,
+    market: Any,
+    stat: Any,
+    threshold: Any,
+    player_name_normalized: str,
+    team_code: Any,
+    opponent_code: Any,
+) -> str:
+    raw = "|".join([
+        str(date_match or ""),
+        str(bookmaker or ""),
+        str(market or ""),
+        str(stat or ""),
+        str(threshold or ""),
+        str(player_name_normalized or ""),
+        str(team_code or ""),
+        str(opponent_code or ""),
+    ])
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:20]
+
+
+def build_matched_row(
+    model_row: pd.Series,
+    odds_row: pd.Series,
+    match_method: str,
+    fuzzy_score: Optional[float],
+    run_date: str,
+) -> Dict[str, Any]:
     model_proba = float(model_row["proba_point_1p_calibree"])
     raw_proba = float(model_row["proba_point_1p_raw"])
     implied = float(odds_row["implied_probability"])
     odds_decimal = float(odds_row["odds_decimal"])
+    date_match = model_row["date_match"].strftime("%Y-%m-%d") if pd.notna(model_row["date_match"]) else None
 
     fair_odds = float(np.nan if model_proba <= 0 else 1.0 / model_proba)
     edge_probability = float(model_proba - implied)
     ev_per_unit = float(model_proba * (odds_decimal - 1.0) - (1.0 - model_proba))
     kelly = kelly_fraction_decimal_odds(model_proba, odds_decimal)
+    player_norm = model_row["player_name_normalized"]
 
     return {
-        "date_match": model_row["date_match"].strftime("%Y-%m-%d") if pd.notna(model_row["date_match"]) else None,
+        "bet_id": make_bet_id(
+            date_match=date_match,
+            bookmaker=odds_row["bookmaker"],
+            market=odds_row["market"],
+            stat=odds_row["stat"],
+            threshold=odds_row["threshold"],
+            player_name_normalized=player_norm,
+            team_code=model_row["team_player_match"],
+            opponent_code=model_row["adversaire_match"],
+        ),
+        "run_date": run_date,
+        "bet_status": "pending",
+        "result": "",
+        "actual_stat_value": np.nan,
+        "settled_at": "",
+        "recommended_flag": False,
+        "recommendation_rank": np.nan,
+        "date_match": date_match,
         "id_match": int(model_row["id_match"]) if pd.notna(model_row["id_match"]) else None,
         "id_joueur": int(model_row["id_joueur"]) if pd.notna(model_row["id_joueur"]) else None,
-        "player_name_model": model_row["nom"],
-        "player_name_model_normalized": model_row["player_name_normalized"],
+        "player_name": model_row["nom"],
+        "player_name_normalized": player_norm,
         "player_name_bookmaker": odds_row["player_name"],
-        "player_name_bookmaker_normalized": odds_row["player_name_normalized_join"],
         "position": model_row["position"],
-        "team_code_model": model_row["team_player_match"],
-        "opponent_code_model": model_row["adversaire_match"],
+        "team": model_row["team_player_match"],
+        "opponent": model_row["adversaire_match"],
+        "is_home": float(model_row["is_home_player"]) if pd.notna(model_row["is_home_player"]) else None,
         "team_name_model": model_row["team_primary_name"],
         "opponent_name_model": model_row["opponent_primary_name"],
-        "is_home_player_model": float(model_row["is_home_player"]) if pd.notna(model_row["is_home_player"]) else None,
-        "rank_proba_sur_date": int(model_row["rank_proba_sur_date"]) if pd.notna(model_row["rank_proba_sur_date"]) else None,
-        "rank_proba_sur_match": int(model_row["rank_proba_sur_match"]) if pd.notna(model_row["rank_proba_sur_match"]) else None,
-        "model_variant": model_row.get("model_variant"),
-        "calibration_method": model_row.get("calibration_method"),
-
         "bookmaker": odds_row["bookmaker"],
         "market": odds_row["market"],
         "stat": odds_row["stat"],
@@ -401,21 +391,22 @@ def build_matched_row(model_row: pd.Series, odds_row: pd.Series, match_method: s
         "team_name_bookmaker": odds_row["team"],
         "odds_decimal": odds_decimal,
         "implied_probability": implied,
-
         "model_probability_raw": raw_proba,
-        "model_probability_calibrated": model_proba,
+        "model_probability": model_proba,
         "fair_odds_model": fair_odds,
         "edge_probability": edge_probability,
         "edge_probability_pct_points": edge_probability * 100.0,
         "ev_per_unit": ev_per_unit,
-        "kelly_fraction_full": kelly,
+        "kelly_fraction": kelly,
         "is_positive_ev": bool(ev_per_unit > 0),
+        "rank_proba_sur_date": int(model_row["rank_proba_sur_date"]) if pd.notna(model_row["rank_proba_sur_date"]) else None,
+        "rank_proba_sur_match": int(model_row["rank_proba_sur_match"]) if pd.notna(model_row["rank_proba_sur_match"]) else None,
         "match_method": match_method,
         "fuzzy_score": fuzzy_score,
     }
 
 
-def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
+def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame, run_date: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
     matched_rows: List[Dict[str, Any]] = []
     unmatched_model_rows: List[Dict[str, Any]] = []
     matched_odds_indices = set()
@@ -434,7 +425,7 @@ def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame) -> Tuple[pd.DataFr
         if len(subset_exact) == 1:
             odds_idx = subset_exact.index[0]
             matched_odds_indices.add(odds_idx)
-            matched_rows.append(build_matched_row(model_row, subset_exact.loc[odds_idx], "exact", None))
+            matched_rows.append(build_matched_row(model_row, subset_exact.loc[odds_idx], "exact", None, run_date))
             exact_match_count += 1
             continue
 
@@ -465,6 +456,7 @@ def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame) -> Tuple[pd.DataFr
                 odds_df.loc[odds_idx],
                 "fuzzy",
                 float(subset_fuzzy.iloc[0]["fuzzy_score"]),
+                run_date,
             ))
             fuzzy_match_count += 1
             continue
@@ -519,88 +511,114 @@ def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame) -> Tuple[pd.DataFr
         "match_rate_vs_bookmaker_rows": float(len(matched_df) / len(odds_df)) if len(odds_df) else 0.0,
         "match_rate_vs_model_rows": float(len(matched_df) / len(model_df)) if len(model_df) else 0.0,
     }
-
     return matched_df, unmatched_model_df, unmatched_bookmaker_df, summary
 
 
-def save_outputs(
-    matched_df: pd.DataFrame,
-    unmatched_model_df: pd.DataFrame,
-    unmatched_bookmaker_df: pd.DataFrame,
-    summary_payload: Dict[str, Any],
-) -> None:
-    matched_df.to_csv(MATCHED_CSV_PATH, index=False)
-    unmatched_model_df.to_csv(UNMATCHED_MODEL_PATH, index=False)
-    unmatched_bookmaker_df.to_csv(UNMATCHED_BOOKMAKER_PATH, index=False)
+def append_master_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
+    if daily_df.empty:
+        if not master_path.exists():
+            pd.DataFrame().to_csv(master_path, index=False)
+        return {"rows_before": 0, "rows_added": 0, "rows_after": 0}
 
-    matched_json_rows = matched_df.to_dict(orient="records")
-    write_json(
-        MATCHED_JSON_PATH,
-        {
-            "rows_count": int(len(matched_json_rows)),
-            "rows": matched_json_rows,
-        },
-    )
-    write_json(SUMMARY_PATH, summary_payload)
+    if master_path.exists():
+        master_df = pd.read_csv(master_path, low_memory=False)
+    else:
+        master_df = pd.DataFrame(columns=daily_df.columns)
+
+    rows_before = len(master_df)
+    combined = pd.concat([master_df, daily_df], ignore_index=True)
+    if "bet_id" in combined.columns:
+        combined = combined.drop_duplicates(subset=["bet_id"], keep="last").copy()
+    rows_after = len(combined)
+    rows_added = rows_after - rows_before
+    combined.to_csv(master_path, index=False)
+    return {"rows_before": int(rows_before), "rows_added": int(rows_added), "rows_after": int(rows_after)}
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Joindre les prédictions modèle POINT avec les cotes Unibet normalisées.")
-    parser.add_argument(
-        "--odds-json",
-        type=str,
-        default=None,
-        help="Chemin explicite vers normalized_points_odds.json. Si absent, plusieurs chemins standards sont testés.",
-    )
-    parser.add_argument(
-        "--disable-fuzzy",
-        action="store_true",
-        help="Désactiver totalement le fallback fuzzy.",
-    )
+    parser.add_argument("--model-csv", type=str, default=str(DEFAULT_MODEL_CSV))
+    parser.add_argument("--odds-json", type=str, default=None)
+    parser.add_argument("--output-dir", type=str, default=str(DEFAULT_OUTPUTS_DIR))
+    parser.add_argument("--run-date", type=str, default=date.today().isoformat())
+    parser.add_argument("--disable-fuzzy", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
-    args = parse_args()
+    global FUZZY_MIN_SCORE
 
-    ensure_output_dir()
-    require_file(MODEL_PREDICTIONS_PATH)
+    args = parse_args()
+    output_dir = Path(args.output_dir)
+    history_dir = output_dir / "history"
+    history_daily_dir = history_dir / "daily_candidates"
+    ensure_dir(output_dir)
+    ensure_dir(history_dir)
+    ensure_dir(history_daily_dir)
+
+    model_csv_path = Path(args.model_csv)
     odds_path = find_odds_json_path(args.odds_json)
 
-    print("06_match_model_to_unibet_odds.py")
-    print(f"Input model predictions : {MODEL_PREDICTIONS_PATH}")
-    print(f"Input odds json         : {odds_path}")
+    matched_csv_path = output_dir / "06_matched_point_edges.csv"
+    matched_json_path = output_dir / "06_matched_point_edges.json"
+    unmatched_model_path = output_dir / "06_unmatched_model_rows.csv"
+    unmatched_bookmaker_path = output_dir / "06_unmatched_bookmaker_rows.csv"
+    summary_path = output_dir / "06_matching_summary.json"
+    dated_candidates_path = history_daily_dir / f"{args.run_date}_06_matched_point_edges.csv"
+    master_history_path = history_dir / "master_candidates_history.csv"
 
-    model_df = load_model_predictions(MODEL_PREDICTIONS_PATH)
+    require_file(model_csv_path)
+
+    print("06_match_model_to_unibet_odds.py")
+    print(f"Input model predictions : {model_csv_path}")
+    print(f"Input odds json         : {odds_path}")
+    print(f"Run date                : {args.run_date}")
+
+    model_df = load_model_predictions(model_csv_path)
     odds_payload, odds_df = load_odds_json(odds_path)
 
     if args.disable_fuzzy:
-        global FUZZY_MIN_SCORE
-        FUZZY_MIN_SCORE = 1.1  # impossible threshold => fuzzy off
+        FUZZY_MIN_SCORE = 1.1
 
-    matched_df, unmatched_model_df, unmatched_bookmaker_df, match_summary = match_rows(model_df, odds_df)
+    matched_df, unmatched_model_df, unmatched_bookmaker_df, match_summary = match_rows(model_df, odds_df, args.run_date)
 
-    matched_df = matched_df.sort_values(
-        ["ev_per_unit", "edge_probability", "model_probability_calibrated"],
-        ascending=[False, False, False],
-    ).reset_index(drop=True)
+    if not matched_df.empty:
+        matched_df = matched_df.sort_values(
+            ["ev_per_unit", "edge_probability", "model_probability"],
+            ascending=[False, False, False],
+        ).reset_index(drop=True)
 
-    positive_ev_df = matched_df[matched_df["ev_per_unit"] > 0].copy()
-    top_positive_ev = positive_ev_df.head(20)[[
-        "player_name_model",
-        "team_code_model",
-        "event_slug",
+    matched_df.to_csv(matched_csv_path, index=False)
+    matched_df.to_csv(dated_candidates_path, index=False)
+    unmatched_model_df.to_csv(unmatched_model_path, index=False)
+    unmatched_bookmaker_df.to_csv(unmatched_bookmaker_path, index=False)
+
+    write_json(
+        matched_json_path,
+        {"rows_count": int(len(matched_df)), "rows": matched_df.to_dict(orient="records")},
+    )
+
+    append_stats = append_master_history(master_history_path, matched_df)
+
+    positive_ev_df = matched_df[matched_df["ev_per_unit"] > 0].copy() if not matched_df.empty else matched_df.copy()
+    top_positive_ev_cols = [
+        "bet_id",
+        "player_name",
+        "team",
+        "opponent",
         "odds_decimal",
-        "model_probability_calibrated",
+        "model_probability",
         "implied_probability",
         "edge_probability",
         "ev_per_unit",
-        "kelly_fraction_full",
+        "kelly_fraction",
         "match_method",
-    ]].to_dict(orient="records")
+    ]
+    top_positive_ev = positive_ev_df.head(20)[top_positive_ev_cols].to_dict(orient="records") if not positive_ev_df.empty else []
 
     summary_payload = {
         "status": "ok",
+        "run_date": args.run_date,
         "market": "player_points",
         "threshold": 1,
         "target_bookmaker": odds_payload.get("bookmaker"),
@@ -609,33 +627,24 @@ def main() -> None:
             if model_df["date_match"].notna().any() else None
         ),
         "inputs": {
-            "model_predictions_path": str(MODEL_PREDICTIONS_PATH),
+            "model_predictions_path": str(model_csv_path),
             "odds_json_path": str(odds_path),
         },
         "match_summary": match_summary,
         "positive_ev_rows_count": int(len(positive_ev_df)),
+        "history_append": append_stats,
         "top_positive_ev_preview": top_positive_ev,
         "outputs": {
-            "matched_csv": str(MATCHED_CSV_PATH),
-            "matched_json": str(MATCHED_JSON_PATH),
-            "unmatched_model_csv": str(UNMATCHED_MODEL_PATH),
-            "unmatched_bookmaker_csv": str(UNMATCHED_BOOKMAKER_PATH),
-            "summary_json": str(SUMMARY_PATH),
+            "matched_csv": str(matched_csv_path),
+            "matched_json": str(matched_json_path),
+            "unmatched_model_csv": str(unmatched_model_path),
+            "unmatched_bookmaker_csv": str(unmatched_bookmaker_path),
+            "summary_json": str(summary_path),
+            "dated_candidates_csv": str(dated_candidates_path),
+            "master_history_csv": str(master_history_path),
         },
-        "notes": [
-            "Matching conservateur : exact joueur + équipe + matchup d'abord",
-            "Fallback fuzzy seulement si unique et très fort",
-            "Les noms purement numériques côté modèle ne sont pas matchés automatiquement",
-            "Les lignes non matchées sont exportées pour audit",
-        ],
     }
-
-    save_outputs(
-        matched_df=matched_df,
-        unmatched_model_df=unmatched_model_df,
-        unmatched_bookmaker_df=unmatched_bookmaker_df,
-        summary_payload=summary_payload,
-    )
+    write_json(summary_path, summary_payload)
 
     print("")
     print("=== MATCHING SUMMARY ===")
@@ -647,12 +656,16 @@ def main() -> None:
     print(f"exact matches         : {match_summary['exact_match_count']}")
     print(f"fuzzy matches         : {match_summary['fuzzy_match_count']}")
     print("")
+    print("=== HISTORY ===")
+    print(f"dated snapshot        : {dated_candidates_path}")
+    print(f"master history        : {master_history_path}")
+    print("")
     print("=== OUTPUTS ===")
-    print(f"- {MATCHED_CSV_PATH}")
-    print(f"- {MATCHED_JSON_PATH}")
-    print(f"- {UNMATCHED_MODEL_PATH}")
-    print(f"- {UNMATCHED_BOOKMAKER_PATH}")
-    print(f"- {SUMMARY_PATH}")
+    print(f"- {matched_csv_path}")
+    print(f"- {matched_json_path}")
+    print(f"- {unmatched_model_path}")
+    print(f"- {unmatched_bookmaker_path}")
+    print(f"- {summary_path}")
 
 
 if __name__ == "__main__":
