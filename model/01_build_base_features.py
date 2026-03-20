@@ -115,6 +115,39 @@ def safe_ratio(num: pd.Series, den: pd.Series) -> pd.Series:
     return out
 
 
+
+
+def coerce_binary_flag(value) -> float:
+    """Coerce legacy boolean-ish values to 1.0 / 0.0.
+
+    Supports ints/floats/bools and strings like True/False, 1/0, yes/no.
+    Returns np.nan when the value cannot be interpreted.
+    """
+    if pd.isna(value):
+        return np.nan
+
+    if isinstance(value, (bool, np.bool_)):
+        return 1.0 if bool(value) else 0.0
+
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        if pd.isna(value):
+            return np.nan
+        if float(value) == 1.0:
+            return 1.0
+        if float(value) == 0.0:
+            return 0.0
+        return float(value)
+
+    txt = str(value).strip().lower()
+    if txt in {"1", "1.0", "true", "t", "yes", "y", "ok"}:
+        return 1.0
+    if txt in {"0", "0.0", "false", "f", "no", "n"}:
+        return 0.0
+
+    parsed = pd.to_numeric(pd.Series([txt]), errors="coerce").iloc[0]
+    return float(parsed) if pd.notna(parsed) else np.nan
+
+
 def parse_mmss_to_minutes(value):
     if pd.isna(value):
         return np.nan
@@ -400,7 +433,7 @@ def charger_standings(path_standings: Path) -> tuple[pd.DataFrame | None, dict]:
 
     conf_cutoff = (
         standings.dropna(subset=["conference_abbrev"])  # type: ignore[arg-type]
-        .groupby(["date_snapshot", "conference_abbrev"], dropna=False)
+        .groupby(["date_snapshot", "conference_abbrev"], dropna=False)[["conference_sequence", "points"]]
         .apply(_compute_conference_cutoff_points)
         .reset_index(name="conference_cutoff_points")
     )
@@ -533,7 +566,6 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
         "penalty_minutes",
         "buts_domicile",
         "buts_exterieur",
-        "match_trouve",
     ]
     for c in cols_num:
         base[c] = pd.to_numeric(base[c], errors="coerce")
@@ -556,14 +588,25 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
     base["id_equipe_exterieur"] = base["id_equipe_exterieur"].apply(normalize_team_code)
     base["season_start_year"] = base["season_source"].apply(parse_season_start_year)
 
-    nb_match_non_trouve = int((base["match_trouve"] != 1).sum())
-    nb_team_bad = int((base["check_team_ok"] != True).sum())
-    nb_opp_bad = int((base["check_opp_ok"] != True).sum())
+    # Legacy files can store these flags as booleans/strings ("True"/"False") instead of 1/0.
+    base["match_trouve_flag"] = base["match_trouve"].apply(coerce_binary_flag)
+    base["check_team_ok_flag"] = base["check_team_ok"].apply(coerce_binary_flag)
+    base["check_opp_ok_flag"] = base["check_opp_ok"].apply(coerce_binary_flag)
+
+    mask_match_bad = base["match_trouve_flag"].isna() | (base["match_trouve_flag"] != 1.0)
+    mask_team_bad = base["check_team_ok_flag"].isna() | (base["check_team_ok_flag"] != 1.0)
+    mask_opp_bad = base["check_opp_ok_flag"].isna() | (base["check_opp_ok_flag"] != 1.0)
+
+    nb_match_non_trouve = int(mask_match_bad.sum())
+    nb_team_bad = int(mask_team_bad.sum())
+    nb_opp_bad = int(mask_opp_bad.sum())
 
     if nb_match_non_trouve > 0:
-        raise ValueError("Il reste des matchs non rattachés")
+        sample = base.loc[mask_match_bad, ["id_match", "id_joueur", "match_trouve"]].head(10).to_dict("records")
+        raise ValueError(f"Il reste des matchs non rattachés ({nb_match_non_trouve}). Exemples: {sample}")
     if nb_team_bad > 0 or nb_opp_bad > 0:
-        raise ValueError("Incohérence équipe/adversaire détectée")
+        sample = base.loc[mask_team_bad | mask_opp_bad, ["id_match", "id_joueur", "check_team_ok", "check_opp_ok"]].head(10).to_dict("records")
+        raise ValueError(f"Incohérence équipe/adversaire détectée (team_bad={nb_team_bad}, opp_bad={nb_opp_bad}). Exemples: {sample}")
 
     base["a_marque_un_point"] = (base["points"] >= 1).astype(int)
     base["a_marque_un_but"] = (base["buts"] >= 1).astype(int)
@@ -588,6 +631,9 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
         "adversaire_attendu_match",
         "check_team_ok",
         "check_opp_ok",
+        "match_trouve_flag",
+        "check_team_ok_flag",
+        "check_opp_ok_flag",
     ]
     colonnes_drop = [c for c in colonnes_drop if c in base.columns]
     base = base.drop(columns=colonnes_drop, errors="ignore")
