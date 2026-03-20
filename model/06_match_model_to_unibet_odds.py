@@ -150,6 +150,33 @@ def normalize_text(text: Any) -> str:
     return normalize_spaces(value)
 
 
+def normalize_player_join_name(text: Any) -> str:
+    """
+    Build a stable join key that aligns abbreviated model names such as
+    "J. Hughes" with full bookmaker names such as "Jack Hughes".
+
+    Rule used:
+    - strip accents/punctuation via normalize_text
+    - keep first initial
+    - keep surname (last token)
+
+    Examples:
+    - "J. Hughes" -> "j hughes"
+    - "Jack Hughes" -> "j hughes"
+    - "Jean-Gabriel Pageau" -> "j pageau"
+    - "J.T. Miller" -> "j miller"
+    """
+    value = normalize_text(text)
+    if not value:
+        return ""
+    parts = [p for p in value.split() if p]
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return f"{parts[0][0]} {parts[-1]}"
+
+
 def is_numeric_like_name(text: Any) -> bool:
     value = normalize_text(text)
     return bool(value) and value.isdigit()
@@ -212,7 +239,8 @@ def load_model_predictions(path: Path) -> pd.DataFrame:
     for col in ["proba_point_1p_calibree", "proba_point_1p_raw", "is_home_player"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["player_name_normalized"] = df["nom"].apply(normalize_text)
+    df["player_name_normalized_raw"] = df["nom"].apply(normalize_text)
+    df["player_name_normalized"] = df["nom"].apply(normalize_player_join_name)
     df["model_name_is_numeric"] = df["nom"].apply(is_numeric_like_name)
     df["team_aliases"] = df["team_player_match"].apply(canonical_team_aliases)
     df["team_primary_name"] = df["team_player_match"].apply(canonical_team_primary)
@@ -247,7 +275,8 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     for col in ["home_team", "away_team", "team", "player_name"]:
         df[col] = df[col].astype(str)
 
-    df["player_name_normalized_join"] = df["player_name"].apply(normalize_text)
+    df["player_name_normalized_raw"] = df["player_name"].apply(normalize_text)
+    df["player_name_normalized_join"] = df["player_name"].apply(normalize_player_join_name)
     df["team_name_normalized_join"] = df["team"].apply(normalize_text)
     df["matchup_key"] = df.apply(
         lambda r: matchup_key_from_team_names(r["home_team"], r["away_team"]),
