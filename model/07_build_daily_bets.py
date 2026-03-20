@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 import argparse
@@ -10,7 +9,6 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUTS_DIR = PROJECT_ROOT / "outputs"
@@ -37,17 +35,31 @@ REQUIRED_COLUMNS = [
     "implied_probability",
     "model_probability",
     "edge_probability",
-    "ev_per_unit",
-    "kelly_fraction",
-    "is_positive_ev",
-    "rank_proba_sur_date",
-    "rank_proba_sur_match",
 ]
 
+OPTIONAL_NUMERIC_COLUMNS = [
+    "ev_per_unit",
+    "kelly_fraction",
+    "rank_proba_sur_date",
+    "rank_proba_sur_match",
+    "value_gap",
+    "hard_exclude_hot_streak_pre",
+]
+
+OPTIONAL_TEXT_COLUMNS = [
+    "is_positive_ev",
+    "hard_exclude_hot_streak_reason",
+]
+
+
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
 
 def require_file(path: Path) -> None:
     if not path.exists():
         raise FileNotFoundError(f"Fichier introuvable : {path}")
+
 
 
 def write_json(path: Path, payload: Dict[str, Any]) -> None:
@@ -55,91 +67,281 @@ def write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+
+def as_bool_series(series: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(series):
+        return series.fillna(False)
+
+    normalized = (
+        series.fillna(0)
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .replace({
+            "1": "true",
+            "0": "false",
+            "yes": "true",
+            "no": "false",
+            "y": "true",
+            "n": "false",
+            "oui": "true",
+            "non": "false",
+        })
+    )
+    return normalized.isin(["true", "t", "1"])
+
+
+# -----------------------------------------------------------------------------
+# Args
+# -----------------------------------------------------------------------------
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Construire les picks quotidiens à partir des candidats matchés du script 06.")
-    parser.add_argument("--input-csv", type=str, default=str(DEFAULT_INPUT_CSV), help="Chemin du CSV produit par 06.")
-    parser.add_argument("--output-dir", type=str, default=str(DEFAULT_OUTPUTS_DIR), help="Dossier outputs du repo.")
-    parser.add_argument("--run-date", type=str, default=None, help="Date du run au format YYYY-MM-DD. Si absente, prise depuis le fichier 06.")
-    parser.add_argument("--max-picks", type=int, default=20, help="Nombre maximum de picks recommandés.")
-    parser.add_argument("--min-ev", type=float, default=0.0, help="EV minimum pour conserver un pick.")
-    parser.add_argument("--min-edge", type=float, default=0.0, help="Edge minimum pour conserver un pick.")
-    parser.add_argument("--one-pick-per-player", action="store_true", help="Conserver au plus un pick par joueur.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Construire les picks quotidiens à partir des candidats matchés du script 06, "
+            "avec priorité à la probabilité modèle."
+        )
+    )
+    parser.add_argument(
+        "--input-csv",
+        type=str,
+        default=str(DEFAULT_INPUT_CSV),
+        help="Chemin du CSV produit par 06.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=str(DEFAULT_OUTPUTS_DIR),
+        help="Dossier outputs du repo.",
+    )
+    parser.add_argument(
+        "--run-date",
+        type=str,
+        default=None,
+        help="Date du run au format YYYY-MM-DD. Si absente, prise depuis le fichier 06.",
+    )
+    parser.add_argument(
+        "--max-picks",
+        type=int,
+        default=10,
+        help="Nombre maximum de picks recommandés.",
+    )
+    parser.add_argument(
+        "--min-odds",
+        type=float,
+        default=1.40,
+        help="Cote minimale par défaut pour conserver un pick.",
+    )
+    parser.add_argument(
+        "--override-min-model-proba",
+        type=float,
+        default=0.90,
+        help="Seuil de probabilité modèle qui autorise un pick même sous la cote minimale.",
+    )
+    parser.add_argument(
+        "--value-threshold",
+        type=float,
+        default=0.02,
+        help="Seuil de gap proba modèle - proba implicite pour marquer is_value_bet=1.",
+    )
+    parser.add_argument(
+        "--one-pick-per-player",
+        action="store_true",
+        default=True,
+        help="Conserver au plus un pick par joueur.",
+    )
+    parser.add_argument(
+        "--disable-hot-streak-exclude",
+        action="store_true",
+        help="Désactiver l'exclusion des joueurs en série chaude anormale.",
+    )
     return parser.parse_args()
 
+
+# -----------------------------------------------------------------------------
+# Load / validate
+# -----------------------------------------------------------------------------
 
 def load_candidates(path: Path) -> pd.DataFrame:
     require_file(path)
     df = pd.read_csv(path, low_memory=False)
+
     missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"Colonnes manquantes dans le fichier 06 : {missing}")
 
     df = df.copy()
+
     numeric_cols = [
         "threshold",
         "odds_decimal",
         "implied_probability",
         "model_probability",
         "edge_probability",
-        "ev_per_unit",
-        "kelly_fraction",
-        "rank_proba_sur_date",
-        "rank_proba_sur_match",
+        *OPTIONAL_NUMERIC_COLUMNS,
     ]
     for col in numeric_cols:
+        if col not in df.columns:
+            df[col] = np.nan
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    for col in ["run_date", "date_match", "bet_status", "result", "player_name", "team", "opponent"]:
+    text_cols = [
+        "run_date",
+        "date_match",
+        "bet_status",
+        "result",
+        "player_name",
+        "team",
+        "opponent",
+        "market",
+        "stat",
+        "bookmaker",
+        *OPTIONAL_TEXT_COLUMNS,
+    ]
+    for col in text_cols:
+        if col not in df.columns:
+            df[col] = ""
         df[col] = df[col].astype(str)
 
     df["bet_status"] = df["bet_status"].replace({"nan": "pending", "": "pending"})
     df["result"] = df["result"].replace({"nan": ""})
+
+    # value gap / flag
+    df["value_gap"] = df["model_probability"] - df["implied_probability"]
+
+    # hot streak flag if present, else neutral
+    if "hard_exclude_hot_streak_pre" not in df.columns:
+        df["hard_exclude_hot_streak_pre"] = 0
+    df["hard_exclude_hot_streak_pre"] = pd.to_numeric(df["hard_exclude_hot_streak_pre"], errors="coerce").fillna(0)
+    df["hard_exclude_hot_streak_pre"] = df["hard_exclude_hot_streak_pre"].astype(int)
+
     return df
+
 
 
 def choose_run_date(df: pd.DataFrame, explicit_run_date: str | None) -> str:
     if explicit_run_date:
         return explicit_run_date
+
     candidates = [x for x in df["run_date"].dropna().astype(str).unique().tolist() if x and x != "nan"]
     if not candidates:
         raise ValueError("Impossible de déterminer run_date. Passe --run-date explicitement.")
     return sorted(candidates)[0]
 
 
+# -----------------------------------------------------------------------------
+# Core logic
+# -----------------------------------------------------------------------------
+
 def build_daily_bets(
     candidates_df: pd.DataFrame,
     run_date: str,
     max_picks: int,
-    min_ev: float,
-    min_edge: float,
+    min_odds: float,
+    override_min_model_proba: float,
+    value_threshold: float,
     one_pick_per_player: bool,
-) -> pd.DataFrame:
+    disable_hot_streak_exclude: bool,
+) -> tuple[pd.DataFrame, Dict[str, Any]]:
     df = candidates_df.copy()
     df = df[df["run_date"] == run_date].copy()
-    if df.empty:
-        return df
 
-    df = df[df["ev_per_unit"] >= min_ev].copy()
-    df = df[df["edge_probability"] >= min_edge].copy()
+    stats: Dict[str, Any] = {
+        "rows_after_run_date_filter": int(len(df)),
+        "rows_removed_low_odds": 0,
+        "rows_removed_hot_streak": 0,
+        "rows_after_player_dedup": 0,
+    }
+
+    if df.empty:
+        return df, stats
+
+    # Value-bet as secondary information only
+    df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
+
+    # Eligibility: odds >= min_odds OR model_probability >= override threshold
+    odds_ok = df["odds_decimal"] >= min_odds
+    proba_override_ok = df["model_probability"] >= override_min_model_proba
+    keep_mask = odds_ok | proba_override_ok
+    stats["rows_removed_low_odds"] = int((~keep_mask).sum())
+    df = df[keep_mask].copy()
+
+    if df.empty:
+        return df, stats
+
+    # Hard exclude hot streak if present
+    if not disable_hot_streak_exclude:
+        hot_mask = df["hard_exclude_hot_streak_pre"].fillna(0).astype(int) == 1
+        stats["rows_removed_hot_streak"] = int(hot_mask.sum())
+        df = df[~hot_mask].copy()
+
+    if df.empty:
+        return df, stats
+
+    # Main ranking: model_probability first, then edge/value, then odds
     df = df.sort_values(
-        ["ev_per_unit", "edge_probability", "model_probability", "odds_decimal"],
-        ascending=[False, False, False, True],
+        ["model_probability", "edge_probability", "value_gap", "odds_decimal"],
+        ascending=[False, False, False, False],
     ).reset_index(drop=True)
 
     if one_pick_per_player:
         df = df.drop_duplicates(subset=["player_name"], keep="first").reset_index(drop=True)
 
+    stats["rows_after_player_dedup"] = int(len(df))
+
     if max_picks > 0:
         df = df.head(max_picks).copy()
 
     if df.empty:
-        return df
+        return df, stats
 
     df["recommended_flag"] = True
     df["recommendation_rank"] = np.arange(1, len(df) + 1)
+    df["display_rank"] = df["recommendation_rank"]
     df["bet_status"] = df["bet_status"].replace({"": "pending", "nan": "pending"})
-    return df
 
+    # Friendly text label for sheet publication
+    df["is_value_bet_label"] = np.where(df["is_value_bet"] == 1, "yes", "no")
+
+    # Stable column order without dropping extra columns if present
+    front_cols = [
+        "bet_id",
+        "run_date",
+        "recommended_flag",
+        "recommendation_rank",
+        "display_rank",
+        "bet_status",
+        "result",
+        "actual_stat_value",
+        "settled_at",
+        "date_match",
+        "player_name",
+        "team",
+        "opponent",
+        "bookmaker",
+        "market",
+        "stat",
+        "threshold",
+        "odds_decimal",
+        "implied_probability",
+        "model_probability",
+        "edge_probability",
+        "value_gap",
+        "is_value_bet",
+        "is_value_bet_label",
+        "hard_exclude_hot_streak_pre",
+        "ev_per_unit",
+        "kelly_fraction",
+    ]
+    ordered_cols = [c for c in front_cols if c in df.columns] + [c for c in df.columns if c not in front_cols]
+    df = df[ordered_cols].copy()
+
+    return df, stats
+
+
+# -----------------------------------------------------------------------------
+# History
+# -----------------------------------------------------------------------------
 
 def append_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
     master_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,9 +353,13 @@ def append_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
         master_df = pd.DataFrame(columns=daily_df.columns)
         rows_before = 0
 
-    existing_bet_ids = set(master_df["bet_id"].astype(str).tolist()) if not master_df.empty and "bet_id" in master_df.columns else set()
-    to_add_df = daily_df[~daily_df["bet_id"].astype(str).isin(existing_bet_ids)].copy()
+    existing_bet_ids = (
+        set(master_df["bet_id"].astype(str).tolist())
+        if (not master_df.empty and "bet_id" in master_df.columns)
+        else set()
+    )
 
+    to_add_df = daily_df[~daily_df["bet_id"].astype(str).isin(existing_bet_ids)].copy()
     combined_df = pd.concat([master_df, to_add_df], ignore_index=True)
     combined_df.to_csv(master_path, index=False)
 
@@ -163,6 +369,10 @@ def append_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
         "rows_after": int(len(combined_df)),
     }
 
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
 
 def main() -> None:
     args = parse_args()
@@ -179,13 +389,15 @@ def main() -> None:
     candidates_df = load_candidates(input_csv)
     run_date = choose_run_date(candidates_df, args.run_date)
 
-    daily_df = build_daily_bets(
+    daily_df, build_stats = build_daily_bets(
         candidates_df=candidates_df,
         run_date=run_date,
         max_picks=args.max_picks,
-        min_ev=args.min_ev,
-        min_edge=args.min_edge,
+        min_odds=args.min_odds,
+        override_min_model_proba=args.override_min_model_proba,
+        value_threshold=args.value_threshold,
         one_pick_per_player=args.one_pick_per_player,
+        disable_hot_streak_exclude=args.disable_hot_streak_exclude,
     )
 
     daily_csv_path = output_dir / "07_daily_bets.csv"
@@ -210,10 +422,11 @@ def main() -> None:
         "team",
         "opponent",
         "odds_decimal",
+        "implied_probability",
         "model_probability",
         "edge_probability",
-        "ev_per_unit",
-        "kelly_fraction",
+        "value_gap",
+        "is_value_bet_label",
     ]
     top_preview: List[Dict[str, Any]] = []
     if not daily_df.empty:
@@ -228,14 +441,17 @@ def main() -> None:
         },
         "rules": {
             "max_picks": int(args.max_picks),
-            "min_ev": float(args.min_ev),
-            "min_edge": float(args.min_edge),
+            "min_odds": float(args.min_odds),
+            "override_min_model_proba": float(args.override_min_model_proba),
+            "value_threshold": float(args.value_threshold),
             "one_pick_per_player": bool(args.one_pick_per_player),
+            "disable_hot_streak_exclude": bool(args.disable_hot_streak_exclude),
         },
         "counts": {
             "candidate_rows_input": int(len(candidates_df[candidates_df["run_date"] == run_date])),
             "daily_bets_rows": int(len(daily_df)),
         },
+        "build_stats": build_stats,
         "history_append": history_append,
         "top_preview": top_preview,
         "outputs": {
@@ -246,15 +462,22 @@ def main() -> None:
             "master_history_csv": str(master_history_path),
         },
     }
-
     write_json(summary_json_path, summary_payload)
 
     print("07_build_daily_bets.py")
-    print(f"Input csv              : {input_csv}")
-    print(f"Run date               : {run_date}")
-    print(f"Daily bets rows        : {len(daily_df)}")
-    print(f"History rows added     : {history_append['rows_added']}")
-    print(f"History rows after     : {history_append['rows_after']}")
+    print(f"Input csv : {input_csv}")
+    print(f"Run date : {run_date}")
+    print(f"Daily bets rows : {len(daily_df)}")
+    print(f"History rows added : {history_append['rows_added']}")
+    print(f"History rows after : {history_append['rows_after']}")
+    print("")
+    print("=== RULES ===")
+    print(f"- max_picks={args.max_picks}")
+    print(f"- min_odds={args.min_odds}")
+    print(f"- override_min_model_proba={args.override_min_model_proba}")
+    print(f"- value_threshold={args.value_threshold}")
+    print(f"- one_pick_per_player={args.one_pick_per_player}")
+    print(f"- disable_hot_streak_exclude={args.disable_hot_streak_exclude}")
     print("")
     print("=== OUTPUTS ===")
     print(f"- {daily_csv_path}")
