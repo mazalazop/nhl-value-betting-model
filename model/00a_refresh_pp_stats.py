@@ -315,12 +315,15 @@ def main() -> None:
     raw_dir, outputs_dir = ensure_dirs(repo_root)
 
     if args.start_date and args.end_date:
-        start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
-        end_date = datetime.strptime(args.end_date, "%Y-%m-%d").date()
+        inferred_start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
+        inferred_end_date = datetime.strptime(args.end_date, "%Y-%m-%d").date()
     else:
-        start_date, end_date = infer_date_range_from_project(repo_root)
+        inferred_start_date, inferred_end_date = infer_date_range_from_project(repo_root)
 
-    start_date, end_date, end_date_was_capped = cap_end_date_to_today(start_date, end_date)
+    start_date, end_date, end_date_was_capped = cap_end_date_to_today(
+        inferred_start_date,
+        inferred_end_date,
+    )
 
     if start_date > end_date:
         raise ValueError("start_date > end_date")
@@ -338,12 +341,14 @@ def main() -> None:
     summary_path = outputs_dir / "00a_refresh_pp_stats_summary.json"
 
     print("=== 00a_refresh_pp_stats.py ===")
-    print(f"Repo root     : {repo_root}")
-    print(f"Date start    : {config.start_date}")
-    print(f"Date end      : {config.end_date}")
+    print(f"Repo root         : {repo_root}")
+    print(f"Date start        : {config.start_date}")
+    print(f"Date end inferred : {inferred_end_date}")
+    print(f"Date end used     : {config.end_date}")
     if end_date_was_capped:
-        print(f"Date end raw  : {end_date}")
-        print(f"Date end cap  : {config.end_date} (bornée à today())")
+        print(f"Date cap applied  : True (bornée à today={date.today().isoformat()})")
+    else:
+        print("Date cap applied  : False")
     print(f"Game type id  : {config.game_type_id}")
     print(f"Raw JSON path : {raw_json_path}")
     print(f"CSV path      : {csv_path}")
