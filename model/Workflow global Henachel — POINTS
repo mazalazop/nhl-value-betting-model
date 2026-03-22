@@ -1,0 +1,63 @@
+# Workflow global Henachel — POINTS
+
+## Où mettre le fichier
+Dans le repo **nhl-value-betting-model** :
+
+```text
+.github/workflows/henachel-points-global.yml
+```
+
+## Idée retenue
+Le point d'entrée principal doit être dans le **repo modèle**, pas dans le repo scraper.
+
+Pourquoi :
+1. la sortie métier finale est côté modèle / Google Sheet
+2. `06_match_model_to_unibet_odds.py` attend `normalized_points_odds.json` côté repo modèle
+3. cela évite un chaînage fragile entre deux workflows de deux repos différents
+
+## Ordre réel du workflow
+1. checkout du repo scraper
+2. découverte des URLs événements Unibet depuis le hub
+3. batch points
+4. acceptance report
+5. normalisation vers `normalized_points_odds.json`
+6. upload artifact interne du workflow
+7. checkout du repo modèle
+8. copie de `normalized_points_odds.json` dans `outputs/`
+9. exécution du pipeline modèle : `00 -> 08`
+10. publication Google Sheet
+
+## Secrets GitHub à créer dans le repo modèle
+### Obligatoires
+- `SCRAPER_REPO_TOKEN`
+  - token GitHub avec au minimum accès lecture au repo scraper
+  - nécessaire si le repo scraper est privé
+- `HENACHEL_GOOGLE_CREDENTIALS_JSON`
+  - contenu JSON complet du service account Google
+- `HENACHEL_SHEET_ID`
+  - identifiant du Google Sheet Henachel
+
+## Ce que ce workflow remplace
+Le workflow global devient le **point d'entrée principal**.
+
+Le workflow existant côté scraper `unibet-event-points-from-hub.yml` peut rester utile pour :
+- debug discovery
+- debug Playwright
+- tests isolés du scraper
+
+Mais il ne doit plus être le workflow métier principal si l'objectif est `scraper -> modèle -> Sheet` dans un seul run.
+
+## Point volontairement laissé séparé
+`09_settle_previous_bets.py` doit rester dans un **workflow séparé** le lendemain.
+Ce n'est pas la même temporalité que la publication des picks du jour.
+
+## Cron actuel
+Le fichier proposé contient :
+
+```yaml
+schedule:
+  - cron: "0 9 * * *"
+```
+
+GitHub interprète le cron en **UTC**.
+Donc ce créneau doit être ajusté ensuite selon l'heure réelle souhaitée en France.
