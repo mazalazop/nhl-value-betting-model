@@ -1,63 +1,301 @@
-# Workflow global Henachel — POINTS
+name: henachel-points-global
 
-## Où mettre le fichier
-Dans le repo **nhl-value-betting-model** :
+on:
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: "Date de run Europe/Paris (YYYY-MM-DD). Vide = aujourd'hui Paris"
+        required: false
+        type: string
+      hub_url:
+        description: "URL hub Unibet NHL"
+        required: false
+        type: string
+        default: "https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
+      headless:
+        description: "Lancer Playwright en headless"
+        required: false
+        type: boolean
+        default: true
+      discovery_max_matches:
+        description: "Nombre max de matchs à cliquer côté hub"
+        required: false
+        type: string
+        default: "12"
+      min_rows_per_event:
+        description: "Seuil minimal de lignes 1+ par match pour l'acceptance report"
+        required: false
+        type: string
+        default: "8"
+      publish_to_sheet:
+        description: "Publier vers Google Sheet"
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    - cron: "0 9 * * *"
 
-```text
-.github/workflows/henachel-points-global.yml
-```
+permissions:
+  contents: read
 
-## Idée retenue
-Le point d'entrée principal doit être dans le **repo modèle**, pas dans le repo scraper.
+env:
+  TZ: Europe/Paris
+  PYTHONUNBUFFERED: "1"
 
-Pourquoi :
-1. la sortie métier finale est côté modèle / Google Sheet
-2. `06_match_model_to_unibet_odds.py` attend `normalized_points_odds.json` côté repo modèle
-3. cela évite un chaînage fragile entre deux workflows de deux repos différents
+jobs:
+  scrape_points:
+    name: Scraper Unibet POINTS
+    runs-on: [self-hosted, macOS, X64, morgan-runner]
+    timeout-minutes: 120
+    outputs:
+      run_date: ${{ steps.resolve.outputs.run_date }}
+      publish_to_sheet: ${{ steps.resolve.outputs.publish_to_sheet }}
 
-## Ordre réel du workflow
-1. checkout du repo scraper
-2. découverte des URLs événements Unibet depuis le hub
-3. batch points
-4. acceptance report
-5. normalisation vers `normalized_points_odds.json`
-6. upload artifact interne du workflow
-7. checkout du repo modèle
-8. copie de `normalized_points_odds.json` dans `outputs/`
-9. exécution du pipeline modèle : `00 -> 08`
-10. publication Google Sheet
+    steps:
+      - name: Resolve runtime config
+        id: resolve
+        shell: bash
+        run: |
+          INPUT_RUN_DATE="${{ github.event.inputs.run_date }}"
+          INPUT_HUB_URL="${{ github.event.inputs.hub_url }}"
+          INPUT_HEADLESS="${{ github.event.inputs.headless }}"
+          INPUT_DISCOVERY_MAX_MATCHES="${{ github.event.inputs.discovery_max_matches }}"
+          INPUT_MIN_ROWS_PER_EVENT="${{ github.event.inputs.min_rows_per_event }}"
+          INPUT_PUBLISH_TO_SHEET="${{ github.event.inputs.publish_to_sheet }}"
 
-## Secrets GitHub à créer dans le repo modèle
-### Obligatoires
-- `SCRAPER_REPO_TOKEN`
-  - token GitHub avec au minimum accès lecture au repo scraper
-  - nécessaire si le repo scraper est privé
-- `HENACHEL_GOOGLE_CREDENTIALS_JSON`
-  - contenu JSON complet du service account Google
-- `HENACHEL_SHEET_ID`
-  - identifiant du Google Sheet Henachel
+          if [ -z "$INPUT_RUN_DATE" ]; then
+            RUN_DATE="$(TZ=Europe/Paris date +%F)"
+          else
+            RUN_DATE="$INPUT_RUN_DATE"
+          fi
 
-## Ce que ce workflow remplace
-Le workflow global devient le **point d'entrée principal**.
+          if [ -z "$INPUT_HUB_URL" ]; then
+            HUB_URL="https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
+          else
+            HUB_URL="$INPUT_HUB_URL"
+          fi
 
-Le workflow existant côté scraper `unibet-event-points-from-hub.yml` peut rester utile pour :
-- debug discovery
-- debug Playwright
-- tests isolés du scraper
+          if [ -z "$INPUT_HEADLESS" ]; then
+            HEADLESS="true"
+          else
+            HEADLESS="$INPUT_HEADLESS"
+          fi
 
-Mais il ne doit plus être le workflow métier principal si l'objectif est `scraper -> modèle -> Sheet` dans un seul run.
+          if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
+            DISCOVERY_MAX_MATCHES="12"
+          else
+            DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
+          fi
 
-## Point volontairement laissé séparé
-`09_settle_previous_bets.py` doit rester dans un **workflow séparé** le lendemain.
-Ce n'est pas la même temporalité que la publication des picks du jour.
+          if [ -z "$INPUT_MIN_ROWS_PER_EVENT" ]; then
+            MIN_ROWS_PER_EVENT="8"
+          else
+            MIN_ROWS_PER_EVENT="$INPUT_MIN_ROWS_PER_EVENT"
+          fi
 
-## Cron actuel
-Le fichier proposé contient :
+          if [ -z "$INPUT_PUBLISH_TO_SHEET" ]; then
+            PUBLISH_TO_SHEET="true"
+          else
+            PUBLISH_TO_SHEET="$INPUT_PUBLISH_TO_SHEET"
+          fi
 
-```yaml
-schedule:
-  - cron: "0 9 * * *"
-```
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
+          echo "publish_to_sheet=$PUBLISH_TO_SHEET" >> "$GITHUB_OUTPUT"
 
-GitHub interprète le cron en **UTC**.
-Donc ce créneau doit être ajusté ensuite selon l'heure réelle souhaitée en France.
+          {
+            echo "RUN_DATE=$RUN_DATE"
+            echo "HUB_URL=$HUB_URL"
+            echo "HEADLESS=$HEADLESS"
+            echo "DISCOVERY_MAX_MATCHES=$DISCOVERY_MAX_MATCHES"
+            echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
+            echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
+          } >> "$GITHUB_ENV"
+
+          echo "RUN_DATE=$RUN_DATE"
+          echo "HEADLESS=$HEADLESS"
+          echo "DISCOVERY_MAX_MATCHES=$DISCOVERY_MAX_MATCHES"
+          echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
+          echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
+
+      - name: Checkout scraper repo
+        uses: actions/checkout@v4
+        with:
+          repository: mazalazop/nhl-unibet-odds-scraper
+          path: scraper_repo
+          token: ${{ secrets.SCRAPER_REPO_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install scraper dependencies
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install chromium
+
+      - name: Discover event URLs from hub
+        working-directory: scraper_repo
+        env:
+          UNIBET_HUB_URL: ${{ env.HUB_URL }}
+          PW_HEADLESS: ${{ env.HEADLESS }}
+          DISCOVERY_MAX_MATCHES: ${{ env.DISCOVERY_MAX_MATCHES }}
+        run: |
+          python scrapers/unibet_points_discover_event_urls.py
+
+      - name: Export discovered event URLs
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
+          export DISCOVERY_JSON_PATH="$LATEST_DISCOVERY_DIR/discovered_event_urls.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["DISCOVERY_JSON_PATH"])
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          urls = payload.get("event_urls", [])
+          if not urls:
+              raise SystemExit("Aucune event URL découverte depuis le hub Unibet.")
+
+          github_env = Path(os.environ["GITHUB_ENV"])
+          with github_env.open("a", encoding="utf-8") as handle:
+              handle.write(f"DISCOVERY_JSON_PATH={path}\n")
+              handle.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
+
+          print(f"URLs découvertes : {len(urls)}")
+          PY
+
+      - name: Run points batch
+        working-directory: scraper_repo
+        env:
+          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
+          PW_HEADLESS: ${{ env.HEADLESS }}
+        run: |
+          python scrapers/unibet_event_points_batch_runner.py
+
+      - name: Build acceptance report
+        working-directory: scraper_repo
+        env:
+          MIN_ROWS_PER_EVENT: ${{ env.MIN_ROWS_PER_EVENT }}
+        shell: bash
+        run: |
+          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+          export BATCH_SUMMARY_PATH="$LATEST_BATCH_DIR/batch_summary.json"
+          python scrapers/unibet_event_points_acceptance_report.py
+
+      - name: Build normalized points json
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+          export ACCEPTANCE_REPORT_PATH="$LATEST_BATCH_DIR/acceptance_report.json"
+          python scrapers/unibet_event_points_normalize_accepted.py
+
+      - name: Prepare artifact bundle for model job
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          mkdir -p export_bundle
+          LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
+          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+
+          cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/acceptance_report.json
+          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/batch_summary.json
+          cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+
+      - name: Upload scraper outputs for model job
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-points-odds-${{ env.RUN_DATE }}
+          path: scraper_repo/export_bundle/
+          retention-days: 7
+
+  model_points:
+    name: Pipeline modèle POINTS
+    needs: scrape_points
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout model repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install model dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy scikit-learn requests urllib3 gspread google-auth google-auth-oauthlib google-auth-httplib2
+
+      - name: Download scraper artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: henachel-points-odds-${{ needs.scrape_points.outputs.run_date }}
+          path: _scraper_artifact
+
+      - name: Place normalized_points_odds.json where script 06 expects it
+        shell: bash
+        run: |
+          mkdir -p outputs
+          cp _scraper_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
+          ls -la outputs
+
+      - name: Write Google credentials file
+        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
+        shell: bash
+        run: |
+          mkdir -p secrets
+          cat > secrets/henachel-service-account.json <<'JSON'
+          ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
+          JSON
+
+      - name: Refresh upstream sources
+        run: python model/00_refresh_sources.py
+
+      - name: Refresh PP stats
+        run: python model/00a_refresh_pp_stats.py
+
+      - name: Build base match fusionnee
+        run: python model/00b_build_base_match_fusionnee.py
+
+      - name: Build features
+        run: python model/01_build_base_features.py
+
+      - name: Predict upcoming games
+        run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Match model to Unibet odds
+        run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Build daily bets
+        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Publish to Google Sheet
+        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
+        run: |
+          python model/08_publish_to_google_sheet.py \
+            --sheet-id "${{ secrets.HENACHEL_SHEET_ID }}" \
+            --credentials-json "secrets/henachel-service-account.json"
+
+      - name: Upload model outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-model-outputs-${{ needs.scrape_points.outputs.run_date }}
+          path: |
+            outputs/
+            data/raw/
+            data/final/
+          retention-days: 7
