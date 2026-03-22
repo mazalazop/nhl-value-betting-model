@@ -67,30 +67,6 @@ def write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-
-def as_bool_series(series: pd.Series) -> pd.Series:
-    if pd.api.types.is_bool_dtype(series):
-        return series.fillna(False)
-
-    normalized = (
-        series.fillna(0)
-        .astype(str)
-        .str.strip()
-        .str.lower()
-        .replace({
-            "1": "true",
-            "0": "false",
-            "yes": "true",
-            "no": "false",
-            "y": "true",
-            "n": "false",
-            "oui": "true",
-            "non": "false",
-        })
-    )
-    return normalized.isin(["true", "t", "1"])
-
-
 # -----------------------------------------------------------------------------
 # Args
 # -----------------------------------------------------------------------------
@@ -146,9 +122,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--one-pick-per-player",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Conserver au plus un pick par joueur.",
+        help="Conserver au plus un pick par joueur (utiliser --no-one-pick-per-player pour désactiver).",
     )
     parser.add_argument(
         "--disable-hot-streak-exclude",
@@ -206,13 +182,15 @@ def load_candidates(path: Path) -> pd.DataFrame:
     df["bet_status"] = df["bet_status"].replace({"nan": "pending", "": "pending"})
     df["result"] = df["result"].replace({"nan": ""})
 
-    # value gap / flag
+    # value gap / flag for information only
     df["value_gap"] = df["model_probability"] - df["implied_probability"]
 
     # hot streak flag if present, else neutral
     if "hard_exclude_hot_streak_pre" not in df.columns:
         df["hard_exclude_hot_streak_pre"] = 0
-    df["hard_exclude_hot_streak_pre"] = pd.to_numeric(df["hard_exclude_hot_streak_pre"], errors="coerce").fillna(0)
+    df["hard_exclude_hot_streak_pre"] = pd.to_numeric(
+        df["hard_exclude_hot_streak_pre"], errors="coerce"
+    ).fillna(0)
     df["hard_exclude_hot_streak_pre"] = df["hard_exclude_hot_streak_pre"].astype(int)
 
     return df
@@ -226,7 +204,9 @@ def choose_run_date(df: pd.DataFrame, explicit_run_date: str | None) -> str:
     candidates = [x for x in df["run_date"].dropna().astype(str).unique().tolist() if x and x != "nan"]
     if not candidates:
         raise ValueError("Impossible de déterminer run_date. Passe --run-date explicitement.")
-    return sorted(candidates)[0]
+
+    # By default, use the most recent run date present in the 06 file.
+    return sorted(candidates)[-1]
 
 
 # -----------------------------------------------------------------------------
@@ -256,7 +236,7 @@ def build_daily_bets(
     if df.empty:
         return df, stats
 
-    # Value-bet as secondary information only
+    # Value-bet flag kept as secondary information only.
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
 
     # Eligibility: odds >= min_odds OR model_probability >= override threshold
@@ -278,10 +258,11 @@ def build_daily_bets(
     if df.empty:
         return df, stats
 
-    # Main ranking: model_probability first, then edge/value, then odds
+    # Main ranking aligned with sheet display logic:
+    # model_probability first, then edge_probability, then odds_decimal.
     df = df.sort_values(
-        ["model_probability", "edge_probability", "value_gap", "odds_decimal"],
-        ascending=[False, False, False, False],
+        ["model_probability", "edge_probability", "odds_decimal"],
+        ascending=[False, False, False],
     ).reset_index(drop=True)
 
     if one_pick_per_player:
