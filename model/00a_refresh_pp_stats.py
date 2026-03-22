@@ -12,6 +12,8 @@ sans toucher au pipeline principal.
 Principe
 --------
 - lit la plage de dates du projet depuis data/final/base_canonique_v2.csv
+- fallback propre sur data/raw/matchs.csv si base_canonique_v2.csv n'existe pas
+- borne la date de fin à today() pour éviter les requêtes inutiles dans le futur
 - découpe la période en mois
 - interroge l'endpoint stats/rest/en/skater/powerplay en niveau game
 - concatène le brut
@@ -31,12 +33,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from urllib.parse import quote
 
 import pandas as pd
@@ -112,17 +113,61 @@ def month_chunks(start_date: date, end_date: date) -> List[Tuple[date, date]]:
     return chunks
 
 
-def infer_date_range_from_project(repo_root: Path) -> Tuple[date, date]:
-    base_path = repo_root / "data" / "final" / "base_canonique_v2.csv"
-    if not base_path.exists():
-        raise FileNotFoundError(f"Fichier introuvable : {base_path}")
+def _extract_date_range_from_csv(csv_path: Path, date_candidates: List[str]) -> Tuple[date, date]:
+    df = pd.read_csv(csv_path)
 
-    df = pd.read_csv(base_path, usecols=["date_match"])
-    s = pd.to_datetime(df["date_match"], errors="coerce").dropna()
+    date_col = next((c for c in date_candidates if c in df.columns), None)
+    if date_col is None:
+        raise ValueError(
+            f"Aucune colonne de date exploitable trouvée dans {csv_path}. "
+            f"Colonnes disponibles: {list(df.columns)}"
+        )
+
+    s = pd.to_datetime(df[date_col], errors="coerce").dropna()
     if s.empty:
-        raise ValueError("Impossible d'inférer la plage de dates depuis base_canonique_v2.csv")
+        raise ValueError(f"Impossible d'inférer des dates valides depuis {csv_path}")
 
     return s.min().date(), s.max().date()
+
+
+def infer_date_range_from_project(repo_root: Path) -> Tuple[date, date]:
+    """
+    Priorité :
+    1) data/final/base_canonique_v2.csv
+    2) data/raw/matchs.csv
+
+    Cela permet au script de fonctionner :
+    - sur un projet déjà avancé
+    - sur une reconstruction from scratch après 00_refresh_sources.py
+    """
+    base_path = repo_root / "data" / "final" / "base_canonique_v2.csv"
+    fallback_path = repo_root / "data" / "raw" / "matchs.csv"
+
+    date_candidates = ["date_match", "game_date", "date", "match_date"]
+
+    if base_path.exists():
+        return _extract_date_range_from_csv(base_path, date_candidates)
+
+    if fallback_path.exists():
+        return _extract_date_range_from_csv(fallback_path, date_candidates)
+
+    raise FileNotFoundError(
+        f"Fichier introuvable : {base_path} ; fallback introuvable aussi : {fallback_path}"
+    )
+
+
+def cap_end_date_to_today(start_date: date, end_date: date) -> Tuple[date, date, bool]:
+    today = date.today()
+    capped = end_date > today
+    end_date_capped = min(end_date, today)
+
+    if start_date > end_date_capped:
+        raise ValueError(
+            f"Plage de dates invalide après borne haute à today(): start_date={start_date} ; "
+            f"end_date_capped={end_date_capped}"
+        )
+
+    return start_date, end_date_capped, capped
 
 
 def build_cayenne_exp(start_date: date, end_date: date, game_type_id: int) -> str:
@@ -168,7 +213,10 @@ def fetch_one_chunk(
 
     data = payload.get("data")
     if not isinstance(data, list):
-        raise ValueError(f"Réponse inattendue : clé 'data' absente ou non liste. Clés payload: {list(payload.keys())}")
+        raise ValueError(
+            f"Réponse inattendue : clé 'data' absente ou non liste. "
+            f"Clés payload: {list(payload.keys())}"
+        )
 
     return data
 
@@ -201,18 +249,31 @@ def normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         if col in out.columns:
             out[col] = pd.to_numeric(out[col], errors="coerce")
 
-    front_cols = [c for c in ["id_joueur", "id_match", "date_match", "ppTimeOnIce", "ppTimeOnIcePerGame", "gamesPlayed"] if c in out.columns]
+    front_cols = [
+        c
+        for c in [
+            "id_joueur",
+            "id_match",
+            "date_match",
+            "ppTimeOnIce",
+            "ppTimeOnIcePerGame",
+            "gamesPlayed",
+        ]
+        if c in out.columns
+    ]
     other_cols = [c for c in out.columns if c not in front_cols]
     return out[front_cols + other_cols]
 
 
-def build_summary(df: pd.DataFrame, config: Config, chunks: List[Tuple[date, date]]) -> Dict:
+def build_summary(df: pd.DataFrame, config: Config, chunks: List[Tuple[date, date]], end_date_was_capped: bool) -> Dict:
     summary: Dict = {
         "status": "ok",
         "source": BASE_STATS_URL,
         "date_range": {
             "start_date": config.start_date.isoformat(),
             "end_date": config.end_date.isoformat(),
+            "end_date_was_capped_to_today": end_date_was_capped,
+            "today": date.today().isoformat(),
         },
         "game_type_id": config.game_type_id,
         "n_chunks": len(chunks),
@@ -221,7 +282,14 @@ def build_summary(df: pd.DataFrame, config: Config, chunks: List[Tuple[date, dat
         "checks": {},
     }
 
-    for col in ["ppTimeOnIce", "ppTimeOnIcePerGame", "gamesPlayed", "id_joueur", "id_match", "date_match"]:
+    for col in [
+        "ppTimeOnIce",
+        "ppTimeOnIcePerGame",
+        "gamesPlayed",
+        "id_joueur",
+        "id_match",
+        "date_match",
+    ]:
         if col in df.columns:
             summary["checks"][col] = {
                 "non_null": int(df[col].notna().sum()),
@@ -252,6 +320,8 @@ def main() -> None:
     else:
         start_date, end_date = infer_date_range_from_project(repo_root)
 
+    start_date, end_date, end_date_was_capped = cap_end_date_to_today(start_date, end_date)
+
     if start_date > end_date:
         raise ValueError("start_date > end_date")
 
@@ -271,6 +341,9 @@ def main() -> None:
     print(f"Repo root     : {repo_root}")
     print(f"Date start    : {config.start_date}")
     print(f"Date end      : {config.end_date}")
+    if end_date_was_capped:
+        print(f"Date end raw  : {end_date}")
+        print(f"Date end cap  : {config.end_date} (bornée à today())")
     print(f"Game type id  : {config.game_type_id}")
     print(f"Raw JSON path : {raw_json_path}")
     print(f"CSV path      : {csv_path}")
@@ -303,7 +376,7 @@ def main() -> None:
     df = normalize_dataframe(df)
     df.to_csv(csv_path, index=False)
 
-    summary = build_summary(df, config, chunks)
+    summary = build_summary(df, config, chunks, end_date_was_capped=end_date_was_capped)
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("")
