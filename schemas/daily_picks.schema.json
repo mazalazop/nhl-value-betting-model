@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NHL Value Betting Daily Picks",
+  "type": "object",
+  "required": ["schema_version", "model_version", "generated_at_utc", "timezone", "slate_date", "picks"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "model_version": {"type": "string"},
+    "generated_at_utc": {"type": "string"},
+    "timezone": {"type": "string"},
+    "slate_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "pick_count": {"type": "integer", "minimum": 0},
+    "picks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rank", "player", "team", "opponent", "match_date", "market", "odds", "model_probability", "edge"],
+        "properties": {
+          "rank": {"type": "integer", "minimum": 1},
+          "player": {"type": "string"},
+          "player_id": {"type": ["integer", "string", "null"]},
+          "team": {"type": "string"},
+          "opponent": {"type": "string"},
+          "match_date": {"type": "string"},
+          "market": {"type": "string"},
+          "odds": {"type": "number", "exclusiveMinimum": 1},
+          "model_probability": {"type": "number", "minimum": 0, "maximum": 1},
+          "implied_probability": {"type": ["number", "null"]},
+          "edge": {"type": "number"},
+          "ev_per_unit": {"type": ["number", "null"]},
+          "recent_form": {"type": ["number", "null"]},
+          "toi_last_game_minutes": {"type": ["number", "null"]}
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
