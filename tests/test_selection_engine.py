@@ -42,6 +42,8 @@ def base_rows():
                 "edge_probability": 0.70 - 1 / 1.80,
                 "hard_exclude_hot_streak_pre": 0,
                 "toi_last_game_minutes": 16.0,
+                "no_point_drought_alert_pre": 0,
+                "no_point_streak_excess_pre": 0.0,
             },
             {
                 "bet_id": "b",
@@ -125,10 +127,10 @@ def test_selection_applies_odds_probability_edge_and_hot_streak_rules():
     selected, stats = m.build_daily_bets(
         df,
         run_date="2026-09-23",
-        max_picks=10,
+        max_picks=5,
         min_odds=1.01,
         min_model_proba=0.50,
-        min_edge=0.0,
+        min_edge=-1.0,
         value_threshold=0.02,
         hot_streak_exception_proba=0.90,
         one_pick_per_player=True,
@@ -163,3 +165,29 @@ def test_selection_is_capped_at_ten_and_one_pick_per_player():
     )
     assert len(selected) <= 10
     assert selected["player_name"].is_unique
+
+
+def test_drought_alert_can_break_a_small_probability_gap():
+    m = load_module()
+    df = base_rows().iloc[[0, 1]].copy()
+    df.loc[df["player_name"] == "Player A", "model_probability"] = 0.69
+    df.loc[df["player_name"] == "Player B", "model_probability"] = 0.70
+    df.loc[df["player_name"] == "Player A", "edge_probability"] = -0.05
+    df.loc[df["player_name"] == "Player B", "edge_probability"] = -0.05
+    df.loc[df["player_name"] == "Player A", "no_point_drought_alert_pre"] = 1
+    df.loc[df["player_name"] == "Player A", "no_point_streak_excess_pre"] = 1.5
+    selected, _ = m.build_daily_bets(
+        df, "2026-09-23", 5, 1.01, 0.50, -1.0, 0.02, 0.90, True, False
+    )
+    assert selected.iloc[0]["player_name"] == "Player A"
+
+
+def test_selection_never_exceeds_five_for_a_single_market():
+    m = load_module()
+    df = pd.concat([base_rows()] * 4, ignore_index=True)
+    df["bet_id"] = [f"b{i}" for i in range(len(df))]
+    df["player_name"] = [f"Player {i}" for i in range(len(df))]
+    selected, _ = m.build_daily_bets(
+        df, "2026-09-23", 5, 1.01, 0.50, -1.0, 0.02, 0.90, True, False
+    )
+    assert len(selected) <= 5
