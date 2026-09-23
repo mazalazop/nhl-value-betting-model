@@ -35,7 +35,7 @@ def main():
     matchs=mod.load_matchs(); joueurs=mod.load_joueurs(); hist,_,_=mod.load_history()
     target=pd.Timestamp(a.target_date).normalize()
     future=mod.select_future_matches(matchs,target)
-    teams=sorted(set(future["id_equipe_domicile"].dropna().tolist()+set(future["id_equipe_exterieur"].dropna().tolist())))
+    teams=sorted(set(future["id_equipe_domicile"].dropna().tolist()) | set(future["id_equipe_exterieur"].dropna().tolist()))
     pool=mod.build_recent_player_pool(hist,joueurs,target,teams,recent_lookback_days=a.recent_lookback_days)
     standings,_,standings_by_team=mod.load_standings()
     upcoming=mod.build_upcoming_universe(future,hist,matchs,pool,standings_by_team)
