@@ -32,8 +32,10 @@ on:
         required: false
         type: boolean
         default: true
+  # Publication en début de soirée en France. Deux créneaux couvrent CET/CEST sans dépendre d'un cron local.
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 17 * * *"
 
 permissions:
   contents: read
@@ -281,6 +283,18 @@ jobs:
 
       - name: Build daily bets
         run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Build mobile API payload
+        run: |
+          python model/12_build_api_payload.py \
+            --input-csv outputs/07_daily_bets.csv \
+            --output-json outputs/api/daily_picks.json
+
+      - name: Validate mobile API payload
+        run: |
+          python model/13_validate_daily_payload.py \
+            --input-json outputs/api/daily_picks.json \
+            --report-json outputs/api/validation.json
 
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
