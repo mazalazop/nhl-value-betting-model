@@ -44,6 +44,8 @@ OPTIONAL_NUMERIC_COLUMNS = [
     "rank_proba_sur_match",
     "value_gap",
     "hard_exclude_hot_streak_pre",
+    "no_point_drought_alert_pre",
+    "no_point_streak_excess_pre",
 ]
 
 OPTIONAL_TEXT_COLUMNS = [
@@ -264,8 +266,8 @@ def build_daily_bets(
     df["no_point_streak_excess_pre"] = pd.to_numeric(df["no_point_streak_excess_pre"], errors="coerce").fillna(0)
     stats["drought_alert_rows"] = int((df["no_point_drought_alert_pre"] > 0).sum())
 
-    # Strict, auditable eligibility: valid odds, sufficient model probability,
-    # and non-negative model edge.
+    # Eligibility: valid odds and sufficient model probability. The edge is deliberately
+    # non-blocking by default because value-bet status is now secondary.
     odds_ok = df["odds_decimal"] >= min_odds
     proba_ok = df["model_probability"] >= min_model_proba
     edge_ok = df["edge_probability"] >= min_edge
@@ -370,8 +372,8 @@ def build_daily_bets(
         "is_value_bet",
         "is_value_bet_label",
         "hard_exclude_hot_streak_pre",
-    "no_point_drought_alert_pre",
-    "no_point_streak_excess_pre",
+        "no_point_drought_alert_pre",
+        "no_point_streak_excess_pre",
         "ev_per_unit",
         "kelly_fraction",
     ]
