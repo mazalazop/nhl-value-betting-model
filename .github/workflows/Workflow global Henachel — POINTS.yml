@@ -287,7 +287,8 @@ jobs:
         run: |
           python model/12_build_api_payload.py \
             --input-csv outputs/07_daily_bets.csv \
-            --output-json outputs/api/daily_picks.json
+            --output-json outputs/api/daily_picks.json \\
+            --slate-date "${{ needs.scrape_points.outputs.run_date }}"
 
       - name: Validate mobile API payload
         run: |
