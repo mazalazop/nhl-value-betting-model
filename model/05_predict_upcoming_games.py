@@ -223,6 +223,17 @@ EXTRA_OUTPUT_COLUMNS = [
     "days_since_last_game",
     "point_hit_rate_last_10",
     "point_hit_rate_last_20",
+    "goal_hit_rate_last_5",
+    "goal_hit_rate_last_10",
+    "goal_hit_rate_last_20",
+    "goal_hit_rate_season_pre",
+    "goal_hit_rate_prev_season",
+    "goal_hit_rate_weighted_pre",
+    "current_no_goal_streak_pre",
+    "max_no_goal_streak_last_2_seasons_pre",
+    "goal_streak_expected_pre",
+    "goal_streak_excess_pre",
+    "goal_drought_alert_pre",
     "point_hit_rate_weighted_pre",
     "recent_vs_expected_gap",
     "current_point_streak_pre",
@@ -260,6 +271,17 @@ DEFAULTS = {
     "point_hit_rate_last_5": DEFAULT_LAST10_HIT_RATE,
     "point_hit_rate_last_10": DEFAULT_LAST10_HIT_RATE,
     "point_hit_rate_last_20": DEFAULT_LAST20_HIT_RATE,
+    "goal_hit_rate_last_5": 0.20,
+    "goal_hit_rate_last_10": 0.20,
+    "goal_hit_rate_last_20": 0.20,
+    "goal_hit_rate_season_pre": 0.20,
+    "goal_hit_rate_prev_season": 0.20,
+    "goal_hit_rate_weighted_pre": 0.20,
+    "current_no_goal_streak_pre": 0.0,
+    "max_no_goal_streak_last_2_seasons_pre": 0.0,
+    "goal_streak_expected_pre": 4.0,
+    "goal_streak_excess_pre": 0.0,
+    "goal_drought_alert_pre": 0.0,
     "point_hit_rate_season_pre": DEFAULT_SEASON_HIT_RATE,
     "point_hit_rate_prev_season": DEFAULT_SEASON_HIT_RATE,
     "point_hit_rate_weighted_pre": DEFAULT_SEASON_HIT_RATE,
@@ -965,6 +987,51 @@ def compute_last_two_seasons_streak_stats(hist_player: pd.DataFrame, target_seas
     return int(max_hit), int(max_no), int(count_5plus)
 
 
+def compute_goal_drought_stats(hist_player: pd.DataFrame, target_season_code: Optional[str], goal_hit_rate_weighted_pre: float) -> Tuple[int, int, float, float, float]:
+    """Return current no-goal streak and a deliberately behavioral drought alert.
+
+    This is not a claim that a goal is "due". It is a player-history bias signal.
+    """
+    if hist_player.empty:
+        return 0, 0, 4.0, 0.0, 0.0
+
+    temp = hist_player.copy()
+    temp["season_code"] = temp["season_source"].apply(normalize_season_code)
+    if target_season_code is not None:
+        temp_current = temp[temp["season_code"] == target_season_code].copy()
+    else:
+        temp_current = temp.copy()
+
+    goal_hits = (pd.to_numeric(temp_current["buts"], errors="coerce").fillna(0) >= 1).astype(int).tolist()
+    current_no_goal = 0
+    for v in reversed(goal_hits):
+        if v == 0:
+            current_no_goal += 1
+        else:
+            break
+
+    target_start = parse_season_start_year(target_season_code)
+    temp2 = temp.copy()
+    if target_start is not None:
+        temp2["season_start_year"] = temp2["season_code"].apply(parse_season_start_year)
+        temp2 = temp2[temp2["season_start_year"].notna() & (temp2["season_start_year"] >= target_start - 1)].copy()
+    values = (pd.to_numeric(temp2["buts"], errors="coerce").fillna(0) >= 1).astype(int).tolist()
+    max_no_goal = 0
+    run = 0
+    for v in values:
+        if v == 0:
+            run += 1
+            max_no_goal = max(max_no_goal, run)
+        else:
+            run = 0
+
+    p_goal = float(np.clip(goal_hit_rate_weighted_pre, 0.05, 0.60))
+    expected = float((1.0 - p_goal) / p_goal)
+    excess = float(max(0.0, current_no_goal - expected) / max(1.0, expected))
+    alert = float(current_no_goal >= 6 and (excess >= 0.75 or (max_no_goal >= 6 and current_no_goal >= 0.80 * max_no_goal)))
+    return int(current_no_goal), int(max_no_goal), expected, excess, alert
+
+
 def compute_current_streaks(hist_player: pd.DataFrame, target_season_code: Optional[str]) -> Tuple[int, int]:
     if hist_player.empty or target_season_code is None:
         return 0, 0
@@ -1059,6 +1126,11 @@ def compute_player_features_for_future_row(
     point_hit_rate_last_10 = safe_mean_last_n(point_hits, 10) if n_prev > 0 else DEFAULT_LAST10_HIT_RATE
     point_hit_rate_last_20 = safe_mean_last_n(point_hits, 20) if n_prev > 0 else DEFAULT_LAST20_HIT_RATE
 
+    goal_hits = (goals.fillna(0) >= 1).astype(int)
+    goal_hit_rate_last_5 = safe_mean_last_n(goal_hits, 5) if n_prev > 0 else 0.20
+    goal_hit_rate_last_10 = safe_mean_last_n(goal_hits, 10) if n_prev > 0 else 0.20
+    goal_hit_rate_last_20 = safe_mean_last_n(goal_hits, 20) if n_prev > 0 else 0.20
+
     current_season_hist = hist_player[hist_player["season_source"] == target_season_code].copy()
     season_games_before_match = len(current_season_hist)
     if season_games_before_match > 0:
@@ -1076,6 +1148,21 @@ def compute_player_features_for_future_row(
     else:
         point_hit_rate_prev_season = np.nan
         points_per_game_prev_season = np.nan
+
+    if len(current_season_hist) > 0:
+        goal_hit_rate_season_pre = float((pd.to_numeric(current_season_hist["buts"], errors="coerce").fillna(0) >= 1).mean())
+    else:
+        goal_hit_rate_season_pre = np.nan
+    if len(prev_season_hist) > 0:
+        goal_hit_rate_prev_season = float((pd.to_numeric(prev_season_hist["buts"], errors="coerce").fillna(0) >= 1).mean())
+    else:
+        goal_hit_rate_prev_season = np.nan
+    if pd.notna(goal_hit_rate_season_pre) and pd.notna(goal_hit_rate_prev_season):
+        goal_hit_rate_weighted_pre = historical_current_weight * goal_hit_rate_season_pre + historical_prev_weight * goal_hit_rate_prev_season
+    else:
+        goal_hit_rate_weighted_pre = goal_hit_rate_season_pre if pd.notna(goal_hit_rate_season_pre) else goal_hit_rate_prev_season
+    if pd.isna(goal_hit_rate_weighted_pre):
+        goal_hit_rate_weighted_pre = 0.20
 
     hist_vs_opp = hist_player[hist_player["adversaire_match"] == opp_code].copy()
     nb_matchs_vs_adv_avant = float(len(hist_vs_opp))
@@ -1181,6 +1268,14 @@ def compute_player_features_for_future_row(
 
     recent_vs_expected_gap = float(point_hit_rate_weighted_pre - recent_combo)
 
+    (
+        current_no_goal_streak_pre,
+        max_no_goal_streak_last_2_seasons_pre,
+        goal_streak_expected_pre,
+        goal_streak_excess_pre,
+        goal_drought_alert_pre,
+    ) = compute_goal_drought_stats(hist_player, target_season_code, goal_hit_rate_weighted_pre)
+
     # Biais volontaire de joueur: on mesure la longueur de la série sans point
     # par rapport à ce qu'on attend de CE joueur. Ce n'est pas une probabilité
     # de "retour à la moyenne" et ce signal ne doit jamais être présenté comme
@@ -1261,6 +1356,17 @@ def compute_player_features_for_future_row(
         "point_hit_rate_last_5": point_hit_rate_last_5,
         "point_hit_rate_last_10": point_hit_rate_last_10,
         "point_hit_rate_last_20": point_hit_rate_last_20,
+        "goal_hit_rate_last_5": goal_hit_rate_last_5,
+        "goal_hit_rate_last_10": goal_hit_rate_last_10,
+        "goal_hit_rate_last_20": goal_hit_rate_last_20,
+        "goal_hit_rate_season_pre": goal_hit_rate_season_pre,
+        "goal_hit_rate_prev_season": goal_hit_rate_prev_season,
+        "goal_hit_rate_weighted_pre": goal_hit_rate_weighted_pre,
+        "current_no_goal_streak_pre": float(current_no_goal_streak_pre),
+        "max_no_goal_streak_last_2_seasons_pre": float(max_no_goal_streak_last_2_seasons_pre),
+        "goal_streak_expected_pre": goal_streak_expected_pre,
+        "goal_streak_excess_pre": goal_streak_excess_pre,
+        "goal_drought_alert_pre": goal_drought_alert_pre,
         "point_hit_rate_season_pre": point_hit_rate_season_pre,
         "point_hit_rate_prev_season": point_hit_rate_prev_season,
         "point_hit_rate_weighted_pre": point_hit_rate_weighted_pre,
