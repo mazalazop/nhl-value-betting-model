@@ -175,6 +175,9 @@ FEATURE_WHITELIST = [
     "current_point_streak_pre",
     "current_no_point_streak_pre",
     "max_point_streak_last_2_seasons_pre",
+    "no_point_streak_expected_pre",
+    "no_point_streak_excess_pre",
+    "no_point_drought_alert_pre",
     "max_no_point_streak_last_2_seasons_pre",
     "count_5plus_point_streaks_last_2_seasons_pre",
     "is_home_team",
@@ -224,6 +227,9 @@ EXTRA_OUTPUT_COLUMNS = [
     "recent_vs_expected_gap",
     "current_point_streak_pre",
     "current_no_point_streak_pre",
+    "no_point_streak_expected_pre",
+    "no_point_streak_excess_pre",
+    "no_point_drought_alert_pre",
     "hard_exclude_hot_streak_pre",
     "games_remaining_team_pre",
     "team_points_pre",
@@ -263,6 +269,9 @@ DEFAULTS = {
     "recent_vs_expected_gap": 0.0,
     "current_point_streak_pre": 0.0,
     "current_no_point_streak_pre": 0.0,
+    "no_point_streak_expected_pre": 1.0,
+    "no_point_streak_excess_pre": 0.0,
+    "no_point_drought_alert_pre": 0.0,
     "max_point_streak_last_2_seasons_pre": 0.0,
     "max_no_point_streak_last_2_seasons_pre": 0.0,
     "count_5plus_point_streaks_last_2_seasons_pre": 0.0,
@@ -1172,6 +1181,27 @@ def compute_player_features_for_future_row(
 
     recent_vs_expected_gap = float(point_hit_rate_weighted_pre - recent_combo)
 
+    # Biais volontaire de joueur: on mesure la longueur de la série sans point
+    # par rapport à ce qu'on attend de CE joueur. Ce n'est pas une probabilité
+    # de "retour à la moyenne" et ce signal ne doit jamais être présenté comme
+    # une loi probabilistique. Il sert d'alerte comportementale complémentaire.
+    p_point_personal = float(np.clip(point_hit_rate_weighted_pre, 0.05, 0.95))
+    no_point_streak_expected_pre = float((1.0 - p_point_personal) / p_point_personal)
+    no_point_streak_excess_pre = float(
+        max(0.0, current_no_point_streak_pre - no_point_streak_expected_pre)
+        / max(1.0, no_point_streak_expected_pre)
+    )
+    no_point_drought_alert_pre = float(
+        current_no_point_streak_pre >= 4
+        and (
+            no_point_streak_excess_pre >= 0.75
+            or (
+                max_no_point_streak_last_2_seasons_pre >= 4
+                and current_no_point_streak_pre >= 0.80 * max_no_point_streak_last_2_seasons_pre
+            )
+        )
+    )
+
     hard_exclude_hot_streak_pre = float(
         (current_point_streak_pre >= 5)
         and (count_5plus_point_streaks_last_2_seasons_pre < 2)
@@ -1240,6 +1270,9 @@ def compute_player_features_for_future_row(
         "recent_vs_expected_gap": recent_vs_expected_gap,
         "current_point_streak_pre": float(current_point_streak_pre),
         "current_no_point_streak_pre": float(current_no_point_streak_pre),
+        "no_point_streak_expected_pre": no_point_streak_expected_pre,
+        "no_point_streak_excess_pre": no_point_streak_excess_pre,
+        "no_point_drought_alert_pre": no_point_drought_alert_pre,
         "max_point_streak_last_2_seasons_pre": float(max_point_streak_last_2_seasons_pre),
         "max_no_point_streak_last_2_seasons_pre": float(max_no_point_streak_last_2_seasons_pre),
         "count_5plus_point_streaks_last_2_seasons_pre": float(count_5plus_point_streaks_last_2_seasons_pre),
