@@ -61,3 +61,13 @@ iOS et Android partagent le même contrat API. Les clients ne calculent pas les 
 6. Construire iOS et Android.
 7. Ajouter notifications, historique et métriques.
 8. Préparer conformité App Store / Google Play et politique de confidentialité.
+
+
+## Sélection quotidienne 2026-27
+
+- Marché POINTS : au maximum 5 picks.
+- Marché BUTS : au maximum 5 picks.
+- La value bet reste affichée comme indicateur secondaire et ne bloque plus par défaut une sélection.
+- Une sécheresse anormalement longue sans point ou sans but est modélisée comme un **biais comportemental de joueur**.
+- Le signal de sécheresse compare la série actuelle à un niveau attendu propre au joueur et à son historique récent. Il est explicitement distinct d'une probabilité de retour à la moyenne.
+- Les cas avec alerte de sécheresse reçoivent un poids d'apprentissage modéré (+15 %) et un petit bonus de classement. L'objectif est de rendre l'alerte visible sans prétendre qu'un joueur est mathématiquement « dû ».
