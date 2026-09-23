@@ -305,12 +305,20 @@ def build_daily_bets(
         df["_toi_last_game"] = np.nan
         df["_toi_priority"] = 0
 
-    # Probability remains the primary ranking criterion. TOI >=14 is a
-    # preference, never a hard exclusion.
+    # La probabilité reste le socle, mais on ajoute un petit bonus explicite
+    # au signal de sécheresse anormale. Cela traduit le biais de joueur demandé
+    # sans transformer ce biais en fausse probabilité mathématique.
+    df["_drought_bonus"] = (
+        0.010 * df["no_point_drought_alert_pre"].clip(lower=0, upper=1)
+        + 0.010 * df["no_point_streak_excess_pre"].clip(lower=0, upper=2)
+    )
+    df["_selection_score"] = df["model_probability"] + df["_drought_bonus"]
+
+    # TOI >=14 est une préférence, jamais une exclusion.
     df = df.sort_values(
-        ["model_probability", "no_point_drought_alert_pre", "no_point_streak_excess_pre",
-         "_toi_priority", "edge_probability", "odds_decimal", "player_name", "team", "opponent"],
-        ascending=[False, False, False, False, False, False, True, True, True],
+        ["_selection_score", "model_probability", "_toi_priority", "edge_probability", "odds_decimal",
+         "player_name", "team", "opponent"],
+        ascending=[False, False, False, False, False, True, True, True],
         kind="stable",
     ).reset_index(drop=True)
 
@@ -322,7 +330,7 @@ def build_daily_bets(
     if max_picks > 0:
         df = df.head(max_picks).copy()
 
-    df = df.drop(columns=["_toi_last_game", "_toi_priority"], errors="ignore")
+    df = df.drop(columns=["_toi_last_game", "_toi_priority", "_drought_bonus", "_selection_score"], errors="ignore")
 
     if df.empty:
         return df, stats
