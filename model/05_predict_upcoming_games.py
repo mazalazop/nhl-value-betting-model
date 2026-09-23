@@ -1157,13 +1157,6 @@ def compute_player_features_for_future_row(
         goal_hit_rate_prev_season = float((pd.to_numeric(prev_season_hist["buts"], errors="coerce").fillna(0) >= 1).mean())
     else:
         goal_hit_rate_prev_season = np.nan
-    if pd.notna(goal_hit_rate_season_pre) and pd.notna(goal_hit_rate_prev_season):
-        goal_hit_rate_weighted_pre = historical_current_weight * goal_hit_rate_season_pre + historical_prev_weight * goal_hit_rate_prev_season
-    else:
-        goal_hit_rate_weighted_pre = goal_hit_rate_season_pre if pd.notna(goal_hit_rate_season_pre) else goal_hit_rate_prev_season
-    if pd.isna(goal_hit_rate_weighted_pre):
-        goal_hit_rate_weighted_pre = 0.20
-
     hist_vs_opp = hist_player[hist_player["adversaire_match"] == opp_code].copy()
     nb_matchs_vs_adv_avant = float(len(hist_vs_opp))
     points_vs_adv_5 = safe_mean_last_n(pd.to_numeric(hist_vs_opp["points"], errors="coerce"), 5) if len(hist_vs_opp) > 0 else np.nan
@@ -1235,6 +1228,13 @@ def compute_player_features_for_future_row(
         HISTORICAL_CURRENT_WEIGHT_RETURN if return_stabilized_flag == 1.0 else HISTORICAL_CURRENT_WEIGHT_DEFAULT
     )
     historical_prev_weight = float(1.0 - historical_current_weight)
+
+    if pd.notna(goal_hit_rate_season_pre) and pd.notna(goal_hit_rate_prev_season):
+        goal_hit_rate_weighted_pre = historical_current_weight * goal_hit_rate_season_pre + historical_prev_weight * goal_hit_rate_prev_season
+    else:
+        goal_hit_rate_weighted_pre = goal_hit_rate_season_pre if pd.notna(goal_hit_rate_season_pre) else goal_hit_rate_prev_season
+    if pd.isna(goal_hit_rate_weighted_pre):
+        goal_hit_rate_weighted_pre = 0.20
 
     if pd.notna(point_hit_rate_season_pre) and pd.notna(point_hit_rate_prev_season):
         point_hit_rate_weighted_pre = historical_current_weight * point_hit_rate_season_pre + historical_prev_weight * point_hit_rate_prev_season
