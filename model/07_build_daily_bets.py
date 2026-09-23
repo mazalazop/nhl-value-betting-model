@@ -105,14 +105,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-odds",
         type=float,
-        default=1.40,
-        help="Cote minimale par défaut pour conserver un pick.",
+        default=1.01,
+        help="Cote minimale. Une cote strictement supérieure à 1 est requise.",
     )
     parser.add_argument(
-        "--override-min-model-proba",
+        "--min-model-proba",
+        type=float,
+        default=0.50,
+        help="Probabilité modèle minimale pour entrer dans l'univers des recommandations.",
+    )
+    parser.add_argument(
+        "--min-edge",
+        type=float,
+        default=0.0,
+        help="Edge minimal modèle - probabilité implicite pour recommander un pick.",
+    )
+    parser.add_argument(
+        "--hot-streak-exception-proba",
         type=float,
         default=0.90,
-        help="Seuil de probabilité modèle qui autorise un pick même sous la cote minimale.",
+        help="Probabilité modèle à partir de laquelle l'exclusion hot streak est levée.",
     )
     parser.add_argument(
         "--value-threshold",
@@ -218,8 +230,10 @@ def build_daily_bets(
     run_date: str,
     max_picks: int,
     min_odds: float,
-    override_min_model_proba: float,
+    min_model_proba: float,
+    min_edge: float,
     value_threshold: float,
+    hot_streak_exception_proba: float,
     one_pick_per_player: bool,
     disable_hot_streak_exclude: bool,
 ) -> tuple[pd.DataFrame, Dict[str, Any]]:
@@ -228,7 +242,7 @@ def build_daily_bets(
 
     stats: Dict[str, Any] = {
         "rows_after_run_date_filter": int(len(df)),
-        "rows_removed_low_odds": 0,
+        "rows_removed_ineligible": 0,
         "rows_removed_hot_streak": 0,
         "rows_after_player_dedup": 0,
     }
@@ -239,11 +253,13 @@ def build_daily_bets(
     # Value-bet flag kept as secondary information only.
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
 
-    # Eligibility: odds >= min_odds OR model_probability >= override threshold
+    # Strict, auditable eligibility: valid odds, sufficient model probability,
+    # and non-negative model edge.
     odds_ok = df["odds_decimal"] >= min_odds
-    proba_override_ok = df["model_probability"] >= override_min_model_proba
-    keep_mask = odds_ok | proba_override_ok
-    stats["rows_removed_low_odds"] = int((~keep_mask).sum())
+    proba_ok = df["model_probability"] >= min_model_proba
+    edge_ok = df["edge_probability"] >= min_edge
+    keep_mask = odds_ok & proba_ok & edge_ok
+    stats["rows_removed_ineligible"] = int((~keep_mask).sum())
     df = df[keep_mask].copy()
 
     if df.empty:
@@ -251,18 +267,40 @@ def build_daily_bets(
 
     # Hard exclude hot streak if present
     if not disable_hot_streak_exclude:
-        hot_mask = df["hard_exclude_hot_streak_pre"].fillna(0).astype(int) == 1
+        hot_mask = (
+            (df["hard_exclude_hot_streak_pre"].fillna(0).astype(int) == 1)
+            & (df["model_probability"] < hot_streak_exception_proba)
+        )
         stats["rows_removed_hot_streak"] = int(hot_mask.sum())
         df = df[~hot_mask].copy()
 
     if df.empty:
         return df, stats
 
-    # Main ranking aligned with sheet display logic:
-    # model_probability first, then edge_probability, then odds_decimal.
+    if "bet_id" in df.columns:
+        df = df.drop_duplicates(subset=["bet_id"], keep="first").copy()
+
+    toi_candidates = [
+        "toi_last_game_minutes",
+        "toi_dernier_match",
+        "temps_de_glace_dernier_match",
+        "last_game_toi_minutes",
+    ]
+    toi_col = next((c for c in toi_candidates if c in df.columns), None)
+    if toi_col:
+        df["_toi_last_game"] = pd.to_numeric(df[toi_col], errors="coerce")
+        df["_toi_priority"] = (df["_toi_last_game"] >= 14.0).astype(int)
+    else:
+        df["_toi_last_game"] = np.nan
+        df["_toi_priority"] = 0
+
+    # Probability remains the primary ranking criterion. TOI >=14 is a
+    # preference, never a hard exclusion.
     df = df.sort_values(
-        ["model_probability", "edge_probability", "odds_decimal"],
-        ascending=[False, False, False],
+        ["model_probability", "_toi_priority", "edge_probability", "odds_decimal",
+         "player_name", "team", "opponent"],
+        ascending=[False, False, False, False, True, True, True],
+        kind="stable",
     ).reset_index(drop=True)
 
     if one_pick_per_player:
@@ -272,6 +310,8 @@ def build_daily_bets(
 
     if max_picks > 0:
         df = df.head(max_picks).copy()
+
+    df = df.drop(columns=["_toi_last_game", "_toi_priority"], errors="ignore")
 
     if df.empty:
         return df, stats
@@ -375,8 +415,10 @@ def main() -> None:
         run_date=run_date,
         max_picks=args.max_picks,
         min_odds=args.min_odds,
-        override_min_model_proba=args.override_min_model_proba,
+        min_model_proba=args.min_model_proba,
+        min_edge=args.min_edge,
         value_threshold=args.value_threshold,
+        hot_streak_exception_proba=args.hot_streak_exception_proba,
         one_pick_per_player=args.one_pick_per_player,
         disable_hot_streak_exclude=args.disable_hot_streak_exclude,
     )
@@ -423,8 +465,10 @@ def main() -> None:
         "rules": {
             "max_picks": int(args.max_picks),
             "min_odds": float(args.min_odds),
-            "override_min_model_proba": float(args.override_min_model_proba),
+            "min_model_proba": float(args.min_model_proba),
+            "min_edge": float(args.min_edge),
             "value_threshold": float(args.value_threshold),
+            "hot_streak_exception_proba": float(args.hot_streak_exception_proba),
             "one_pick_per_player": bool(args.one_pick_per_player),
             "disable_hot_streak_exclude": bool(args.disable_hot_streak_exclude),
         },
@@ -455,8 +499,10 @@ def main() -> None:
     print("=== RULES ===")
     print(f"- max_picks={args.max_picks}")
     print(f"- min_odds={args.min_odds}")
-    print(f"- override_min_model_proba={args.override_min_model_proba}")
+    print(f"- min_model_proba={args.min_model_proba}")
+    print(f"- min_edge={args.min_edge}")
     print(f"- value_threshold={args.value_threshold}")
+    print(f"- hot_streak_exception_proba={args.hot_streak_exception_proba}")
     print(f"- one_pick_per_player={args.one_pick_per_player}")
     print(f"- disable_hot_streak_exclude={args.disable_hot_streak_exclude}")
     print("")
