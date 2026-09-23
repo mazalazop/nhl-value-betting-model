@@ -23,13 +23,16 @@
           "opponent": {"type": "string"},
           "match_date": {"type": "string"},
           "market": {"type": "string"},
+          "market_group": {"type": "string"},
           "odds": {"type": "number", "exclusiveMinimum": 1},
           "model_probability": {"type": "number", "minimum": 0, "maximum": 1},
           "implied_probability": {"type": ["number", "null"]},
           "edge": {"type": "number"},
           "ev_per_unit": {"type": ["number", "null"]},
           "recent_form": {"type": ["number", "null"]},
-          "toi_last_game_minutes": {"type": ["number", "null"]}
+          "toi_last_game_minutes": {"type": ["number", "null"]},
+          "drought_alert": {"type": ["number", "null"]},
+          "drought_excess": {"type": ["number", "null"]}
         },
         "additionalProperties": true
       }
