@@ -99,8 +99,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-picks",
         type=int,
-        default=10,
-        help="Nombre maximum de picks recommandés.",
+        default=5,
+        help="Nombre maximum de picks recommandés pour ce marché.",
     )
     parser.add_argument(
         "--min-odds",
@@ -117,8 +117,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-edge",
         type=float,
-        default=0.0,
-        help="Edge minimal modèle - probabilité implicite pour recommander un pick.",
+        default=-1.0,
+        help="Edge minimal. Par défaut il ne filtre plus les picks: la value bet reste un indicateur secondaire.",
     )
     parser.add_argument(
         "--hot-streak-exception-proba",
@@ -245,6 +245,7 @@ def build_daily_bets(
         "rows_removed_ineligible": 0,
         "rows_removed_hot_streak": 0,
         "rows_after_player_dedup": 0,
+        "drought_alert_rows": 0,
     }
 
     if df.empty:
@@ -252,6 +253,16 @@ def build_daily_bets(
 
     # Value-bet flag kept as secondary information only.
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
+
+    # Signal comportemental volontaire: une série sans point anormalement longue
+    # doit rester visible même lorsque la value bet stricte est faible/négative.
+    if "no_point_drought_alert_pre" not in df.columns:
+        df["no_point_drought_alert_pre"] = 0
+    if "no_point_streak_excess_pre" not in df.columns:
+        df["no_point_streak_excess_pre"] = 0.0
+    df["no_point_drought_alert_pre"] = pd.to_numeric(df["no_point_drought_alert_pre"], errors="coerce").fillna(0)
+    df["no_point_streak_excess_pre"] = pd.to_numeric(df["no_point_streak_excess_pre"], errors="coerce").fillna(0)
+    stats["drought_alert_rows"] = int((df["no_point_drought_alert_pre"] > 0).sum())
 
     # Strict, auditable eligibility: valid odds, sufficient model probability,
     # and non-negative model edge.
@@ -297,9 +308,9 @@ def build_daily_bets(
     # Probability remains the primary ranking criterion. TOI >=14 is a
     # preference, never a hard exclusion.
     df = df.sort_values(
-        ["model_probability", "_toi_priority", "edge_probability", "odds_decimal",
-         "player_name", "team", "opponent"],
-        ascending=[False, False, False, False, True, True, True],
+        ["model_probability", "no_point_drought_alert_pre", "no_point_streak_excess_pre",
+         "_toi_priority", "edge_probability", "odds_decimal", "player_name", "team", "opponent"],
+        ascending=[False, False, False, False, False, False, True, True, True],
         kind="stable",
     ).reset_index(drop=True)
 
@@ -351,6 +362,8 @@ def build_daily_bets(
         "is_value_bet",
         "is_value_bet_label",
         "hard_exclude_hot_streak_pre",
+    "no_point_drought_alert_pre",
+    "no_point_streak_excess_pre",
         "ev_per_unit",
         "kelly_fraction",
     ]
@@ -467,6 +480,8 @@ def main() -> None:
             "min_odds": float(args.min_odds),
             "min_model_proba": float(args.min_model_proba),
             "min_edge": float(args.min_edge),
+            "value_bet_is_secondary_signal": True,
+            "drought_alert_is_secondary_signal": True,
             "value_threshold": float(args.value_threshold),
             "hot_streak_exception_proba": float(args.hot_streak_exception_proba),
             "one_pick_per_player": bool(args.one_pick_per_player),
