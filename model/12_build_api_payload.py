@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, math
+import argparse, json, math, numbers
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -13,12 +13,19 @@ MODEL_VERSION = "point-v3.0"
 SCHEMA_VERSION = "1.0.0"
 
 def finite(v: Any) -> Any:
-    if v is None or pd.isna(v):
+    if v is None:
         return None
-    if isinstance(v, (float, int)) and not math.isfinite(float(v)):
-        return None
+    try:
+        if pd.isna(v):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if isinstance(v, numbers.Integral):
+        return int(v)
+    if isinstance(v, numbers.Real):
+        value = float(v)
+        return value if math.isfinite(value) else None
     return v
-
 def col(df: pd.DataFrame, names: list[str]) -> str | None:
     return next((n for n in names if n in df.columns), None)
 
