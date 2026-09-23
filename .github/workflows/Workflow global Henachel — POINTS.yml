@@ -285,7 +285,7 @@ jobs:
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
 
       - name: Build daily bets
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}" --max-picks 5 --min-edge -1.0
 
       - name: Build mobile API payload
         run: |
