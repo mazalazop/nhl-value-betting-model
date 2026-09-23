@@ -32,10 +32,9 @@ on:
         required: false
         type: boolean
         default: true
-  # Publication en début de soirée en France. Deux créneaux couvrent CET/CEST sans dépendre d'un cron local.
+  # Publication en fin d'après-midi / début de soirée France : 16:00 UTC (17:00 CET, 18:00 CEST).
   schedule:
     - cron: "0 16 * * *"
-    - cron: "0 17 * * *"
 
 permissions:
   contents: read
