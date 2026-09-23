@@ -290,6 +290,7 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
         if prev_season is None or current_season != prev_season:
             running_point_streak = 0
             running_no_point_streak = 0
+            running_no_goal_streak = 0
 
         current_point_streak_pre[i] = running_point_streak
         current_no_point_streak_pre[i] = running_no_point_streak
