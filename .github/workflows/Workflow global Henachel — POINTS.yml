@@ -264,7 +264,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest -q tests/test_mobile_payload.py
+          pytest -q tests/test_mobile_payload.py tests/test_selection_engine.py
 
       - name: Refresh upstream sources
         run: python model/00_refresh_sources.py
