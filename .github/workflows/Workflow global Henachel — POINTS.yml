@@ -238,7 +238,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy scikit-learn requests urllib3 gspread google-auth google-auth-oauthlib google-auth-httplib2
+          pip install -r requirements.txt
 
       - name: Download scraper artifact
         uses: actions/download-artifact@v4
@@ -261,6 +261,10 @@ jobs:
           cat > secrets/henachel-service-account.json <<'JSON'
           ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
           JSON
+
+      - name: Run unit tests
+        run: |
+          pytest -q tests/test_mobile_payload.py
 
       - name: Refresh upstream sources
         run: python model/00_refresh_sources.py
