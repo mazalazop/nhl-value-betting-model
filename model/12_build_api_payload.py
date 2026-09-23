@@ -64,7 +64,7 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
         picks.append({
             "rank": len(picks) + 1,
             "player": player,
-            "player_id": r[col(df, ["id_joueur", "player_id"])] if col(df, ["id_joueur", "player_id"]) and not pd.isna(r[col(df, ["id_joueur", "player_id"])]) else None,
+            "player_id": (int(r[col(df, ["id_joueur", "player_id"])]) if pd.api.types.is_integer_dtype(type(r[col(df, ["id_joueur", "player_id"])])) else str(r[col(df, ["id_joueur", "player_id"])])) if col(df, ["id_joueur", "player_id"]) and not pd.isna(r[col(df, ["id_joueur", "player_id"])]) else None,
             "team": textv(r, ["team", "team_player_match"]),
             "opponent": textv(r, ["opponent", "adversaire_match"]),
             "match_date": datev(r[date_col]),
