@@ -39,7 +39,7 @@ def datev(v: Any) -> str | None:
     d = pd.to_datetime(v, errors="coerce")
     return None if pd.isna(d) else d.strftime("%Y-%m-%d")
 
-def build(df: pd.DataFrame) -> dict[str, Any]:
+def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
     date_col = col(df, ["date_match", "match_date", "game_date"])
     prob_col = col(df, ["model_probability", "probability", "proba_model", "p_model"])
     edge_col = col(df, ["edge_probability", "edge", "edge_pct"])
@@ -82,7 +82,7 @@ def build(df: pd.DataFrame) -> dict[str, Any]:
         "model_version": MODEL_VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "timezone": "Europe/Paris",
-        "slate_date": dates.min().strftime("%Y-%m-%d") if not dates.empty else None,
+        "slate_date": slate_date or (dates.min().strftime("%Y-%m-%d") if not dates.empty else None),
         "pick_count": len(picks),
         "picks": picks,
     }
@@ -91,11 +91,12 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--input-csv", default=str(DEFAULT_INPUT))
     p.add_argument("--output-json", default=str(DEFAULT_OUTPUT))
+    p.add_argument("--slate-date", default=None, help="Date métier France du slate, YYYY-MM-DD.")
     a = p.parse_args()
     src, dst = Path(a.input_csv), Path(a.output_json)
     if not src.exists():
         raise FileNotFoundError(f"Input introuvable: {src}")
-    payload = build(pd.read_csv(src, low_memory=False))
+    payload = build(pd.read_csv(src, low_memory=False), slate_date=a.slate_date)
     if payload["pick_count"] and not payload["slate_date"]:
         raise ValueError("Picks présents mais slate_date introuvable.")
     dst.parent.mkdir(parents=True, exist_ok=True)
