@@ -76,13 +76,16 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
             "opponent": textv(r, ["opponent", "adversaire_match"]),
             "match_date": datev(r[date_col]),
             "market": textv(r, ["market", "stat", "bet_type"], "point_1_plus"),
+            "market_group": textv(r, ["pick_market_group"], "points"),
             "odds": odds,
             "model_probability": prob,
             "implied_probability": num(r, ["implied_probability", "proba_implicite"]),
             "edge": num(r, ["edge_probability", "edge", "edge_pct"]) or 0.0,
             "ev_per_unit": num(r, ["ev_per_unit", "ev"]),
             "recent_form": num(r, ["recent_form", "point_hit_rate_last_5", "point_hit_rate_last_10"]),
-            "toi_last_game_minutes": num(r, ["toi_last_game_minutes", "toi_dernier_match", "temps_de_glace"])
+            "toi_last_game_minutes": num(r, ["toi_last_game_minutes", "toi_dernier_match", "temps_de_glace"]),
+            "drought_alert": num(r, ["no_point_drought_alert_pre", "goal_drought_alert_pre"]),
+            "drought_excess": num(r, ["no_point_streak_excess_pre", "goal_streak_excess_pre"])
         })
     return {
         "schema_version": SCHEMA_VERSION,
