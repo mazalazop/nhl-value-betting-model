@@ -221,6 +221,7 @@ REQUIRED_HISTORY_COLUMNS = [
 
 EXTRA_OUTPUT_COLUMNS = [
     "days_since_last_game",
+    "toi_last_game_minutes",
     "point_hit_rate_last_10",
     "point_hit_rate_last_20",
     "goal_hit_rate_last_5",
@@ -1075,6 +1076,8 @@ def compute_player_features_for_future_row(
     target_season_code = normalize_season_code(saison)
     n_prev = int(len(hist_player))
 
+    toi_last_game_minutes = float(pd.to_numeric(hist_player["temps_de_glace"].iloc[-1], errors="coerce")) if n_prev > 0 and pd.notna(hist_player["temps_de_glace"].iloc[-1]) else np.nan
+
     last_date = pd.Timestamp(hist_player["date_match"].iloc[-1]) if n_prev > 0 else None
     last_season_code = hist_player["season_source"].iloc[-1] if n_prev > 0 else None
     same_season_prev = bool(last_season_code == target_season_code) if (last_season_code and target_season_code) else False
@@ -1305,6 +1308,7 @@ def compute_player_features_for_future_row(
 
     row = {
         "id_joueur": int(player_id),
+        "toi_last_game_minutes": toi_last_game_minutes,
         "date_match": game_date,
         "saison": pd.to_numeric(saison, errors="coerce"),
         "team_player_match": team_code,
@@ -1515,6 +1519,7 @@ def build_upcoming_universe(
                     "adversaire_match": opp_code,
                     "is_home_player": float(is_home),
                     "days_since_last_game": pd.to_numeric(player.get("days_since_last_game"), errors="coerce"),
+                    "toi_last_game_minutes": base_row.get("toi_last_game_minutes", np.nan),
                 }
                 out_row.update(base_row)
                 out_row.update(team_ctx)
