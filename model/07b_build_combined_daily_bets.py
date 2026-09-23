@@ -44,7 +44,7 @@ def main():
     combined=pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()
     if not combined.empty:
         combined=combined.sort_values(["pick_market_group","model_probability","edge_probability"],ascending=[True,False,False],kind="stable").reset_index(drop=True)
-        combined["recommendation_rank"]=range(1,len(combined)+1)
+        combined["recommendation_rank"]=combined.groupby("pick_market_group", sort=False).cumcount()+1
         combined["display_rank"]=combined["recommendation_rank"]
     path=OUT/"07_daily_bets.csv";combined.to_csv(path,index=False)
     print(f"Points: {sum(len(x[x['pick_market_group']=='points']) for x in frames) if frames else 0}")
