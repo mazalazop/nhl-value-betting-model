@@ -51,7 +51,7 @@ def main():
     Xfit=Xfit[keep];Xcal=cal[keep].apply(pd.to_numeric,errors="coerce").replace([np.inf,-np.inf],np.nan)
     yfit=fit.target_goal_1p.astype(int);ycal=cal.target_goal_1p.astype(int)
     if yfit.nunique()<2 or ycal.nunique()<2: raise ValueError("Fit/calibration BUT sans deux classes.")
-    pos=max(1,int(yfit.sum()));neg=max(1,len(yfit)-int(yfit.sum()));w=np.where(yfit.to_numpy()==1,neg/pos,1.0)
+    pos=max(1,int(yfit.sum()));neg=max(1,len(yfit)-int(yfit.sum()));w=np.where(yfit.to_numpy()==1,neg/pos,1.0)\n    if "goal_drought_alert_pre" in fit.columns: w=w*np.where(pd.to_numeric(fit["goal_drought_alert_pre"],errors="coerce").fillna(0).to_numpy()>0,1.15,1.0)
     model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
     model.fit(Xfit,yfit,sample_weight=w)
     raw_cal=model.predict_proba(Xcal)[:,1]
