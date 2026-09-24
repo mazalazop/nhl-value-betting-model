@@ -1723,6 +1723,26 @@ def main() -> None:
     target_date = choose_target_date(matchs=matchs, target_date_str=args.target_date)
     future_matches = select_future_matches(matchs=matchs, target_date=target_date)
 
+    if future_matches.empty:
+        empty_cols = META_OUTPUT_COLUMNS + EXTRA_OUTPUT_COLUMNS + [
+            "model_variant", "calibration_method",
+            "proba_point_1p_raw", "proba_point_1p_calibree",
+            "rank_proba_sur_date", "rank_proba_sur_match",
+        ]
+        pd.DataFrame(columns=list(dict.fromkeys(empty_cols))).to_csv(PRED_UPCOMING_RAW_PATH, index=False)
+        pd.DataFrame(columns=list(dict.fromkeys(empty_cols))).to_csv(PRED_UPCOMING_CAL_PATH, index=False)
+        summary = {
+            "status": "ok",
+            "target_date": str(target_date.date()),
+            "future_matches_rows": 0,
+            "future_players_rows": 0,
+            "future_teams": [],
+            "note": "Aucun match au slate demandé : prédictions vides, pipeline poursuivable.",
+        }
+        write_json(SUMMARY_PATH, summary)
+        print(f"Aucun match pour le slate {target_date.date()}: 0 prédiction POINTS.")
+        return
+
     history_before_target = history[history[date_col] < target_date].copy()
     if history_before_target.empty:
         raise ValueError("Aucune ligne historique disponible avant la date cible.")
