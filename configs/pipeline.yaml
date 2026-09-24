@@ -2,7 +2,7 @@ project:
   name: nhl-value-betting
   season: 2026-27
   timezone: Europe/Paris
-  model_version: point-v3.0
+  model_version: henachel-2026-27-v1
 
 slate:
   timezone: Europe/Paris
