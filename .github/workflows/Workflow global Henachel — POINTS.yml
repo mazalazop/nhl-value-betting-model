@@ -152,6 +152,7 @@ jobs:
           python scrapers/unibet_points_discover_event_urls.py
 
       - name: Export discovered event URLs
+        id: export_urls
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -171,13 +172,17 @@ jobs:
               handle.write(f"DISCOVERY_JSON_PATH={path}\n")
               handle.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
 
+          has_events = bool(urls)
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as handle:
+              handle.write(f"has_events={str(has_events).lower()}\n")
+
           print(f"URLs découvertes : {len(urls)}")
           if not urls:
               print("Aucun match découvert : marchés de cotes vides.")
           PY
 
       - name: Run points batch
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         env:
           UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
@@ -186,7 +191,7 @@ jobs:
           python scrapers/unibet_event_points_batch_runner.py
 
       - name: Build acceptance report
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         env:
           MIN_ROWS_PER_EVENT: ${{ env.MIN_ROWS_PER_EVENT }}
@@ -197,7 +202,7 @@ jobs:
           python scrapers/unibet_event_points_acceptance_report.py
 
       - name: Build normalized points json
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -206,7 +211,7 @@ jobs:
           python scrapers/unibet_event_points_normalize_accepted.py
 
       - name: Run goals batch
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         env:
           UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
@@ -215,7 +220,7 @@ jobs:
           python scrapers/unibet_event_goals_batch_runner.py
 
       - name: Build goals acceptance report
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -224,7 +229,7 @@ jobs:
           python scrapers/unibet_event_goals_acceptance_report.py
 
       - name: Build normalized goals json
-        if: ${{ env.UNIBET_EVENT_URLS != '' }}
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         shell: bash
         run: |
