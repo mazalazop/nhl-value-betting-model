@@ -264,6 +264,11 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     if not isinstance(rows, list):
         raise ValueError("normalized_points_odds.json['rows'] doit être une liste.")
 
+    # The scraper normalizer emits the canonical `rows` key. An unavailable
+    # market is represented by an empty list, which therefore has no columns.
+    if not rows:
+        return payload, pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)
+
     df = pd.DataFrame(rows)
     missing_cols = [c for c in REQUIRED_ODDS_ROW_COLUMNS if c not in df.columns]
     if missing_cols:
