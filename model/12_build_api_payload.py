@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "outputs" / "07_daily_bets.csv"
 DEFAULT_OUTPUT = ROOT / "outputs" / "api" / "daily_picks.json"
-MODEL_VERSION = "point-v3.0"
+MODEL_VERSION = "henachel-2026-27-v1"
 SCHEMA_VERSION = "1.0.0"
 
 def finite(v: Any) -> Any:
