@@ -21,8 +21,8 @@ def load_goal_odds(path, m):
     rows = payload.get("normalized_rows", [])
     if not isinstance(rows, list):
         raise ValueError("normalized_goals_odds.json['normalized_rows'] doit être une liste.")
-    df = pd.DataFrame(rows)
     required = ["bookmaker","market_key","home_team","away_team","team","player_name_raw","odds_decimal"]
+    df = pd.DataFrame(rows, columns=required)
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Colonnes manquantes dans les cotes BUT: {missing}")
@@ -74,6 +74,15 @@ def main():
         raise ValueError("Probabilité BUT absente.")
     odds_path = find_odds_path(a.odds_json)
     _, odds = load_goal_odds(odds_path, m)
+    if odds.empty:
+        OUT.mkdir(parents=True, exist_ok=True)
+        (OUT / "06_matched_goal_edges.csv").write_text("", encoding="utf-8")
+        (OUT / "06_goal_matching_summary.json").write_text(
+            json.dumps({"status":"ok","run_date":a.run_date,"matched_rows":0,"odds_file":str(odds_path),"reason":"no_accepted_goal_market_rows"}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print("BUT matched rows: 0 (aucune cote BUT acceptée)")
+        return
 
     model["date_match"] = pd.to_datetime(model["date_match"], errors="coerce")
     model["team_player_match"] = model["team_player_match"].astype(str).str.upper().str.strip()
