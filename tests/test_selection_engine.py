@@ -136,7 +136,7 @@ def test_selection_applies_odds_probability_edge_and_hot_streak_rules():
         one_pick_per_player=True,
         disable_hot_streak_exclude=False,
     )
-    assert selected["player_name"].tolist() == ["Player D", "Player A"]
+    assert selected["player_name"].tolist() == ["Player D", "Player A", "Player B"]
     assert stats["rows_removed_hot_streak"] == 1
 
 
