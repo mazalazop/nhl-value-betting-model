@@ -253,7 +253,14 @@ def build_daily_bets(
     if df.empty:
         return df, stats
 
-    # Value-bet flag kept as secondary information only.
+    # Value-bet flag kept as secondary information only. Derive the gap when
+    # the matcher has only model probability and implied probability.
+    if "value_gap" not in df.columns:
+        if "implied_probability" in df.columns:
+            df["value_gap"] = pd.to_numeric(df["model_probability"], errors="coerce") - pd.to_numeric(df["implied_probability"], errors="coerce")
+        else:
+            df["value_gap"] = 0.0
+    df["value_gap"] = pd.to_numeric(df["value_gap"], errors="coerce").fillna(0.0)
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
 
     # Signal comportemental volontaire: une série sans point anormalement longue
