@@ -41,3 +41,12 @@ def test_payload_ranks_independently_by_market_and_allows_same_player():
     assert [p["rank"] for p in goals] == [1, 2]
     assert {p["player"] for p in points} & {p["player"] for p in goals} == {"Same Player"}
     assert validation_mod.validate(payload) == []
+
+
+def test_payload_allows_zero_picks():
+    payload = payload_mod.build(pd.DataFrame(), slate_date="2026-09-29")
+    assert payload["pick_count"] == 0
+    assert payload["points_pick_count"] == 0
+    assert payload["goals_pick_count"] == 0
+    assert payload["picks"] == []
+    assert validation_mod.validate(payload) == []
