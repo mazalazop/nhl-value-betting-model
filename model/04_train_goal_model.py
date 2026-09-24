@@ -61,7 +61,8 @@ def main():
  keep=[c for c in features if not Xtr[c].isna().all() and Xtr[c].nunique(dropna=True)>1]
  Xtr=Xtr[keep];Xca=ca[keep].apply(pd.to_numeric,errors="coerce").replace([np.inf,-np.inf],np.nan);Xte=te[keep].apply(pd.to_numeric,errors="coerce").replace([np.inf,-np.inf],np.nan)
  ytr=tr.target_goal_1p.astype(int);yca=ca.target_goal_1p.astype(int);yte=te.target_goal_1p.astype(int)
- pos=max(1,int(ytr.sum()));neg=max(1,len(ytr)-int(ytr.sum()));w=np.where(ytr.to_numpy()==1,neg/pos,1.0)\n    if "goal_drought_alert_pre" in train.columns: w=w*np.where(pd.to_numeric(train["goal_drought_alert_pre"],errors="coerce").fillna(0).to_numpy()>0,1.15,1.0)
+ pos=max(1,int(ytr.sum()));neg=max(1,len(ytr)-int(ytr.sum()));w=np.where(ytr.to_numpy()==1,neg/pos,1.0)
+    if "goal_drought_alert_pre" in tr.columns: w=w*np.where(pd.to_numeric(train["goal_drought_alert_pre"],errors="coerce").fillna(0).to_numpy()>0,1.15,1.0)
  model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
  model.fit(Xtr,ytr,sample_weight=w)
  pca=model.predict_proba(Xca)[:,1]
