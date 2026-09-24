@@ -35,6 +35,21 @@ def main():
     matchs=mod.load_matchs(); joueurs=mod.load_joueurs(); hist,_,_=mod.load_history()
     target=pd.Timestamp(a.target_date).normalize()
     future=mod.select_future_matches(matchs,target)
+    if future.empty:
+        empty_cols = [
+            "date_match", "id_match", "id_joueur", "nom", "position",
+            "team_player_match", "adversaire_match", "is_home_player",
+            "proba_goal_1p_raw", "proba_goal_1p_calibree",
+            "rank_proba_goal_sur_date", "rank_proba_goal_sur_match",
+        ]
+        OUT.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(columns=empty_cols).to_csv(OUT/"predictions_upcoming_goal_enrichi_calibre_v1.csv", index=False)
+        (OUT/"05_predict_upcoming_goals_summary.json").write_text(
+            json.dumps({"status":"ok","target_date":target.strftime("%Y-%m-%d"),"feature_count":0,"drought_bias":True,"future_matches_rows":0,"note":"Aucun match au slate demandé : prédictions BUTS vides, pipeline poursuivable."}, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+        print(f"Aucun match pour le slate {target.date()}: 0 prédiction BUTS.")
+        return
     teams=sorted(set(future["id_equipe_domicile"].dropna().tolist()) | set(future["id_equipe_exterieur"].dropna().tolist()))
     pool=mod.build_recent_player_pool(hist,joueurs,target,teams,recent_lookback_days=a.recent_lookback_days)
     standings,_,standings_by_team=mod.load_standings()
