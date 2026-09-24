@@ -51,6 +51,18 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
     prob_col = col(df, ["model_probability", "probability", "proba_model", "p_model"])
     edge_col = col(df, ["edge_probability", "edge", "edge_pct"])
     odds_col = col(df, ["odds_decimal", "odds", "cote"])
+    if df.empty:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "model_version": MODEL_VERSION,
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "timezone": "Europe/Paris",
+            "slate_date": slate_date,
+            "pick_count": 0,
+            "points_pick_count": 0,
+            "goals_pick_count": 0,
+            "picks": [],
+        }
     if not date_col or not prob_col or not odds_col:
         raise ValueError("07_daily_bets.csv ne contient pas les colonnes minimales date/probabilité/cote.")
 
