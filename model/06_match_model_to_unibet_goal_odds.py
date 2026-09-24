@@ -22,7 +22,9 @@ def load_goal_odds(path, m):
     if not isinstance(rows, list):
         raise ValueError("normalized_goals_odds.json['normalized_rows'] doit être une liste.")
     required = ["bookmaker","market_key","home_team","away_team","team","player_name_raw","odds_decimal"]
-    df = pd.DataFrame(rows, columns=required)
+    df = pd.DataFrame(rows)
+    if df.empty:
+        df = pd.DataFrame(columns=required)
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Colonnes manquantes dans les cotes BUT: {missing}")
