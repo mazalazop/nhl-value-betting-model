@@ -59,6 +59,10 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
     w["_e"] = pd.to_numeric(w[edge_col], errors="coerce") if edge_col else 0.0
     w["_o"] = pd.to_numeric(w[odds_col], errors="coerce")
     w = w.sort_values(["_p", "_e", "_o"], ascending=False, kind="stable")
+    if "pick_market_group" in w.columns:
+        w["_market_rank"] = w.groupby("pick_market_group", sort=False).cumcount() + 1
+    else:
+        w["_market_rank"] = range(1, len(w) + 1)
 
     dates = pd.to_datetime(w[date_col], errors="coerce").dropna()
     picks = []
@@ -69,7 +73,7 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
         if not player or odds is None or prob is None or odds <= 1:
             continue
         picks.append({
-            "rank": len(picks) + 1,
+            "rank": int(r["_market_rank"]),
             "player": player,
             "player_id": (int(r[col(df, ["id_joueur", "player_id"])]) if pd.api.types.is_integer_dtype(type(r[col(df, ["id_joueur", "player_id"])])) else str(r[col(df, ["id_joueur", "player_id"])])) if col(df, ["id_joueur", "player_id"]) and not pd.isna(r[col(df, ["id_joueur", "player_id"])]) else None,
             "team": textv(r, ["team", "team_player_match"]),
@@ -94,6 +98,8 @@ def build(df: pd.DataFrame, slate_date: str | None = None) -> dict[str, Any]:
         "timezone": "Europe/Paris",
         "slate_date": slate_date or (dates.min().strftime("%Y-%m-%d") if not dates.empty else None),
         "pick_count": len(picks),
+        "points_pick_count": sum(1 for p in picks if p.get("market_group") == "points"),
+        "goals_pick_count": sum(1 for p in picks if p.get("market_group") == "goals"),
         "picks": picks,
     }
 
