@@ -23,4 +23,21 @@ def test_payload_contract_and_sorting():
     assert payload["slate_date"] == "2026-10-13"
     assert payload["pick_count"] == 2
     assert payload["picks"][0]["player"] == "A"
+    assert payload["picks"][0]["rank"] == 1
+    assert payload["points_pick_count"] == 2
+    assert payload["goals_pick_count"] == 0
+    assert validation_mod.validate(payload) == []
+
+def test_payload_ranks_independently_by_market_and_allows_same_player():
+    df = pd.DataFrame([
+        {"player_name":"Same Player","team":"AAA","opponent":"BBB","date_match":"2026-10-14","market":"point_1_plus","pick_market_group":"points","odds_decimal":2.0,"model_probability":0.80,"edge_probability":0.30},
+        {"player_name":"Same Player","team":"AAA","opponent":"BBB","date_match":"2026-10-14","market":"player_to_score_including_ot","pick_market_group":"goals","odds_decimal":2.5,"model_probability":0.70,"edge_probability":0.30},
+        {"player_name":"Another Goal","team":"BBB","opponent":"AAA","date_match":"2026-10-14","market":"player_to_score_including_ot","pick_market_group":"goals","odds_decimal":2.2,"model_probability":0.65,"edge_probability":0.20},
+    ])
+    payload = payload_mod.build(df, slate_date="2026-10-13")
+    points = [p for p in payload["picks"] if p["market_group"] == "points"]
+    goals = [p for p in payload["picks"] if p["market_group"] == "goals"]
+    assert [p["rank"] for p in points] == [1]
+    assert [p["rank"] for p in goals] == [1, 2]
+    assert {p["player"] for p in points} & {p["player"] for p in goals} == {"Same Player"}
     assert validation_mod.validate(payload) == []
