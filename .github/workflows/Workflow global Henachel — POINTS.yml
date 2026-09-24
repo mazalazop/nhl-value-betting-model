@@ -124,6 +124,7 @@ jobs:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
           token: ${{ secrets.SCRAPER_REPO_TOKEN }}
+          ref: c0e0a81c264ab5c25c2feb31b5315186b66dec6d
 
       - name: Setup Python
         uses: actions/setup-python@v5
