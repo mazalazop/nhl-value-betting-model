@@ -199,6 +199,29 @@ jobs:
           export ACCEPTANCE_REPORT_PATH="$LATEST_BATCH_DIR/acceptance_report.json"
           python scrapers/unibet_event_points_normalize_accepted.py
 
+      - name: Run goals batch
+        working-directory: scraper_repo
+        env:
+          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
+          PW_HEADLESS: ${{ env.HEADLESS }}
+        run: |
+          python scrapers/unibet_event_goals_batch_runner.py
+
+      - name: Build goals acceptance report
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+          export BATCH_SUMMARY_PATH="$LATEST_GOALS_BATCH_DIR/batch_summary.json"
+          python scrapers/unibet_event_goals_acceptance_report.py
+
+      - name: Build normalized goals json
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+          export ACCEPTANCE_REPORT_PATH="$LATEST_GOALS_BATCH_DIR/acceptance_report.json"
+          python scrapers/unibet_event_goals_normalize_accepted.py
       - name: Prepare artifact bundle for model job
         working-directory: scraper_repo
         shell: bash
@@ -208,8 +231,13 @@ jobs:
           LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
 
           cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
-          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/acceptance_report.json
-          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/batch_summary.json
+          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/points_acceptance_report.json
+          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/points_batch_summary.json
+          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+          LATEST_GOALS_NORMALIZED_DIR=$(ls -td "$LATEST_GOALS_BATCH_DIR"/normalized_* | head -n 1)
+          cp "$LATEST_GOALS_NORMALIZED_DIR/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
+          cp "$LATEST_GOALS_BATCH_DIR/acceptance_report.json" export_bundle/goals_acceptance_report.json
+          cp "$LATEST_GOALS_BATCH_DIR/batch_summary.json" export_bundle/goals_batch_summary.json
           cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
 
       - name: Upload scraper outputs for model job
@@ -251,6 +279,7 @@ jobs:
         run: |
           mkdir -p outputs
           cp _scraper_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
+          cp _scraper_artifact/normalized_goals_odds.json outputs/normalized_goals_odds.json
           ls -la outputs
 
       - name: Write Google credentials file
@@ -284,8 +313,14 @@ jobs:
       - name: Match model to Unibet odds
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
 
-      - name: Build daily bets
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}" --max-picks 5 --min-edge -1.0
+      - name: Train goal model and predict upcoming goals
+        run: python model/05b_predict_upcoming_goals.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Match goal model to Unibet odds
+        run: python model/06_match_model_to_unibet_goal_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Build independent 5+5 daily bets
+        run: python model/07b_build_combined_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}" --max-points 5 --max-goals 5 --min-edge -1.0
 
       - name: Build mobile API payload
         run: |
