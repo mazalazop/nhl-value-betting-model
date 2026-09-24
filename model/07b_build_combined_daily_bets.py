@@ -41,7 +41,18 @@ def main():
         if not selected.empty:
             selected["pick_market_group"]=market
             frames.append(selected)
-    combined=pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()
+    if frames:
+        combined=pd.concat(frames,ignore_index=True)
+    else:
+        combined=pd.DataFrame(columns=[
+            "bet_id","run_date","date_match","player_name","team","opponent",
+            "bookmaker","market","stat","threshold","odds_decimal",
+            "implied_probability","model_probability_raw","model_probability",
+            "edge_probability","edge_probability_pct_points","ev_per_unit",
+            "kelly_fraction","result","bet_status","actual_stat_value",
+            "settled_at","recommended_flag","recommendation_rank","pick_market_group",
+            "display_rank",
+        ])
     if not combined.empty:
         combined=combined.sort_values(["pick_market_group","model_probability","edge_probability"],ascending=[True,False,False],kind="stable").reset_index(drop=True)
         combined["recommendation_rank"]=combined.groupby("pick_market_group", sort=False).cumcount()+1
