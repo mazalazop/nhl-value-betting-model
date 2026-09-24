@@ -18,7 +18,7 @@ def validate(p: dict) -> list[str]:
     if p["timezone"] != "Europe/Paris": errors.append("timezone must be Europe/Paris")
     if not isinstance(p["picks"], list): return errors + ["picks must be a list"]
     for i,x in enumerate(p["picks"]):
-        for k in ["rank","player","team","opponent","match_date","market","odds","model_probability","edge"]:
+        for k in ["rank","player","team","opponent","match_date","market","market_group","odds","model_probability","edge"]:
             if k not in x: errors.append(f"pick[{i}] missing:{k}")
         if "odds" in x and (not isinstance(x["odds"],(int,float)) or x["odds"] <= 1): errors.append(f"pick[{i}] invalid odds")
         if "model_probability" in x and not (0 <= x["model_probability"] <= 1): errors.append(f"pick[{i}] invalid probability")
