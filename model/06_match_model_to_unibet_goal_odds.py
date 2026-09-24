@@ -76,7 +76,7 @@ def main():
     _, odds = load_goal_odds(odds_path, m)
     if odds.empty:
         OUT.mkdir(parents=True, exist_ok=True)
-        (OUT / "06_matched_goal_edges.csv").write_text("", encoding="utf-8")
+        pd.DataFrame(columns=["bet_id","run_date","bet_status","result","actual_stat_value","settled_at","recommended_flag","recommendation_rank","date_match","player_name","team","opponent","bookmaker","market","stat","threshold","odds_decimal","implied_probability","model_probability","edge_probability"]).to_csv(OUT / "06_matched_goal_edges.csv", index=False)
         (OUT / "06_goal_matching_summary.json").write_text(
             json.dumps({"status":"ok","run_date":a.run_date,"matched_rows":0,"odds_file":str(odds_path),"reason":"no_accepted_goal_market_rows"}, ensure_ascii=False, indent=2),
             encoding="utf-8",
