@@ -606,6 +606,35 @@ def main() -> None:
     model_df = load_model_predictions(model_csv_path)
     odds_payload, odds_df = load_odds_json(odds_path)
 
+    if odds_df.empty:
+        empty_cols = [
+            "bet_id","run_date","bet_status","result","actual_stat_value","settled_at",
+            "recommended_flag","recommendation_rank","date_match","id_match","id_joueur",
+            "player_name","team","opponent","bookmaker","market","stat","threshold",
+            "outcome_label","outcome_key","odds_decimal","implied_probability",
+            "model_probability_raw","model_probability","fair_odds_model",
+            "edge_probability","edge_probability_pct_points","ev_per_unit",
+            "kelly_fraction","is_positive_ev","match_method","fuzzy_score",
+        ]
+        empty = pd.DataFrame(columns=empty_cols)
+        empty.to_csv(matched_csv_path, index=False)
+        empty.to_csv(dated_candidates_path, index=False)
+        pd.DataFrame().to_csv(unmatched_model_path, index=False)
+        pd.DataFrame().to_csv(unmatched_bookmaker_path, index=False)
+        write_json(matched_json_path, {"rows_count": 0, "rows": []})
+        append_stats = append_master_history(master_history_path, empty)
+        write_json(summary_path, {
+            "status": "ok",
+            "run_date": args.run_date,
+            "model_rows_count": int(len(model_df)),
+            "bookmaker_rows_count": 0,
+            "matched_rows_count": 0,
+            "reason": "no_accepted_point_market_rows",
+            "append_stats": append_stats,
+        })
+        print("POINT matched rows: 0 (aucune cote POINT acceptée)")
+        return
+
     if args.disable_fuzzy:
         FUZZY_MIN_SCORE = 1.1
 
