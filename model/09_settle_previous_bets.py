@@ -102,6 +102,10 @@ def load_stats(path: Path) -> pd.DataFrame:
     df["id_match"] = pd.to_numeric(df["id_match"], errors="coerce")
     df["id_joueur"] = pd.to_numeric(df["id_joueur"], errors="coerce")
     df["points"] = pd.to_numeric(df["points"], errors="coerce")
+    if "buts" in df.columns:
+        df["buts"] = pd.to_numeric(df["buts"], errors="coerce")
+    else:
+        df["buts"] = np.nan
 
     df = df.sort_values(["date_match", "id_match", "id_joueur"]).drop_duplicates(
         subset=["id_match", "id_joueur"], keep="last"
@@ -215,14 +219,16 @@ def main() -> None:
 
     pending_df = pending_df.reset_index().rename(columns={"index": "history_index"})
     merged = pending_df.merge(
-        stats_df[["id_match", "id_joueur", "date_match", "points"]].rename(
-            columns={"date_match": "stats_date_match", "points": "actual_points"}
+        stats_df[["id_match", "id_joueur", "date_match", "points", "buts"]].rename(
+            columns={"date_match": "stats_date_match", "points": "actual_points", "buts": "actual_goals"}
         ),
         on=["id_match", "id_joueur"],
         how="left",
     )
 
+    goal_mask = merged["stat"].astype(str).str.lower().str.contains("goal|but") | merged["outcome_key"].astype(str).str.contains("player_to_score", case=False, na=False)
     merged["actual_stat_value"] = merged["actual_points"]
+    merged.loc[goal_mask, "actual_stat_value"] = merged.loc[goal_mask, "actual_goals"]
     merged["settled_result"] = merged.apply(
         lambda r: settle_result(r["actual_stat_value"], r["threshold"], r["outcome_key"]),
         axis=1,

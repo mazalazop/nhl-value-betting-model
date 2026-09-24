@@ -252,7 +252,9 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
     n = len(player_df)
     current_point_streak_pre = [0] * n
     current_no_point_streak_pre = [0] * n
+    current_no_goal_streak_pre = [0] * n
     max_point_streak_last2_pre = [0] * n
+    max_no_goal_streak_last2_pre = [0] * n
     max_no_point_streak_last2_pre = [0] * n
     count_5plus_point_streaks_last2_pre = [0] * n
     count_matches_last2_pre = [0] * n
@@ -260,6 +262,7 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
     prev_season = None
     running_point_streak = 0
     running_no_point_streak = 0
+    running_no_goal_streak = 0
 
     def scan_streaks(values: list[int]) -> tuple[int, int, int]:
         max_hit = 0
@@ -287,9 +290,11 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
         if prev_season is None or current_season != prev_season:
             running_point_streak = 0
             running_no_point_streak = 0
+            running_no_goal_streak = 0
 
         current_point_streak_pre[i] = running_point_streak
         current_no_point_streak_pre[i] = running_no_point_streak
+        current_no_goal_streak_pre[i] = running_no_goal_streak
 
         if pd.isna(current_season):
             start_idx = 0
@@ -309,6 +314,10 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
             max_point_streak_last2_pre[i] = max_hit
             max_no_point_streak_last2_pre[i] = max_no
             count_5plus_point_streaks_last2_pre[i] = count_5plus
+            goal_values = (pd.to_numeric(player_df["buts"], errors="coerce").fillna(0).iloc[start_idx:i] >= 1).astype(int).tolist()
+            if goal_values:
+                _, max_no_goal, _ = scan_streaks([1 if v else 0 for v in goal_values])
+                max_no_goal_streak_last2_pre[i] = max_no_goal
 
         if hits[i] == 1:
             running_point_streak += 1
@@ -316,13 +325,20 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
         else:
             running_no_point_streak += 1
             running_point_streak = 0
+        goal_value = int(pd.to_numeric(player_df["buts"].iloc[i], errors="coerce") >= 1) if pd.notna(player_df["buts"].iloc[i]) else 0
+        if goal_value == 1:
+            running_no_goal_streak = 0
+        else:
+            running_no_goal_streak += 1
         prev_season = current_season
 
     return pd.DataFrame(
         {
             "current_point_streak_pre": current_point_streak_pre,
             "current_no_point_streak_pre": current_no_point_streak_pre,
+            "current_no_goal_streak_pre": current_no_goal_streak_pre,
             "max_point_streak_last_2_seasons_pre": max_point_streak_last2_pre,
+            "max_no_goal_streak_last_2_seasons_pre": max_no_goal_streak_last2_pre,
             "max_no_point_streak_last_2_seasons_pre": max_no_point_streak_last2_pre,
             "count_5plus_point_streaks_last_2_seasons_pre": count_5plus_point_streaks_last2_pre,
             "count_matches_last_2_seasons_pre": count_matches_last2_pre,
@@ -724,7 +740,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
     df["point_hit_rate_last_5"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_point", 5)
     df["point_hit_rate_last_10"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_point", 10)
     df["point_hit_rate_last_20"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_point", 20)
+    df["goal_hit_rate_last_5"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_but", 5)
     df["goal_hit_rate_last_10"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_but", 10)
+    df["goal_hit_rate_last_20"] = rolling_mean_shifted(df, "id_joueur", "a_marque_un_but", 20)
 
     df["hist_ok_5"] = (df["nb_matchs_avant_match"] >= 5).astype(int)
     df["hist_ok_10"] = (df["nb_matchs_avant_match"] >= 10).astype(int)
@@ -817,7 +835,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "point_hit_rate_last_5",
         "point_hit_rate_last_10",
         "point_hit_rate_last_20",
+        "goal_hit_rate_last_5",
         "goal_hit_rate_last_10",
+        "goal_hit_rate_last_20",
         "season_point_hits_before_match",
         "season_goal_hits_before_match",
         "season_points_before_match",
@@ -837,7 +857,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "recent_hit_rate_composite",
         "current_point_streak_pre",
         "current_no_point_streak_pre",
+        "current_no_goal_streak_pre",
         "max_point_streak_last_2_seasons_pre",
+        "max_no_goal_streak_last_2_seasons_pre",
         "max_no_point_streak_last_2_seasons_pre",
         "count_5plus_point_streaks_last_2_seasons_pre",
         "count_matches_last_2_seasons_pre",
@@ -865,8 +887,10 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "season_pp_before_match",
         "current_point_streak_pre",
         "current_no_point_streak_pre",
+        "current_no_goal_streak_pre",
         "max_point_streak_last_2_seasons_pre",
         "max_no_point_streak_last_2_seasons_pre",
+        "max_no_goal_streak_last_2_seasons_pre",
         "count_5plus_point_streaks_last_2_seasons_pre",
         "count_matches_last_2_seasons_pre",
         "prev_season_games",
@@ -879,7 +903,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "point_hit_rate_last_5": DEFAULT_LAST10_HIT_RATE,
         "point_hit_rate_last_10": DEFAULT_LAST10_HIT_RATE,
         "point_hit_rate_last_20": DEFAULT_LAST20_HIT_RATE,
+        "goal_hit_rate_last_5": 0.20,
         "goal_hit_rate_last_10": 0.20,
+        "goal_hit_rate_last_20": 0.20,
         "point_hit_rate_season_pre": DEFAULT_SEASON_HIT_RATE,
         "goal_hit_rate_season_pre": 0.20,
         "points_per_game_season_pre": DEFAULT_POINTS_PER_GAME,
@@ -1189,6 +1215,31 @@ def enrichir_contexte_v2(
         df["historical_current_weight"] * current_ppg_base + df["historical_prev_weight"] * prev_ppg_base,
         current_ppg_base.fillna(prev_ppg_base),
     )
+
+    goal_current_base = pd.to_numeric(df["goal_hit_rate_season_pre"], errors="coerce")
+    goal_prev_base = pd.to_numeric(df["goal_hit_rate_prev_season"], errors="coerce")
+    df["goal_hit_rate_weighted_pre"] = np.where(
+        goal_current_base.notna() & goal_prev_base.notna(),
+        df["historical_current_weight"] * goal_current_base + df["historical_prev_weight"] * goal_prev_base,
+        goal_current_base.fillna(goal_prev_base),
+    )
+    df["goal_hit_rate_weighted_pre"] = df["goal_hit_rate_weighted_pre"].fillna(0.20)
+    goal_p = df["goal_hit_rate_weighted_pre"].clip(lower=0.05, upper=0.60)
+    df["goal_streak_expected_pre"] = (1.0 - goal_p) / goal_p
+    df["goal_streak_excess_pre"] = (
+        (df["current_no_goal_streak_pre"] - df["goal_streak_expected_pre"]).clip(lower=0)
+        / df["goal_streak_expected_pre"].clip(lower=1.0)
+    )
+    df["goal_drought_alert_pre"] = (
+        (df["current_no_goal_streak_pre"] >= 6)
+        & (
+            (df["goal_streak_excess_pre"] >= 0.75)
+            | (
+                (df["max_no_goal_streak_last_2_seasons_pre"] >= 6)
+                & (df["current_no_goal_streak_pre"] >= 0.80 * df["max_no_goal_streak_last_2_seasons_pre"])
+            )
+        )
+    ).astype(int)
 
     recent_combo = 0.6 * df["point_hit_rate_last_10"].fillna(df["point_hit_rate_last_20"]) + 0.4 * df[
         "point_hit_rate_last_20"

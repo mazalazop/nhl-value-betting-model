@@ -156,6 +156,9 @@ BASELINE_FEATURE_WHITELIST = [
     "recent_vs_expected_gap",
     "current_point_streak_pre",
     "current_no_point_streak_pre",
+    "no_point_streak_expected_pre",
+    "no_point_streak_excess_pre",
+    "no_point_drought_alert_pre",
     "max_point_streak_last_2_seasons_pre",
     "max_no_point_streak_last_2_seasons_pre",
     "count_5plus_point_streaks_last_2_seasons_pre",
@@ -436,7 +439,7 @@ def keep_train_valid_features_only(
     )
 
 
-def compute_sample_weights(y: pd.Series) -> np.ndarray:
+def compute_sample_weights(y: pd.Series, drought_alert: pd.Series | None = None) -> np.ndarray:
     y_array = y.astype(int).to_numpy()
     positives = int(y_array.sum())
     negatives = int(len(y_array) - positives)
@@ -445,7 +448,13 @@ def compute_sample_weights(y: pd.Series) -> np.ndarray:
         return np.ones(len(y_array), dtype=float)
 
     pos_weight = negatives / positives
-    return np.where(y_array == 1, pos_weight, 1.0).astype(float)
+    weights = np.where(y_array == 1, pos_weight, 1.0).astype(float)
+    if drought_alert is not None:
+        alert = pd.to_numeric(drought_alert, errors="coerce").fillna(0).to_numpy()
+        # Biais volontaire et modéré: les cas de sécheresse anormale comptent
+        # 15% de plus dans l'apprentissage, sans les transformer en "événements dus".
+        weights = weights * np.where(alert > 0, 1.15, 1.0)
+    return weights
 
 
 def safe_roc_auc(y_true: np.ndarray, proba: np.ndarray) -> float:
@@ -571,7 +580,7 @@ def train_one_variant(
     if y_train.nunique() < 2:
         raise ValueError(f"Le train ne contient qu'une seule classe pour {variant_name}.")
 
-    sample_weight = compute_sample_weights(y_train)
+    sample_weight = compute_sample_weights(y_train, train_df.get("no_point_drought_alert_pre"))
 
     model = HistGradientBoostingClassifier(
         loss="log_loss",

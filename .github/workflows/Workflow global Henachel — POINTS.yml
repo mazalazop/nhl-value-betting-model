@@ -1,6 +1,9 @@
 name: henachel-points-global
 
 on:
+  push:
+    branches:
+      - season-2026-27-renovation
   workflow_dispatch:
     inputs:
       run_date:
@@ -32,8 +35,9 @@ on:
         required: false
         type: boolean
         default: true
+  # Publication en fin d'après-midi / début de soirée France : 16:00 UTC (17:00 CET, 18:00 CEST).
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 16 * * *"
 
 permissions:
   contents: read
@@ -70,7 +74,7 @@ jobs:
           fi
 
           if [ -z "$INPUT_HUB_URL" ]; then
-            HUB_URL="https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
+            HUB_URL="https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl"
           else
             HUB_URL="$INPUT_HUB_URL"
           fi
@@ -122,7 +126,7 @@ jobs:
         with:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
-          token: ${{ secrets.SCRAPER_REPO_TOKEN }}
+          ref: cec6303ca4d41ffa0265959ea569608c048d04df
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -147,6 +151,7 @@ jobs:
           python scrapers/unibet_points_discover_event_urls.py
 
       - name: Export discovered event URLs
+        id: export_urls
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -161,18 +166,22 @@ jobs:
           path = Path(os.environ["DISCOVERY_JSON_PATH"])
           payload = json.loads(path.read_text(encoding="utf-8"))
           urls = payload.get("event_urls", [])
-          if not urls:
-              raise SystemExit("Aucune event URL découverte depuis le hub Unibet.")
-
           github_env = Path(os.environ["GITHUB_ENV"])
           with github_env.open("a", encoding="utf-8") as handle:
               handle.write(f"DISCOVERY_JSON_PATH={path}\n")
               handle.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
 
+          has_events = bool(urls)
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as handle:
+              handle.write(f"has_events={str(has_events).lower()}\n")
+
           print(f"URLs découvertes : {len(urls)}")
+          if not urls:
+              print("Aucun match découvert : marchés de cotes vides.")
           PY
 
       - name: Run points batch
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         env:
           UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
@@ -181,6 +190,7 @@ jobs:
           python scrapers/unibet_event_points_batch_runner.py
 
       - name: Build acceptance report
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         env:
           MIN_ROWS_PER_EVENT: ${{ env.MIN_ROWS_PER_EVENT }}
@@ -191,6 +201,7 @@ jobs:
           python scrapers/unibet_event_points_acceptance_report.py
 
       - name: Build normalized points json
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -198,18 +209,58 @@ jobs:
           export ACCEPTANCE_REPORT_PATH="$LATEST_BATCH_DIR/acceptance_report.json"
           python scrapers/unibet_event_points_normalize_accepted.py
 
+      - name: Run goals batch
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
+        working-directory: scraper_repo
+        env:
+          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
+          PW_HEADLESS: ${{ env.HEADLESS }}
+        run: |
+          python scrapers/unibet_event_goals_batch_runner.py
+
+      - name: Build goals acceptance report
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+          export BATCH_SUMMARY_PATH="$LATEST_GOALS_BATCH_DIR/batch_summary.json"
+          python scrapers/unibet_event_goals_acceptance_report.py
+
+      - name: Build normalized goals json
+        if: ${{ steps.export_urls.outputs.has_events == 'true' }}
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+          export ACCEPTANCE_REPORT_PATH="$LATEST_GOALS_BATCH_DIR/acceptance_report.json"
+          python scrapers/unibet_event_goals_normalize_accepted.py
       - name: Prepare artifact bundle for model job
         working-directory: scraper_repo
         shell: bash
         run: |
           mkdir -p export_bundle
           LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-
-          cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
-          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/acceptance_report.json
-          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/batch_summary.json
           cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+
+          if [ -n "$UNIBET_EVENT_URLS" ]; then
+            LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+            cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+            cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/points_acceptance_report.json
+            cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/points_batch_summary.json
+            LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+            LATEST_GOALS_NORMALIZED_DIR=$(ls -td "$LATEST_GOALS_BATCH_DIR"/normalized_* | head -n 1)
+            cp "$LATEST_GOALS_NORMALIZED_DIR/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
+            cp "$LATEST_GOALS_BATCH_DIR/acceptance_report.json" export_bundle/goals_acceptance_report.json
+            cp "$LATEST_GOALS_BATCH_DIR/batch_summary.json" export_bundle/goals_batch_summary.json
+          else
+            printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
+            printf '%s\n' '{"normalized_rows_count":0,"normalized_rows":[]}' > export_bundle/normalized_goals_odds.json
+            printf '%s\n' '{"accepted_event_count":0,"events":[]}' > export_bundle/points_acceptance_report.json
+            printf '%s\n' '{"accepted_events_count":0,"results":[]}' > export_bundle/goals_acceptance_report.json
+            printf '%s\n' '{"input_urls_count":0,"accepted_runs":0,"rejected_runs":0,"results":[]}' > export_bundle/points_batch_summary.json
+            printf '%s\n' '{"input_urls_count":0,"accepted_runs":0,"rejected_runs":0,"results":[]}' > export_bundle/goals_batch_summary.json
+          fi
 
       - name: Upload scraper outputs for model job
         uses: actions/upload-artifact@v4
@@ -237,7 +288,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy scikit-learn requests urllib3 gspread google-auth google-auth-oauthlib google-auth-httplib2
+          pip install -r requirements.txt
 
       - name: Download scraper artifact
         uses: actions/download-artifact@v4
@@ -250,6 +301,7 @@ jobs:
         run: |
           mkdir -p outputs
           cp _scraper_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
+          cp _scraper_artifact/normalized_goals_odds.json outputs/normalized_goals_odds.json
           ls -la outputs
 
       - name: Write Google credentials file
@@ -260,6 +312,10 @@ jobs:
           cat > secrets/henachel-service-account.json <<'JSON'
           ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
           JSON
+
+      - name: Run unit tests
+        run: |
+          pytest -q tests/test_mobile_payload.py tests/test_selection_engine.py
 
       - name: Refresh upstream sources
         run: python model/00_refresh_sources.py
@@ -279,8 +335,27 @@ jobs:
       - name: Match model to Unibet odds
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
 
-      - name: Build daily bets
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+      - name: Train goal model and predict upcoming goals
+        run: python model/05b_predict_upcoming_goals.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Match goal model to Unibet odds
+        run: python model/06_match_model_to_unibet_goal_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Build independent 5+5 daily bets
+        run: python model/07b_build_combined_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}" --max-points 5 --max-goals 5 --min-edge -1.0
+
+      - name: Build mobile API payload
+        run: |
+          python model/12_build_api_payload.py \
+            --input-csv outputs/07_daily_bets.csv \
+            --output-json outputs/api/daily_picks.json \
+            --slate-date "${{ needs.scrape_points.outputs.run_date }}"
+
+      - name: Validate mobile API payload
+        run: |
+          python model/13_validate_daily_payload.py \
+            --input-json outputs/api/daily_picks.json \
+            --report-json outputs/api/validation.json
 
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}

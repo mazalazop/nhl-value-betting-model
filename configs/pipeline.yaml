@@ -1,0 +1,33 @@
+project:
+  name: nhl-value-betting
+  season: 2026-27
+  timezone: Europe/Paris
+  model_version: henachel-2026-27-v1
+
+slate:
+  timezone: Europe/Paris
+  rule: "Un match NHL joué mardi soir et terminé mercredi matin en France appartient au slate du mardi en France."
+
+selection:
+  max_picks_points: 5
+  max_picks_goals: 5
+  min_decimal_odds: 1.01
+  min_model_probability: 0.50
+  min_edge: -1.0
+  prefer_last_game_toi_minutes: 14.0
+  hot_streak_exclusion: true
+  hot_streak_exception_probability: 0.90
+  drought_alert_min_games: 4
+  drought_bonus_weight_alert: 0.010
+  drought_bonus_weight_excess: 0.010
+
+outputs:
+  daily_bets_csv: outputs/07_daily_bets.csv
+  public_payload: outputs/api/daily_picks.json
+  payload_validation: outputs/api/validation.json
+  history_csv: outputs/history/master_daily_bets_history.csv
+
+pipeline:
+  fail_on_empty_picks: false
+  publish_google_sheet: true
+  public_payload_enabled: true

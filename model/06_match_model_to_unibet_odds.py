@@ -264,6 +264,11 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     if not isinstance(rows, list):
         raise ValueError("normalized_points_odds.json['rows'] doit être une liste.")
 
+    # The scraper normalizer emits the canonical `rows` key. An unavailable
+    # market is represented by an empty list, which therefore has no columns.
+    if not rows:
+        return payload, pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)
+
     df = pd.DataFrame(rows)
     missing_cols = [c for c in REQUIRED_ODDS_ROW_COLUMNS if c not in df.columns]
     if missing_cols:
@@ -605,6 +610,35 @@ def main() -> None:
 
     model_df = load_model_predictions(model_csv_path)
     odds_payload, odds_df = load_odds_json(odds_path)
+
+    if odds_df.empty:
+        empty_cols = [
+            "bet_id","run_date","bet_status","result","actual_stat_value","settled_at",
+            "recommended_flag","recommendation_rank","date_match","id_match","id_joueur",
+            "player_name","team","opponent","bookmaker","market","stat","threshold",
+            "outcome_label","outcome_key","odds_decimal","implied_probability",
+            "model_probability_raw","model_probability","fair_odds_model",
+            "edge_probability","edge_probability_pct_points","ev_per_unit",
+            "kelly_fraction","is_positive_ev","match_method","fuzzy_score",
+        ]
+        empty = pd.DataFrame(columns=empty_cols)
+        empty.to_csv(matched_csv_path, index=False)
+        empty.to_csv(dated_candidates_path, index=False)
+        pd.DataFrame().to_csv(unmatched_model_path, index=False)
+        pd.DataFrame().to_csv(unmatched_bookmaker_path, index=False)
+        write_json(matched_json_path, {"rows_count": 0, "rows": []})
+        append_stats = append_master_history(master_history_path, empty)
+        write_json(summary_path, {
+            "status": "ok",
+            "run_date": args.run_date,
+            "model_rows_count": int(len(model_df)),
+            "bookmaker_rows_count": 0,
+            "matched_rows_count": 0,
+            "reason": "no_accepted_point_market_rows",
+            "append_stats": append_stats,
+        })
+        print("POINT matched rows: 0 (aucune cote POINT acceptée)")
+        return
 
     if args.disable_fuzzy:
         FUZZY_MIN_SCORE = 1.1
