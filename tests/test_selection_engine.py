@@ -191,3 +191,54 @@ def test_selection_never_exceeds_five_for_a_single_market():
         df, "2026-09-23", 5, 1.01, 0.50, -1.0, 0.02, 0.90, True, False
     )
     assert len(selected) <= 5
+
+
+def test_combined_selector_keeps_five_points_and_five_goals_independent():
+    import importlib.util
+    combined_path = ROOT / "model" / "07b_build_combined_daily_bets.py"
+    spec = importlib.util.spec_from_file_location("combined_daily_bets", combined_path)
+    combined = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(combined)
+
+    points = pd.concat([base_rows()] * 3, ignore_index=True)
+    points["bet_id"] = [f"p{i}" for i in range(len(points))]
+    points["player_name"] = [f"Point Player {i}" for i in range(len(points))]
+    points["run_date"] = "2026-09-23"
+    points["hard_exclude_hot_streak_pre"] = 0
+
+    goals = points.copy()
+    goals["bet_id"] = [f"g{i}" for i in range(len(goals))]
+    goals["player_name"] = [f"Goal Player {i}" for i in range(len(goals))]
+    goals["market"] = "player_to_score_including_ot"
+    goals["goal_drought_alert_pre"] = 0
+    goals["goal_streak_excess_pre"] = 0.0
+    goals["pick_market_group"] = "goals"
+
+    point_path = ROOT / "outputs" / "_test_points.csv"
+    goal_path = ROOT / "outputs" / "_test_goals.csv"
+    point_path.parent.mkdir(parents=True, exist_ok=True)
+    points.to_csv(point_path, index=False)
+    goals.to_csv(goal_path, index=False)
+
+    try:
+        import sys
+        old_argv = sys.argv
+        sys.argv = [
+            "07b_build_combined_daily_bets.py",
+            "--run-date", "2026-09-23",
+            "--point-csv", str(point_path),
+            "--goal-csv", str(goal_path),
+            "--max-points", "5",
+            "--max-goals", "5",
+        ]
+        combined.main()
+        result = pd.read_csv(ROOT / "outputs" / "07_daily_bets.csv")
+        assert len(result[result["pick_market_group"] == "points"]) <= 5
+        assert len(result[result["pick_market_group"] == "goals"]) <= 5
+        assert result[result["pick_market_group"] == "points"]["recommendation_rank"].between(1, 5).all()
+        assert result[result["pick_market_group"] == "goals"]["recommendation_rank"].between(1, 5).all()
+    finally:
+        sys.argv = old_argv
+        point_path.unlink(missing_ok=True)
+        goal_path.unlink(missing_ok=True)
