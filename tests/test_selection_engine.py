@@ -242,3 +242,85 @@ def test_combined_selector_keeps_five_points_and_five_goals_independent():
         sys.argv = old_argv
         point_path.unlink(missing_ok=True)
         goal_path.unlink(missing_ok=True)
+
+
+def test_combined_selector_allows_same_player_across_markets_and_missing_goal_file(tmp_path):
+    import importlib.util
+    import sys
+
+    combined_path = ROOT / "model" / "07b_build_combined_daily_bets.py"
+    spec = importlib.util.spec_from_file_location("combined_daily_bets_missing_goal", combined_path)
+    combined = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(combined)
+
+    points = base_rows().iloc[[0, 3]].copy()
+    points["player_name"] = ["Same Player", "Point Player"]
+    points["bet_id"] = ["p_same", "p_other"]
+    points["hard_exclude_hot_streak_pre"] = 0
+    point_path = tmp_path / "points.csv"
+    points.to_csv(point_path, index=False)
+    missing_goal_path = tmp_path / "missing_goals.csv"
+
+    old_argv = sys.argv
+    output_path = ROOT / "outputs" / "07_daily_bets.csv"
+    try:
+        sys.argv = [
+            "07b_build_combined_daily_bets.py",
+            "--run-date", "2026-09-23",
+            "--point-csv", str(point_path),
+            "--goal-csv", str(missing_goal_path),
+            "--max-points", "5",
+            "--max-goals", "5",
+        ]
+        combined.main()
+        result = pd.read_csv(output_path)
+        assert len(result) == 2
+        assert set(result["pick_market_group"]) == {"points"}
+    finally:
+        sys.argv = old_argv
+
+
+def test_combined_selector_allows_same_player_in_points_and_goals(tmp_path):
+    import importlib.util
+    import sys
+
+    combined_path = ROOT / "model" / "07b_build_combined_daily_bets.py"
+    spec = importlib.util.spec_from_file_location("combined_daily_bets_cross_market", combined_path)
+    combined = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(combined)
+
+    points = base_rows().iloc[[0]].copy()
+    points["player_name"] = "Same Player"
+    points["bet_id"] = "p_same"
+    points["hard_exclude_hot_streak_pre"] = 0
+
+    goals = points.copy()
+    goals["bet_id"] = "g_same"
+    goals["market"] = "player_to_score_including_ot"
+    goals["goal_drought_alert_pre"] = 0
+    goals["goal_streak_excess_pre"] = 0.0
+
+    point_path = tmp_path / "points.csv"
+    goal_path = tmp_path / "goals.csv"
+    points.to_csv(point_path, index=False)
+    goals.to_csv(goal_path, index=False)
+
+    old_argv = sys.argv
+    try:
+        sys.argv = [
+            "07b_build_combined_daily_bets.py",
+            "--run-date", "2026-09-23",
+            "--point-csv", str(point_path),
+            "--goal-csv", str(goal_path),
+            "--max-points", "5",
+            "--max-goals", "5",
+        ]
+        combined.main()
+        result = pd.read_csv(ROOT / "outputs" / "07_daily_bets.csv")
+        assert len(result) == 2
+        assert set(result["pick_market_group"]) == {"points", "goals"}
+        assert result["player_name"].tolist().count("Same Player") == 2
+    finally:
+        sys.argv = old_argv
