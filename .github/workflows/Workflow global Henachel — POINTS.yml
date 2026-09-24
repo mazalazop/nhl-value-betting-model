@@ -74,7 +74,7 @@ jobs:
           fi
 
           if [ -z "$INPUT_HUB_URL" ]; then
-            HUB_URL="https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
+            HUB_URL="https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl"
           else
             HUB_URL="$INPUT_HUB_URL"
           fi
@@ -126,7 +126,7 @@ jobs:
         with:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
-          ref: c0e0a81c264ab5c25c2feb31b5315186b66dec6d
+          ref: cec6303ca4d41ffa0265959ea569608c048d04df
 
       - name: Setup Python
         uses: actions/setup-python@v5
