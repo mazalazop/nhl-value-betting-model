@@ -237,17 +237,26 @@ jobs:
         run: |
           mkdir -p export_bundle
           LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-
-          cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
-          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/points_acceptance_report.json
-          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/points_batch_summary.json
-          LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
-          LATEST_GOALS_NORMALIZED_DIR=$(ls -td "$LATEST_GOALS_BATCH_DIR"/normalized_* | head -n 1)
-          cp "$LATEST_GOALS_NORMALIZED_DIR/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
-          cp "$LATEST_GOALS_BATCH_DIR/acceptance_report.json" export_bundle/goals_acceptance_report.json
-          cp "$LATEST_GOALS_BATCH_DIR/batch_summary.json" export_bundle/goals_batch_summary.json
           cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+
+          if [ -n "$UNIBET_EVENT_URLS" ]; then
+            LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+            cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+            cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/points_acceptance_report.json
+            cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/points_batch_summary.json
+            LATEST_GOALS_BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)
+            LATEST_GOALS_NORMALIZED_DIR=$(ls -td "$LATEST_GOALS_BATCH_DIR"/normalized_* | head -n 1)
+            cp "$LATEST_GOALS_NORMALIZED_DIR/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
+            cp "$LATEST_GOALS_BATCH_DIR/acceptance_report.json" export_bundle/goals_acceptance_report.json
+            cp "$LATEST_GOALS_BATCH_DIR/batch_summary.json" export_bundle/goals_batch_summary.json
+          else
+            printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
+            printf '%s\n' '{"normalized_rows_count":0,"normalized_rows":[]}' > export_bundle/normalized_goals_odds.json
+            printf '%s\n' '{"accepted_event_count":0,"events":[]}' > export_bundle/points_acceptance_report.json
+            printf '%s\n' '{"accepted_events_count":0,"results":[]}' > export_bundle/goals_acceptance_report.json
+            printf '%s\n' '{"input_urls_count":0,"accepted_runs":0,"rejected_runs":0,"results":[]}' > export_bundle/points_batch_summary.json
+            printf '%s\n' '{"input_urls_count":0,"accepted_runs":0,"rejected_runs":0,"results":[]}' > export_bundle/goals_batch_summary.json
+          fi
 
       - name: Upload scraper outputs for model job
         uses: actions/upload-artifact@v4
