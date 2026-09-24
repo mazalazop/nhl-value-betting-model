@@ -65,8 +65,11 @@ iOS et Android partagent le même contrat API. Les clients ne calculent pas les 
 
 ## Sélection quotidienne 2026-27
 
-- Marché POINTS : au maximum 5 picks.
-- Marché BUTS : au maximum 5 picks.
+- Marché POINTS : au maximum 5 picks, classés indépendamment de BUTS.
+- Marché BUTS : au maximum 5 picks, classés indépendamment de POINTS.
+- Maximum global : 10 picks par slate.
+- Le même joueur peut apparaître une fois dans POINTS et une fois dans BUTS.
+- L’absence de cotes BUTS ne fait pas échouer le pipeline : le marché produit 0 pick jusqu’à sa publication.
 - La value bet reste affichée comme indicateur secondaire et ne bloque plus par défaut une sélection.
 - Une sécheresse anormalement longue sans point ou sans but est modélisée comme un **biais comportemental de joueur**.
 - Le signal de sécheresse compare la série actuelle à un niveau attendu propre au joueur et à son historique récent. Il est explicitement distinct d'une probabilité de retour à la moyenne.
