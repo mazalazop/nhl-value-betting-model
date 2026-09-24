@@ -52,7 +52,7 @@ def main():
         return
     teams=sorted(set(future["id_equipe_domicile"].dropna().tolist()) | set(future["id_equipe_exterieur"].dropna().tolist()))
     pool=mod.build_recent_player_pool(hist,joueurs,target,teams,recent_lookback_days=a.recent_lookback_days)
-    standings,_,standings_by_team=mod.load_standings()
+    _,_,standings_by_team=mod.load_standings_optional()
     upcoming=mod.build_upcoming_universe(future,hist,matchs,pool,standings_by_team)
 
     h=hist[hist["date_match"]<target].copy()
