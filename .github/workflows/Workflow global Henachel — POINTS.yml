@@ -1,6 +1,9 @@
 name: henachel-points-global
 
 on:
+  push:
+    branches:
+      - season-2026-27-renovation
   workflow_dispatch:
     inputs:
       run_date:
