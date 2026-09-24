@@ -23,6 +23,23 @@ def validate(p: dict) -> list[str]:
         if "odds" in x and (not isinstance(x["odds"],(int,float)) or x["odds"] <= 1): errors.append(f"pick[{i}] invalid odds")
         if "model_probability" in x and not (0 <= x["model_probability"] <= 1): errors.append(f"pick[{i}] invalid probability")
     if p.get("pick_count") != len(p["picks"]): errors.append("pick_count mismatch")
+    groups = {"points": [], "goals": []}
+    for i, x in enumerate(p["picks"]):
+        group = x.get("market_group", "points")
+        if group in groups:
+            groups[group].append(x)
+        else:
+            errors.append(f"pick[{i}] invalid market_group:{group}")
+    for group, rows in groups.items():
+        if len(rows) > 5:
+            errors.append(f"{group} pick count exceeds 5")
+        ranks = [x.get("rank") for x in rows]
+        if ranks != list(range(1, len(rows) + 1)):
+            errors.append(f"{group} ranks are not independent 1..N")
+    if p.get("points_pick_count") != len(groups["points"]):
+        errors.append("points_pick_count mismatch")
+    if p.get("goals_pick_count") != len(groups["goals"]):
+        errors.append("goals_pick_count mismatch")
     return errors
 
 def main() -> None:
