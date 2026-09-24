@@ -10,7 +10,7 @@ DEFAULT_REPORT = ROOT / "outputs/api/validation.json"
 
 def validate(p: dict) -> list[str]:
     errors = []
-    required = ["schema_version","model_version","generated_at_utc","timezone","slate_date","picks"]
+    required = ["schema_version","model_version","generated_at_utc","timezone","slate_date","pick_count","points_pick_count","goals_pick_count","picks"]
     errors += [f"missing:{k}" for k in required if k not in p]
     if errors: return errors
     try: datetime.fromisoformat(p["generated_at_utc"].replace("Z","+00:00"))
