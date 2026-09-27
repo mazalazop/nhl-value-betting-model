@@ -329,6 +329,9 @@ jobs:
       - name: Build features
         run: python model/01_build_base_features.py
 
+      - name: Run scientific walk-forward audit
+        run: python model/14_walk_forward_audit.py
+
       - name: Predict upcoming games
         run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
 
