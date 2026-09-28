@@ -56,12 +56,24 @@ def fit_predict(tr,te,target,features,train_mod):
     alert=pd.to_numeric(tr.get(alert_col,0),errors="coerce").fillna(0).to_numpy()
     w=np.where(y==1,neg/pos,1.0)*np.where(alert>0,1.15,1.0)
     model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
-    model.fit(X,y,sample_weight=w); p_raw=model.predict_proba(T)[:,1]; p_cal=p_raw.copy()
     split=int(len(tr)*.85)
-    if split>=50 and len(np.unique(y[split:]))==2:
+    p_cal=None
+    if split>=50 and len(np.unique(y[:split]))==2 and len(np.unique(y[split:]))==2:
+        # Fit the calibrator only on dates the base model did not train on.
+        cal_model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
+        cal_model.fit(X.iloc[:split],y[:split],sample_weight=w[:split])
+        p_cal_train=cal_model.predict_proba(X.iloc[split:])[:,1]
         calibrator=LogisticRegression(C=1e6,max_iter=1000)
-        calibrator.fit(model.predict_proba(X.iloc[split:])[:,1].reshape(-1,1),y[split:])
+        calibrator.fit(p_cal_train.reshape(-1,1),y[split:])
+        # Refit the production model on the complete historical window, then calibrate test probabilities.
+        model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
+        model.fit(X,y,sample_weight=w)
+        p_raw=model.predict_proba(T)[:,1]
         p_cal=calibrator.predict_proba(p_raw.reshape(-1,1))[:,1]
+    else:
+        model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
+        model.fit(X,y,sample_weight=w)
+        p_cal=model.predict_proba(T)[:,1]
     return p_cal,yt,len(cols)
 
 def run(df,market,target,features,train_mod):
