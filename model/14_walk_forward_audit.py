@@ -53,7 +53,7 @@ def fit_predict(tr,te,target,features,train_mod):
     y=tr[target].astype(int).to_numpy(); yt=te[target].astype(int).to_numpy()
     pos=max(1,int(y.sum())); neg=max(1,len(y)-int(y.sum()))
     alert_col="no_point_drought_alert_pre" if target=="audit_point" else "goal_drought_alert_pre"
-    alert=pd.to_numeric(tr.get(alert_col,0),errors="coerce").fillna(0).to_numpy()
+    alert_source=tr[alert_col] if alert_col in tr.columns else pd.Series(0,index=tr.index)\n    alert=pd.to_numeric(alert_source,errors="coerce").fillna(0).to_numpy()
     w=np.where(y==1,neg/pos,1.0)*np.where(alert>0,1.15,1.0)
     model=HistGradientBoostingClassifier(loss="log_loss",learning_rate=.05,max_iter=300,max_depth=6,min_samples_leaf=50,l2_regularization=1.0,early_stopping=False,random_state=42)
     split=int(len(tr)*.85)
