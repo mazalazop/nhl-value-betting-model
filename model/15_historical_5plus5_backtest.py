@@ -28,9 +28,11 @@ def settle(df: pd.DataFrame, group: str) -> pd.DataFrame:
     out=df.copy()
     stat=pd.to_numeric(out.get("actual_stat_value"),errors="coerce")
     threshold=pd.to_numeric(out.get("threshold"),errors="coerce").fillna(1)
-    out["won"]=(stat>=threshold).astype("Int64")
-    out["pnl"]=out["won"].map({1:out["odds_decimal"]-1,0:-1})
-    out.loc[out["won"].isna(),"pnl"]=pd.NA
+    out["won"]=(stat>=threshold).astype("boolean")
+    out["pnl"]=pd.NA
+    settled=out["won"].notna()
+    out.loc[settled & out["won"],"pnl"]=pd.to_numeric(out.loc[settled & out["won"],"odds_decimal"],errors="coerce")-1.0
+    out.loc[settled & ~out["won"],"pnl"]=-1.0
     out["pick_market_group"]=group
     return out
 
