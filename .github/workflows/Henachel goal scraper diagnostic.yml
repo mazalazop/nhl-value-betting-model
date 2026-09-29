@@ -1,0 +1,95 @@
+name: Henachel goal scraper diagnostic
+
+on:
+  push:
+    branches:
+      - season-2026-27-renovation
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+  HUB_URL: https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout model repo
+        uses: actions/checkout@v4
+
+      - name: Checkout scraper repo
+        uses: actions/checkout@v4
+        with:
+          repository: mazalazop/nhl-unibet-odds-scraper
+          path: scraper_repo
+          ref: e55f1dad1abf02dac6d2526f265843bbe308e24d
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scraper_repo/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Discover events
+        working-directory: scraper_repo
+        env:
+          UNIBET_HUB_URL: https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl
+          PW_HEADLESS: "true"
+          DISCOVERY_MAX_MATCHES: "5"
+        run: python scrapers/unibet_points_discover_event_urls.py
+
+      - name: Export events
+        id: events
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          DISCOVERY_JSON="$(find artifacts/unibet_points_discover_event_urls -name discovered_event_urls.json -print -quit)"
+          python - "$DISCOVERY_JSON" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          data=json.loads(Path(sys.argv[1]).read_text())
+          urls=data.get("event_urls", [])
+          Path(os.environ["GITHUB_ENV"]).open("a").write("UNIBET_EVENT_URLS="+",".join(urls)+"\n")
+          Path(os.environ["GITHUB_OUTPUT"]).open("a").write("has_events="+str(bool(urls)).lower()+"\n")
+          print("URLs découvertes:", len(urls))
+          PY
+
+      - name: Run goal batch
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        env:
+          PW_HEADLESS: "true"
+        run: python scrapers/unibet_event_goals_batch_runner.py
+
+      - name: Build acceptance report
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          BATCH="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
+          BATCH_SUMMARY_PATH="$BATCH/batch_summary.json" python scrapers/unibet_event_goals_acceptance_report.py
+
+      - name: Normalize goals
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          BATCH="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
+          ACCEPTANCE_REPORT_PATH="$BATCH/acceptance_report.json" python scrapers/unibet_event_goals_normalize_accepted.py
+
+      - name: Upload scraper diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: goal-scraper-diagnostic
+          path: scraper_repo/artifacts/
+          retention-days: 7

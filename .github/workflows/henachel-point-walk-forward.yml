@@ -1,0 +1,70 @@
+name: henachel-point-walk-forward-audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      min_train_days:
+        description: "Historique minimal avant le premier fold"
+        required: false
+        default: "365"
+      test_days:
+        description: "Longueur de chaque fenêtre test"
+        required: false
+        default: "30"
+      step_days:
+        description: "Décalage entre deux folds"
+        required: false
+        default: "30"
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  walk_forward:
+    runs-on: [self-hosted, macOS, X64, morgan-runner]
+    timeout-minutes: 240
+    steps:
+      - name: Checkout model repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Refresh source data
+        run: python model/00_refresh_sources.py
+
+      - name: Refresh PP stats
+        run: python model/00a_refresh_pp_stats.py
+
+      - name: Build match/player base
+        run: python model/00b_build_base_match_fusionnee.py
+
+      - name: Refresh standings
+        run: python model/00c_refresh_team_standings.py
+
+      - name: Build features
+        run: python model/01_build_base_features.py
+
+      - name: Run expanding walk-forward audit
+        run: |
+          python model/14_walk_forward_point_backtest.py             --min-train-days "${{ inputs.min_train_days }}"             --test-days "${{ inputs.test_days }}"             --step-days "${{ inputs.step_days }}"
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-point-walk-forward-audit
+          path: |
+            outputs/walk_forward_point_results.csv
+            outputs/walk_forward_point_results.json
+          retention-days: 30
