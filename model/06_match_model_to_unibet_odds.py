@@ -104,12 +104,17 @@ TEAM_CODE_TO_NAMES = {
     "VGK": ["vegas golden knights"],
     "WSH": ["washington capitals"],
     "WPG": ["winnipeg jets"],
+    "FLA": ["florida panthers"],
+    "MTL": ["montreal canadiens"],
+    "VGK": ["vegas golden knights"],
 }
 
 PLAYER_NAME_OVERRIDES = {
     "sebastian aho fin": "sebastian aho",
     "sebastian aho (fin)": "sebastian aho",
 }
+
+BOOKMAKER_TEAM_CODE_ALIASES = {"FLO": "FLA", "MON": "MTL", "VEG": "VGK"}
 
 FUZZY_MIN_SCORE = 0.965
 
@@ -196,8 +201,19 @@ def canonical_team_aliases(team_code: Any) -> List[str]:
     return [normalize_text(x) for x in aliases if normalize_text(x)]
 
 
+def normalize_bookmaker_team_name(value: Any) -> str:
+    raw = normalize_text(value)
+    if not raw:
+        return ""
+    first = raw.split()[0].upper()
+    code = BOOKMAKER_TEAM_CODE_ALIASES.get(first, first)
+    if code in TEAM_CODE_TO_NAMES:
+        return canonical_team_primary(code) or raw
+    return raw
+
+
 def matchup_key_from_team_names(team_a: Any, team_b: Any) -> Tuple[str, str]:
-    ordered = sorted([normalize_text(team_a), normalize_text(team_b)])
+    ordered = sorted([normalize_bookmaker_team_name(team_a), normalize_bookmaker_team_name(team_b)])
     return ordered[0], ordered[1]
 
 
