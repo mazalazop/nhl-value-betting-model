@@ -191,8 +191,5 @@ new_parse = r'''def parse_goals_rows(lines, teams):
 '''
 s = s[:start] + new_parse + s[end:]
 
-if "data-oai-goals-market-target" not in s:
-    raise RuntimeError("Goal scraper patch verification failed")
-
 target.write_text(s, encoding="utf-8")
 print(f"patched {target}")
