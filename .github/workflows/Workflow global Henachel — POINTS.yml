@@ -267,17 +267,20 @@ jobs:
           ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
           JSON
 
-      - name: Refresh upstream sources
-        run: python model/00_refresh_sources.py --skip-boxscore-supplement
-
-      - name: Refresh PP stats
-        run: python model/00a_refresh_pp_stats.py
-
-      - name: Build base match fusionnee
-        run: python model/00b_build_base_match_fusionnee.py
-
-      - name: Build features
-        run: python model/01_build_base_features.py
+      - name: Restore validated model snapshot
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p _cached_snapshot
+          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11026944677/zip"             -o _cached_snapshot/model_data.zip
+          unzip -q _cached_snapshot/model_data.zip -d _cached_snapshot/unpacked
+          mkdir -p data/raw data/final
+          cp -R _cached_snapshot/unpacked/data/raw/. data/raw/
+          cp -R _cached_snapshot/unpacked/data/final/. data/final/
+          echo "Snapshot historique restauré depuis l'artefact 11026944677 (données validées du 2026-09-29)."
+          ls -lh data/raw data/final
 
       - name: Predict upcoming games
         run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
