@@ -294,7 +294,12 @@ def exact_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.Da
         return subset
     aliases = set(model_row["team_aliases"] or [])
     if aliases:
-        subset = subset[subset["team_name_normalized_join"].isin(aliases)].copy()
+        team_filtered = subset[subset["team_name_normalized_join"].isin(aliases)].copy()
+        # Unibet's POINTS market may not expose team labels in the player rows.
+        # If the bookmaker team is blank, matchup + player is still unique enough
+        # for this market and the model already knows the player's team.
+        if not team_filtered.empty:
+            subset = team_filtered
     return subset
 
 
@@ -304,8 +309,12 @@ def fuzzy_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.Da
 
     subset = odds_df[
         (odds_df["matchup_key"] == model_row["matchup_key"])
-        & (odds_df["team_name_normalized_join"].isin(set(model_row["team_aliases"] or [])))
     ].copy()
+    aliases = set(model_row["team_aliases"] or [])
+    if aliases:
+        team_filtered = subset[subset["team_name_normalized_join"].isin(aliases)].copy()
+        if not team_filtered.empty:
+            subset = team_filtered
     if subset.empty:
         return subset
 
