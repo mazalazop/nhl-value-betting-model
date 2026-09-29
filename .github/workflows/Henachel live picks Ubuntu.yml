@@ -1,4 +1,4 @@
-name: Henachel live picks Ubuntu
+name: Henachel live picks Ubuntu # live standings optimized
 
 on:
   push:
