@@ -62,7 +62,7 @@ jobs:
         with:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
-          ref: cec6303ca4d41ffa0265959ea569608c048d04df
+          ref: d8fde4207e43e264e58e5c426dec715ebb0726a4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -133,11 +133,6 @@ jobs:
         run: |
           BATCH="$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)"
           ACCEPTANCE_REPORT_PATH="$BATCH/acceptance_report.json" python scrapers/unibet_event_points_normalize_accepted.py
-
-      - name: Patch live BUTS scraper selector
-        working-directory: .
-        shell: bash
-        run: python tools/patch_goal_scraper.py scraper_repo/scrapers/unibet_event_goals_parser_v1.py
 
       - name: Run BUTS batch
         if: steps.events.outputs.has_events == 'true'
