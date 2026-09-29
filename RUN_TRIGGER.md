@@ -8,3 +8,5 @@ Final parser syntax fix trigger.
 Correct literal escape in parser trigger.
 
 Verified parser syntax around market expansion.
+
+Final validation fix: accept teamless POINTS rows.
