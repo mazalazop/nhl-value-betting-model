@@ -268,7 +268,7 @@ jobs:
           JSON
 
       - name: Refresh upstream sources
-        run: python model/00_refresh_sources.py
+        run: python model/00_refresh_sources.py --skip-boxscore-supplement
 
       - name: Refresh PP stats
         run: python model/00a_refresh_pp_stats.py
