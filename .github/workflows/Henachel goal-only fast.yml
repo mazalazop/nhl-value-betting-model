@@ -1,0 +1,221 @@
+name: Henachel goal-only fast
+
+on:
+  push:
+    branches:
+      - season-2026-27-renovation
+  workflow_dispatch:
+    inputs:
+      run_date:
+        description: "Date Europe/Paris YYYY-MM-DD"
+        required: false
+        type: string
+      publish_to_sheet:
+        description: "Publier vers Google Sheet"
+        required: false
+        type: boolean
+        default: true
+      run_points_market:
+        description: "Scraper le marché POINTS"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: henachel-goal-only-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: Europe/Paris
+  PYTHONUNBUFFERED: "1"
+  HUB_URL: "https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl"
+
+jobs:
+  live_picks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Resolve runtime config
+        id: config
+        shell: bash
+        run: |
+          RUN_DATE="${{ github.event.inputs.run_date }}"
+          if [ -z "$RUN_DATE" ]; then RUN_DATE="$(TZ=Europe/Paris date +%F)"; fi
+          PUBLISH="${{ github.event.inputs.publish_to_sheet }}"
+          if [ -z "$PUBLISH" ]; then PUBLISH="true"; fi
+          RUN_POINTS="${{ github.event.inputs.run_points_market }}"
+          if [ -z "$RUN_POINTS" ]; then RUN_POINTS="false"; fi
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
+          echo "RUN_DATE=$RUN_DATE" >> "$GITHUB_ENV"
+          echo "PUBLISH_TO_SHEET=$PUBLISH" >> "$GITHUB_ENV"
+          echo "RUN_POINTS_MARKET=$RUN_POINTS" >> "$GITHUB_ENV"
+
+      - name: Checkout model repo
+        uses: actions/checkout@v4
+
+      - name: Checkout scraper repo
+        uses: actions/checkout@v4
+        with:
+          repository: mazalazop/nhl-unibet-odds-scraper
+          path: scraper_repo
+          ref: cec6303ca4d41ffa0265959ea569608c048d04df
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r scraper_repo/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Discover Unibet NHL events
+        working-directory: scraper_repo
+        env:
+          UNIBET_HUB_URL: ${{ env.HUB_URL }}
+          PW_HEADLESS: "true"
+          DISCOVERY_MAX_MATCHES: "12"
+        run: python scrapers/unibet_points_discover_event_urls.py
+
+      - name: Export discovered events
+        id: events
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          DISCOVERY_JSON="$(find artifacts/unibet_points_discover_event_urls -name discovered_event_urls.json -print -quit)"
+          python - "$DISCOVERY_JSON" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          p=Path(sys.argv[1])
+          data=json.loads(p.read_text())
+          urls=data.get("event_urls", [])
+          Path(os.environ["GITHUB_ENV"]).open("a").write("UNIBET_EVENT_URLS="+",".join(urls)+"\n")
+          Path(os.environ["GITHUB_OUTPUT"]).open("a").write(f"has_events={str(bool(urls)).lower()}\n")
+          print(f"URLs découvertes: {len(urls)}")
+          PY
+
+      - name: Prepare empty POINTS market
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          mkdir -p export_bundle
+          printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
+
+      - name: Run BUTS batch
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        env:
+          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
+          PW_HEADLESS: "true"
+        run: python scrapers/unibet_event_goals_batch_runner.py
+
+      - name: Build BUTS acceptance report
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          BATCH="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
+          BATCH_SUMMARY_PATH="$BATCH/batch_summary.json" python scrapers/unibet_event_goals_acceptance_report.py
+
+      - name: Normalize BUTS
+        if: steps.events.outputs.has_events == 'true'
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          BATCH="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
+          ACCEPTANCE_REPORT_PATH="$BATCH/acceptance_report.json" python scrapers/unibet_event_goals_normalize_accepted.py
+
+      - name: Prepare odds bundle
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          mkdir -p export_bundle
+          DISC="$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)"
+          cp "$DISC/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+          if [ -n "$UNIBET_EVENT_URLS" ]; then
+            if [ "$RUN_POINTS_MARKET" = "true" ]; then
+              P="$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)"
+              cp "$P/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+            fi
+            G="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
+            GN="$(ls -td "$G"/normalized_* | head -n 1)"
+            cp "$GN/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
+          else
+            printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
+            printf '%s\n' '{"normalized_rows_count":0,"normalized_rows":[]}' > export_bundle/normalized_goals_odds.json
+          fi
+
+      - name: Install Google credentials
+        if: steps.config.outputs.publish == 'true'
+        shell: bash
+        run: |
+          mkdir -p secrets
+          cat > secrets/henachel-service-account.json <<'JSON'
+          ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
+          JSON
+
+      - name: Place odds
+        shell: bash
+        run: |
+          mkdir -p outputs
+          cp scraper_repo/export_bundle/normalized_points_odds.json outputs/
+          cp scraper_repo/export_bundle/normalized_goals_odds.json outputs/
+
+      - name: Run unit tests
+        run: pytest -q tests/test_mobile_payload.py tests/test_selection_engine.py
+
+      - name: Refresh upstream sources
+        run: python model/00_refresh_sources.py --min-season 20252026 --skip-boxscore-supplement
+
+      - name: Refresh PP stats
+        run: python model/00a_refresh_pp_stats.py
+
+      - name: Build match fusion
+        run: python model/00b_build_base_match_fusionnee.py
+
+      - name: Refresh standings
+        run: python model/00c_refresh_team_standings.py
+
+      - name: Build features
+        run: python model/01_build_base_features.py
+
+      - name: Predict BUTS
+        run: python model/05b_predict_upcoming_goals.py --target-date "${{ env.RUN_DATE }}"
+
+      - name: Match BUTS odds
+        run: python model/06_match_model_to_unibet_goal_odds.py --run-date "${{ env.RUN_DATE }}"
+
+      - name: Build goal selection
+        run: python model/07b_build_combined_daily_bets.py --run-date "${{ env.RUN_DATE }}" --max-points 0 --max-goals 5 --min-edge -1.0
+
+      - name: Build mobile payload
+        run: |
+          python model/12_build_api_payload.py --input-csv outputs/07_daily_bets.csv --output-json outputs/api/daily_picks.json --slate-date "${{ env.RUN_DATE }}"
+
+      - name: Validate payload
+        run: |
+          python model/13_validate_daily_payload.py --input-json outputs/api/daily_picks.json --report-json outputs/api/validation.json
+
+      - name: Publish Google Sheet
+        if: steps.config.outputs.publish == 'true'
+        run: |
+          python model/08_publish_to_google_sheet.py --sheet-id "${{ secrets.HENACHEL_SHEET_ID }}" --credentials-json "secrets/henachel-service-account.json"
+
+      - name: Upload live outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-live-${{ env.RUN_DATE }}
+          path: |
+            outputs/
+            data/raw/
+            data/final/
+          retention-days: 14
