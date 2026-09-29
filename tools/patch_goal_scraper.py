@@ -106,7 +106,6 @@ new_select = r'''def select_first_matching_market_block(page, labels):
 
     return "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
 '''
-'''
 s = s[:start] + new_select + s[end:]
 
 start = s.index("def parse_goals_rows(lines, teams):")
