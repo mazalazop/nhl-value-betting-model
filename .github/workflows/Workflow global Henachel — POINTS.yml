@@ -282,8 +282,19 @@ jobs:
           echo "Snapshot historique restauré depuis l'artefact 11026944677 (données validées du 2026-09-29)."
           ls -lh data/raw data/final
 
-      - name: Predict upcoming games
-        run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+      - name: Restore latest point predictions
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p _cached_predictions
+          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11037905854/zip"             -o _cached_predictions/model_outputs.zip
+          unzip -q _cached_predictions/model_outputs.zip -d _cached_predictions/unpacked
+          cp _cached_predictions/unpacked/outputs/predictions_upcoming_point_enrichi_calibre_v2.csv outputs/
+          cp _cached_predictions/unpacked/outputs/predictions_upcoming_point_enrichi_v2.csv outputs/
+          echo "Prédictions POINT restaurées depuis le run #163."
+          wc -l outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
 
       - name: Match model to Unibet odds
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
