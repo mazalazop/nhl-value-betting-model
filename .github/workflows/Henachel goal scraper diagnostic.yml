@@ -26,7 +26,7 @@ jobs:
         with:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
-          ref: 04c194c644b9e4a915f7ab845cef3df00cafd3ac
+          ref: e55f1dad1abf02dac6d2526f265843bbe308e24d
 
       - name: Setup Python
         uses: actions/setup-python@v5
