@@ -38,6 +38,10 @@ on:
   schedule:
     - cron: "0 9 * * *"
 
+concurrency:
+  group: henachel-points-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -125,7 +129,6 @@ jobs:
         with:
           repository: mazalazop/nhl-unibet-odds-scraper
           path: scraper_repo
-          token: ${{ secrets.SCRAPER_REPO_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
