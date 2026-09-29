@@ -180,7 +180,7 @@ jobs:
         run: pytest -q tests/test_mobile_payload.py tests/test_selection_engine.py
 
       - name: Refresh upstream sources
-        run: python model/00_refresh_sources.py
+        run: python model/00_refresh_sources.py --min-season 20232024 --skip-boxscore-supplement
 
       - name: Refresh PP stats
         run: python model/00a_refresh_pp_stats.py
