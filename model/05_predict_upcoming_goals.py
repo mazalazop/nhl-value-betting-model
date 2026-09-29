@@ -1069,7 +1069,7 @@ def compute_player_features_for_future_row(
     goal_hit_rate_prev_season = float((pd.to_numeric(prev_season_goal_hist["buts"], errors="coerce").fillna(0) >= 1).mean()) if len(prev_season_goal_hist) else np.nan
 
     if pd.notna(goal_hit_rate_season_pre) and pd.notna(goal_hit_rate_prev_season):
-        goal_hit_rate_weighted_pre = historical_current_weight * goal_hit_rate_season_pre + historical_prev_weight * goal_hit_rate_prev_season
+        goal_hit_rate_weighted_pre = 0.60 * goal_hit_rate_season_pre + 0.40 * goal_hit_rate_prev_season
     elif pd.notna(goal_hit_rate_season_pre):
         goal_hit_rate_weighted_pre = goal_hit_rate_season_pre
     elif pd.notna(goal_hit_rate_prev_season):
