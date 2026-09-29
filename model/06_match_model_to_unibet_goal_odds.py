@@ -104,25 +104,23 @@ def main():
             & (odds["player_name_normalized_join"] == mr["player_name_normalized"])
         ].copy()
         if not sub.empty and mr["team_aliases"]:
-            sub = sub[sub["team_name_normalized_join"].isin(set(mr["team_aliases"]))].copy()
+            aliases = set(mr["team_aliases"])
+            team_filtered = sub[sub["team_name_normalized_join"].isin(aliases)].copy()
+            # Unibet's NHL player-goal rows do not expose a team label per row.
+            # An empty bookmaker team is valid when matchup and player match.
+            if not team_filtered.empty:
+                sub = team_filtered
         method = "exact"
         score = None
         if sub.empty and not mr["model_name_is_numeric"]:
+            aliases = set(mr["team_aliases"])
             sub = odds[
                 (odds["matchup_key"] == mr["matchup_key"])
-                & (odds["team_name_normalized_join"].isin(set(mr["team_aliases"])))
-            ].copy()
-            if not sub.empty:
-                model_name = mr["player_name_normalized"]
-                sub["fuzzy_score"] = sub["player_name_normalized_join"].apply(
-                    lambda x: __import__("difflib").SequenceMatcher(None, model_name, x).ratio()
+                & (
+                    odds["team_name_normalized_join"].isin(aliases)
+                    | (odds["team_name_normalized_join"] == "")
                 )
-                sub = sub.sort_values(["fuzzy_score","odds_decimal"], ascending=[False,True])
-                best = float(sub.iloc[0]["fuzzy_score"])
-                sub = sub[sub["fuzzy_score"] >= 0.965]
-                sub = sub[sub["fuzzy_score"] == best].copy()
-                method = "fuzzy"
-                score = best
+            ].copy()
         if len(sub) != 1:
             continue
 
