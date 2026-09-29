@@ -10,3 +10,5 @@ Correct literal escape in parser trigger.
 Verified parser syntax around market expansion.
 
 Final validation fix: accept teamless POINTS rows.
+
+Use current predictions and corrected POINTS matcher.
