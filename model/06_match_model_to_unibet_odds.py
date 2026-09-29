@@ -264,7 +264,11 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     if not rows:
         return payload, pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)
 
-    missing_top = [k for k in REQUIRED_ODDS_TOP_LEVEL_KEYS if k not in payload]\n    if missing_top:\n        raise ValueError(f"Clés manquantes dans normalized_points_odds.json : {missing_top}")\n\n    df = pd.DataFrame(rows)
+    missing_top = [k for k in REQUIRED_ODDS_TOP_LEVEL_KEYS if k not in payload]
+    if missing_top:
+        raise ValueError(f"Clés manquantes dans normalized_points_odds.json : {missing_top}")
+
+    df = pd.DataFrame(rows)
     missing_cols = [c for c in REQUIRED_ODDS_ROW_COLUMNS if c not in df.columns]
     if missing_cols:
         raise ValueError(f"Colonnes manquantes dans les rows bookmaker : {missing_cols}")
