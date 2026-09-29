@@ -134,6 +134,153 @@ jobs:
           BATCH="$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)"
           ACCEPTANCE_REPORT_PATH="$BATCH/acceptance_report.json" python scrapers/unibet_event_points_normalize_accepted.py
 
+      - name: Patch live BUTS scraper selector
+        working-directory: .
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("scraper_repo/scrapers/unibet_event_goals_parser_v1.py")
+          s = p.read_text(encoding="utf-8")
+          s = s.replace("""TAB_LABEL_CANDIDATES = [
+              "Buteurs",
+              "Buteur",
+              "Buts",
+              "Joueurs",
+          ]""","""TAB_LABEL_CANDIDATES = [
+              "Joueurs",
+              "Buteurs",
+              "Buteur",
+              "Buts",
+              "Points",
+          ]""")
+          s = s.replace("""BLOCK_LABEL_CANDIDATES = [
+              "BUTEUR (PROLONGATIONS INCLUSES)",
+              "BUTEUR",
+          ]""","""BLOCK_LABEL_CANDIDATES = [
+              "Nombre de Buts - Joueur - Match",
+              "Nombre de Buts - Joueur",
+              "NOMBRE DE BUTS - JOUEUR - MATCH",
+              "NOMBRE DE BUTS - JOUEUR",
+              "NOMBRE DE BUTS DU JOUEUR (PROLONGATIONS INCLUSES)",
+              "NOMBRE DE BUTS DU JOUEUR",
+              "BUTEUR (PROLONGATIONS INCLUSES)",
+              "BUTEUR",
+              "Buteur",
+          ]""")
+          start=s.index("def select_first_matching_market_block(page, labels):")
+          end=s.index("\ndef click_all_see_more_in_block",start)
+          new_func=r'''def select_first_matching_market_block(page, labels):
+              result = page.evaluate(
+                  """
+                  (cfg) => {
+                    const normalize = (value) => String(value || '')
+                      .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+                      .toLowerCase().replace(/\\s+/g, ' ').trim();
+                    const labels=(cfg.labels||[]).map(normalize).filter(Boolean);
+                    const teams=(cfg.teams||[]).map(normalize).filter(Boolean);
+                    const all=Array.from(document.querySelectorAll('div, section, article, li'));
+                    for(const prev of Array.from(document.querySelectorAll('[data-oai-goals-market-target]')))
+                      prev.removeAttribute('data-oai-goals-market-target');
+                    const candidates=[];
+                    for(const el of all){
+                      const raw=el.innerText||''; const text=normalize(raw); if(!text) continue;
+                      const hasGoals=text.includes('nombre de buts')||text.includes('buteur')||text.includes('2 buts ou plus')||text.includes('1 but ou plus');
+                      if(!hasGoals || !text.includes('joueur')) continue;
+                      if(text.includes('nombre de points')||text.includes('nombre de passes decisives')||text.includes('points - joueur')) continue;
+                      const lines=raw.split(/\\n+/).map(x=>x.trim()).filter(Boolean).length;
+                      const odds=(text.match(/\\b\\d+(?:[.,]\\d+)?\\b/g)||[]).length;
+                      const more=(text.match(/afficher plus|voir plus/g)||[]).length;
+                      const teamHits=teams.filter(x=>x&&text.includes(x)).length;
+                      const labelHit=labels.some(lbl=>text.startsWith(lbl)||text.includes(lbl));
+                      let score=0;
+                      if(labelHit) score+=220;
+                      if(text.startsWith('nombre de buts')) score+=180;
+                      if(text.startsWith('buteur')) score+=130;
+                      if(text.includes('2 buts ou plus')) score+=70;
+                      if(text.includes('1 but ou plus')) score+=40;
+                      if(teamHits>=1) score+=20;
+                      if(odds>=8) score+=25;
+                      if(lines>=6&&lines<=180) score+=20;
+                      if(more<=8) score+=10;
+                      if(text.length>7000) score-=180;
+                      if(lines>250) score-=140;
+                      candidates.push({el,label:labels.find(lbl=>text.startsWith(lbl)||text.includes(lbl))||'BUTEUR',score,text_length:text.length,line_count:lines,odd_count:odds,show_more_hits:more});
+                    }
+                    candidates.sort((a,b)=>b.score-a.score||a.text_length-b.text_length||a.line_count-b.line_count);
+                    if(!candidates.length) return {found:false,selected_block_label:null};
+                    const best=candidates[0];
+                    best.el.setAttribute('data-oai-goals-market-target','1');
+                    return {found:true,selected_block_label:best.label};
+                  }
+                  """,
+                  {"labels": labels, "teams": teams},
+              )
+              if not result.get("found"):
+                  return None, None
+              return result.get("selected_block_label") or "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
+          '''
+          s=s[:start]+new_func+s[end:]
+          start=s.index("def parse_goals_rows(lines, teams):")
+          end=s.index("\ndef validate_rows",start)
+          new_parse=r'''def parse_goals_rows(lines, teams):
+              rows=[]; debug_players=[]
+          
+              team_map={}
+              for team in teams:
+                  key=normalize_for_match(team); compact=re.sub(r"[^a-z0-9]+","",key)
+                  toks=[t for t in key.split() if len(t)>=3]
+                  variants={key,compact}
+                  if toks: variants.add(toks[-1])
+                  for v in variants:
+                      if v: team_map[v]=team
+          
+              def resolve_team(line):
+                  key=normalize_for_match(line); compact=re.sub(r"[^a-z0-9]+","",key)
+                  if key in team_map: return team_map[key]
+                  if compact in team_map: return team_map[compact]
+                  for v,team in team_map.items():
+                      if len(v)>=5 and (v in compact or compact in v): return team
+                  return None
+          
+              i=0; current_team=None
+              headers={"buteur","1 but","1 but ou plus","2 buts ou plus","2 buts"}
+              while i<len(lines):
+                  line=norm_spaces(lines[i]); resolved=resolve_team(line)
+                  if resolved:
+                      current_team=resolved; i+=1
+                      while i<len(lines) and normalize_for_match(lines[i]) in headers: i+=1
+                      continue
+                  if not current_team:
+                      i+=1; continue
+                  player=line
+                  if not is_valid_player_name(player,teams):
+                      i+=1; continue
+                  j=i+1; odds=[]
+                  while j<len(lines) and len(odds)<4:
+                      token=norm_spaces(lines[j]); key=normalize_for_match(token)
+                      if resolve_team(token): break
+                      if key in headers or "afficher plus" in key or "voir plus" in key or "voir moins" in key: break
+                      if is_decimal_odd(token) or token=="-":
+                          odds.append(token); j+=1
+                      else: break
+                  if odds:
+                      first=odds[0]
+                      debug_players.append({"team":current_team,"player_name_raw":player,"odds_count_seen":len(odds),"kept_outcome_label":"Buteur","has_dash":any(x=="-" for x in odds),"kept_odds_values":[first] if first!="-" else [],"parser_mode":"line_based_fuzzy_team"})
+                      if first!="-":
+                          rows.append({"team":current_team,"player_name_raw":player,"outcome_label":"Buteur","odds_raw":first})
+                      i=j
+                  else:
+                      i+=1
+              return rows,debug_players
+          '''
+          s=s[:start]+new_parse+s[end:]
+          p.write_text(s,encoding="utf-8")
+          print("goal scraper patched")
+          
+          PY
+
       - name: Run BUTS batch
         if: steps.events.outputs.has_events == 'true'
         working-directory: scraper_repo
