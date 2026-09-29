@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -418,41 +419,46 @@ def build_stats_dataframe(
     session: requests.Session,
     df_matchs_played: pd.DataFrame,
     sleep_seconds: float,
+    workers: int = 12,
 ) -> pd.DataFrame:
     all_rows: List[Dict[str, Any]] = []
     total_games = len(df_matchs_played)
 
     print(f"[stats] matchs joués à parcourir : {total_games}")
+    print(f"[stats] workers API : {workers}")
 
-    for idx, match_row in df_matchs_played.iterrows():
-        game_id = int(match_row["id_match"])
-        date_match = str(match_row["date_match"])
-        season_source = str(match_row["saison"])
+    tasks = [
+        (int(row["id_match"]), str(row["date_match"]), str(row["saison"]))
+        for _, row in df_matchs_played.iterrows()
+    ]
 
-        payload = fetch_game_payload(session, game_id)
+    def fetch_one(task):
+        game_id, date_match, season_source = task
+        local_session = build_session()
+        payload = fetch_game_payload(local_session, game_id)
         game_rows = parse_game_to_stats_rows(
             payload=payload,
             game_id=game_id,
             date_match=date_match,
             season_source=season_source,
         )
-
-        if len(game_rows) == 0:
+        if not game_rows:
             raise ValueError(f"Aucune ligne joueur trouvée pour id_match={game_id}")
+        return game_rows
 
-        all_rows.extend(game_rows)
-
-        if (idx + 1) % 200 == 0 or (idx + 1) == total_games:
-            print(f"[stats] {idx + 1}/{total_games}")
-
-        time.sleep(sleep_seconds)
+    with ThreadPoolExecutor(max_workers=max(1, int(workers))) as executor:
+        futures = {executor.submit(fetch_one, task): task for task in tasks}
+        completed = 0
+        for future in as_completed(futures):
+            all_rows.extend(future.result())
+            completed += 1
+            if completed % 200 == 0 or completed == total_games:
+                print(f"[stats] {completed}/{total_games}")
 
     if not all_rows:
         raise ValueError("stats.csv vide : aucune stat joueur collectée.")
 
     df = pd.DataFrame(all_rows)
-
-    # Dédoublonnage de sécurité
     df["id_joueur"] = pd.to_numeric(df["id_joueur"], errors="coerce").astype("Int64")
     df["id_match"] = pd.to_numeric(df["id_match"], errors="coerce").astype("Int64")
     df["is_home_player"] = pd.to_numeric(df["is_home_player"], errors="coerce").astype("Int64")
@@ -463,7 +469,6 @@ def build_stats_dataframe(
 
     df["date_match"] = pd.to_datetime(df["date_match"], errors="coerce").dt.strftime("%Y-%m-%d")
     df["season_source"] = df["season_source"].astype(str)
-
     df = (
         df.sort_values(["date_match", "id_match", "id_joueur"])
         .drop_duplicates(subset=["id_match", "id_joueur"], keep="last")
@@ -471,33 +476,16 @@ def build_stats_dataframe(
     )
 
     required_cols = [
-        "id_joueur",
-        "id_match",
-        "date_match",
-        "season_source",
-        "team_player_match",
-        "adversaire_match",
-        "home_road_flag",
-        "is_home_player",
-        "team_name_match",
-        "opponent_name_match",
-        "buts",
-        "passes",
-        "points",
-        "tirs",
-        "temps_de_glace",
-        "temps_pp",
-        "plus_moins",
-        "penalty_minutes",
+        "id_joueur","id_match","date_match","season_source","team_player_match",
+        "adversaire_match","home_road_flag","is_home_player","team_name_match",
+        "opponent_name_match","buts","passes","points","tirs","temps_de_glace",
+        "temps_pp","plus_moins","penalty_minutes",
     ]
     df = df[required_cols]
-
     missing = int(df["id_joueur"].isna().sum() + df["id_match"].isna().sum())
     if missing > 0:
         raise ValueError(f"stats.csv invalide : {missing} ids manquants.")
-
     return df
-
 
 def audit_players_against_joueurs_csv(df_stats: pd.DataFrame, df_joueurs: pd.DataFrame) -> Tuple[int, pd.DataFrame]:
     ids_stats = set(pd.to_numeric(df_stats["id_joueur"], errors="coerce").dropna().astype(int))
@@ -606,6 +594,10 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_SLEEP_SECONDS,
         help="Pause entre appels API.",
     )
+    parser.add_argument(
+        "--workers", type=int, default=12,
+        help="Nombre de requêtes boxscore concurrentes.",
+    )
     return parser.parse_args()
 
 
@@ -645,6 +637,7 @@ def main() -> None:
         session=session,
         df_matchs_played=df_matchs_played,
         sleep_seconds=args.sleep_seconds,
+        workers=args.workers,
     )
 
     joueurs_missing_count, joueurs_missing_df = audit_players_against_joueurs_csv(df_stats, df_joueurs)
