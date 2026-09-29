@@ -95,7 +95,6 @@ new_select = r'''def select_first_matching_market_block(page, labels):
     log(f"market block selected: {label}")
     return "BUTEUR", block
 '''
-'''
 s = s[:start] + new_select + s[end:]
 
 start = s.index("def parse_goals_rows(lines, teams):")
