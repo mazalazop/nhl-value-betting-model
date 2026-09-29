@@ -15,6 +15,8 @@ DEFAULT_INPUT_CSV = DEFAULT_OUTPUTS_DIR / "07_daily_bets.csv"
 DEFAULT_CREDS_JSON = PROJECT_ROOT / "secrets" / "henachel-service-account.json"
 DEFAULT_DAILY_WS = "daily_picks"
 DEFAULT_HISTORY_WS = "history_raw"
+DEFAULT_GOAL_WS = "goal_picks"
+DEFAULT_GOAL_INPUT_CSV = DEFAULT_OUTPUTS_DIR / "predictions_upcoming_goal_enrichi_calibre_v1.csv"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -42,6 +44,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--credentials-json", type=str, default=str(DEFAULT_CREDS_JSON))
     parser.add_argument("--daily-worksheet", type=str, default=DEFAULT_DAILY_WS)
     parser.add_argument("--history-worksheet", type=str, default=DEFAULT_HISTORY_WS)
+    parser.add_argument("--goal-input-csv", type=str, default=str(DEFAULT_GOAL_INPUT_CSV))
+    parser.add_argument("--goal-worksheet", type=str, default=DEFAULT_GOAL_WS)
     return parser.parse_args()
 
 
@@ -90,6 +94,29 @@ def load_daily_bets(path: Path) -> pd.DataFrame:
 
     return df
 
+
+def load_goal_predictions(path: Path, run_date: str) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Fichier prédictions BUT introuvable : {path}")
+    df = pd.read_csv(path, low_memory=False)
+    prob_col = next((c for c in ["proba_goal_1p_calibree", "proba_goal_1p", "model_probability"] if c in df.columns), None)
+    name_col = next((c for c in ["nom", "player_name", "player_name_model"] if c in df.columns), None)
+    team_col = next((c for c in ["team_player_match", "team_code_model", "team"] if c in df.columns), None)
+    opp_col = next((c for c in ["adversaire_match", "opponent_code_model", "opponent"] if c in df.columns), None)
+    if not prob_col or not name_col or not team_col or not opp_col:
+        raise ValueError("Colonnes joueur/équipe/adversaire/probabilité absentes des prédictions BUT.")
+    out = pd.DataFrame({
+        "rang": range(1, len(df) + 1),
+        "date_match": run_date,
+        "joueur": df[name_col],
+        "équipe": df[team_col],
+        "adversaire": df[opp_col],
+        "probabilité_but": pd.to_numeric(df[prob_col], errors="coerce"),
+    })
+    out = out.sort_values("probabilité_but", ascending=False, na_position="last").head(5).reset_index(drop=True)
+    out["rang"] = range(1, len(out) + 1)
+    out["probabilité_but"] = out["probabilité_but"].map(_format_pct)
+    return out
 
 def authorize_gspread(credentials_json: Path) -> gspread.Client:
     if not credentials_json.exists():
@@ -486,26 +513,32 @@ def main() -> None:
     args = parse_args()
 
     input_csv = Path(args.input_csv)
+    goal_input_csv = Path(args.goal_input_csv)
     credentials_json = Path(args.credentials_json)
 
     daily_bets_df = load_daily_bets(input_csv)
     daily_display_df = build_daily_display_df(daily_bets_df)
     daily_history_df = build_history_display_df(daily_bets_df)
+    run_date = str(daily_bets_df["run_date"].iloc[0]) if not daily_bets_df.empty and "run_date" in daily_bets_df.columns else ""
+    goal_display_df = load_goal_predictions(goal_input_csv, run_date)
 
     gc = authorize_gspread(credentials_json)
     sh = gc.open_by_key(args.sheet_id)
 
     daily_ws = get_or_create_worksheet(sh, args.daily_worksheet)
     history_ws = get_or_create_worksheet(sh, args.history_worksheet)
+    goal_ws = get_or_create_worksheet(sh, args.goal_worksheet)
 
     existing_history_df = read_ws_as_df(history_ws)
     merged_history_df = merge_history(existing_history_df, daily_history_df)
 
     write_replace(daily_ws, daily_display_df)
     write_replace(history_ws, merged_history_df)
+    write_replace(goal_ws, goal_display_df)
 
     apply_basic_sheet_style(sh, daily_ws, len(daily_display_df) + 1, len(daily_display_df.columns))
     apply_basic_sheet_style(sh, history_ws, len(merged_history_df) + 1, len(merged_history_df.columns))
+    apply_basic_sheet_style(sh, goal_ws, len(goal_display_df) + 1, len(goal_display_df.columns))
     clear_conditional_format_rules(sh, history_ws)
     apply_history_conditional_formatting(sh, history_ws, merged_history_df)
 
@@ -522,6 +555,8 @@ def main() -> None:
     print(f"History rows before    : {rows_before}")
     print(f"History rows after     : {rows_after}")
     print(f"History rows added     : {rows_added}")
+    print(f"Goal rows written      : {len(goal_display_df)}")
+    print(f"Goal worksheet         : {args.goal_worksheet}")
 
 
 if __name__ == "__main__":
