@@ -213,9 +213,11 @@ jobs:
         run: python model/01_build_base_features.py
 
       - name: Predict POINTS
+        if: env.RUN_POINTS_MARKET == 'true'
         run: python model/05_predict_upcoming_games.py --target-date "${{ env.RUN_DATE }}"
 
       - name: Match POINTS odds
+        if: env.RUN_POINTS_MARKET == 'true'
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ env.RUN_DATE }}"
 
       - name: Predict BUTS
