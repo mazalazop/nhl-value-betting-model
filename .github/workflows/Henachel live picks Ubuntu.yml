@@ -22,7 +22,7 @@ on:
         default: false
 
 concurrency:
-  group: henachel-live-picks-${{ github.ref }}
+  group: henachel-live-picks-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
