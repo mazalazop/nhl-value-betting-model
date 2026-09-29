@@ -256,20 +256,7 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     require_file(path)
     payload = json.loads(path.read_text(encoding="utf-8"))
 
-    missing_top = [k for k in REQUIRED_ODDS_TOP_LEVEL_KEYS if k not in payload]
-    if missing_top:
-        raise ValueError(f"Clés manquantes dans normalized_points_odds.json : {missing_top}")
-
-    rows = payload["rows"]
-    if not isinstance(rows, list):
-        raise ValueError("normalized_points_odds.json['rows'] doit être une liste.")
-
-    # The scraper normalizer emits the canonical `rows` key. An unavailable
-    # market is represented by an empty list, which therefore has no columns.
-    if not rows:
-        return payload, pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)
-
-    df = pd.DataFrame(rows)
+    # An unavailable POINTS market is a valid runtime state. The live pipeline\n    # uses the minimal empty rows payload when Unibet does not publish points odds yet.\n    rows = payload.get("rows", [])\n    if not isinstance(rows, list):\n        raise ValueError("normalized_points_odds.json['rows'] doit être une liste.")\n    if not rows:\n        return payload, pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)\n\n    missing_top = [k for k in REQUIRED_ODDS_TOP_LEVEL_KEYS if k not in payload]\n    if missing_top:\n        raise ValueError(f"Clés manquantes dans normalized_points_odds.json : {missing_top}")\n\n    df = pd.DataFrame(rows)
     missing_cols = [c for c in REQUIRED_ODDS_ROW_COLUMNS if c not in df.columns]
     if missing_cols:
         raise ValueError(f"Colonnes manquantes dans les rows bookmaker : {missing_cols}")
