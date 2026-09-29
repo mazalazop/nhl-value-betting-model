@@ -1,6 +1,9 @@
 name: henachel-points-global
 
 on:
+  push:
+    branches:
+      - run-points-live-2026-09-29
   workflow_dispatch:
     inputs:
       run_date:
