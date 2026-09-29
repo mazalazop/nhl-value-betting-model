@@ -162,6 +162,18 @@ FEATURE_WHITELIST = [
     "return_stabilized_flag",
     "historical_current_weight",
     "historical_prev_weight",
+    "goal_hit_rate_last_5",
+    "goal_hit_rate_last_10",
+    "goal_hit_rate_last_20",
+    "season_goal_hits_before_match",
+    "goal_hit_rate_season_pre",
+    "goal_hit_rate_prev_season",
+    "goal_hit_rate_weighted_pre",
+    "current_no_goal_streak_pre",
+    "max_no_goal_streak_last_2_seasons_pre",
+    "goal_streak_expected_pre",
+    "goal_streak_excess_pre",
+    "goal_drought_alert_pre",
     "point_hit_rate_last_5",
     "point_hit_rate_last_10",
     "point_hit_rate_last_20",
@@ -1045,6 +1057,51 @@ def compute_player_features_for_future_row(
     points_par_60_5 = safe_ratio(points_moy_5 * 60.0, toi_moy_5)
     buts_par_60_5 = safe_ratio(buts_moy_5 * 60.0, toi_moy_5)
 
+    goal_hits = (goals.fillna(0) >= 1).astype(int)
+    goal_hit_rate_last_5 = safe_mean_last_n(goal_hits, 5) if n_prev > 0 else 0.0
+    goal_hit_rate_last_10 = safe_mean_last_n(goal_hits, 10) if n_prev > 0 else 0.0
+    goal_hit_rate_last_20 = safe_mean_last_n(goal_hits, 20) if n_prev > 0 else 0.0
+
+    current_season_goal_hist = hist_player[hist_player["season_source"] == target_season_code].copy()
+    season_goal_hits_before_match = float((pd.to_numeric(current_season_goal_hist["buts"], errors="coerce").fillna(0) >= 1).sum()) if len(current_season_goal_hist) else 0.0
+    goal_hit_rate_season_pre = float((pd.to_numeric(current_season_goal_hist["buts"], errors="coerce").fillna(0) >= 1).mean()) if len(current_season_goal_hist) else np.nan
+    prev_season_goal_hist = hist_player[hist_player["season_source"] == previous_season_code(target_season_code)].copy()
+    goal_hit_rate_prev_season = float((pd.to_numeric(prev_season_goal_hist["buts"], errors="coerce").fillna(0) >= 1).mean()) if len(prev_season_goal_hist) else np.nan
+
+    if pd.notna(goal_hit_rate_season_pre) and pd.notna(goal_hit_rate_prev_season):
+        goal_hit_rate_weighted_pre = historical_current_weight * goal_hit_rate_season_pre + historical_prev_weight * goal_hit_rate_prev_season
+    elif pd.notna(goal_hit_rate_season_pre):
+        goal_hit_rate_weighted_pre = goal_hit_rate_season_pre
+    elif pd.notna(goal_hit_rate_prev_season):
+        goal_hit_rate_weighted_pre = goal_hit_rate_prev_season
+    else:
+        goal_hit_rate_weighted_pre = 0.15
+
+    current_no_goal_streak_pre = 0
+    for v in reversed(goal_hits.tolist()):
+        if v == 0:
+            current_no_goal_streak_pre += 1
+        else:
+            break
+
+    max_no_goal_streak_last_2_seasons_pre = 0
+    no_run = 0
+    target_start = parse_season_start_year(target_season_code)
+    streak_hist = hist_player.copy()
+    if target_start is not None:
+        streak_hist["_season_start"] = streak_hist["season_source"].apply(parse_season_start_year)
+        streak_hist = streak_hist[streak_hist["_season_start"].notna() & (streak_hist["_season_start"] >= target_start - 1)].copy()
+    for v in (pd.to_numeric(streak_hist["buts"], errors="coerce").fillna(0) >= 1).astype(int).tolist():
+        if v == 0:
+            no_run += 1
+            max_no_goal_streak_last_2_seasons_pre = max(max_no_goal_streak_last_2_seasons_pre, no_run)
+        else:
+            no_run = 0
+
+    goal_streak_expected_pre = float((1.0 - goal_hit_rate_weighted_pre) / goal_hit_rate_weighted_pre) if goal_hit_rate_weighted_pre > 0 else 19.0
+    goal_streak_excess_pre = float(max(0.0, current_no_goal_streak_pre - goal_streak_expected_pre))
+    goal_drought_alert_pre = float(1 if current_no_goal_streak_pre >= 5 and current_no_goal_streak_pre >= 0.5 * goal_streak_expected_pre else 0)
+
     point_hits = (points.fillna(0) >= 1).astype(int)
     point_hit_rate_last_5 = safe_mean_last_n(point_hits, 5) if n_prev > 0 else DEFAULT_LAST10_HIT_RATE
     point_hit_rate_last_10 = safe_mean_last_n(point_hits, 10) if n_prev > 0 else DEFAULT_LAST10_HIT_RATE
@@ -1228,6 +1285,18 @@ def compute_player_features_for_future_row(
         "return_stabilized_flag": return_stabilized_flag,
         "historical_current_weight": historical_current_weight,
         "historical_prev_weight": historical_prev_weight,
+        "goal_hit_rate_last_5": goal_hit_rate_last_5,
+        "goal_hit_rate_last_10": goal_hit_rate_last_10,
+        "goal_hit_rate_last_20": goal_hit_rate_last_20,
+        "season_goal_hits_before_match": season_goal_hits_before_match,
+        "goal_hit_rate_season_pre": goal_hit_rate_season_pre,
+        "goal_hit_rate_prev_season": goal_hit_rate_prev_season,
+        "goal_hit_rate_weighted_pre": goal_hit_rate_weighted_pre,
+        "current_no_goal_streak_pre": float(current_no_goal_streak_pre),
+        "max_no_goal_streak_last_2_seasons_pre": float(max_no_goal_streak_last_2_seasons_pre),
+        "goal_streak_expected_pre": goal_streak_expected_pre,
+        "goal_streak_excess_pre": goal_streak_excess_pre,
+        "goal_drought_alert_pre": goal_drought_alert_pre,
         "point_hit_rate_last_5": point_hit_rate_last_5,
         "point_hit_rate_last_10": point_hit_rate_last_10,
         "point_hit_rate_last_20": point_hit_rate_last_20,
@@ -1495,7 +1564,7 @@ def build_prediction_outputs(
     base = upcoming_df.copy()
     base["proba_goal_1p_raw"] = raw_proba
     base["proba_goal_1p_calibree"] = cal_proba
-    base["model_variant"] = "enrichi"
+    base["model_variant"] = "goal_enrichi"
     base["calibration_method"] = "sigmoid"
 
     base["rank_proba_sur_date"] = (
