@@ -4,3 +4,5 @@ Parser hotfix a399fb8 validated for next POINTS run.
 Batch stderr diagnostics trigger.
 
 Final parser syntax fix trigger.
+
+Correct literal escape in parser trigger.
