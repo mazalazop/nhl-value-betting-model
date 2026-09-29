@@ -40,8 +40,12 @@ new_select = r'''def select_first_matching_market_block(page, labels):
         """
         (cfg) => {
           const normalize = (v) => String(v || '')
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase().replace(/\s+/g, ' ').trim();
+            .toLowerCase()
+            .replaceAll(String.fromCharCode(10), ' ')
+            .replaceAll(String.fromCharCode(13), ' ')
+            .replaceAll(String.fromCharCode(9), ' ')
+            .replaceAll('  ', ' ')
+            .trim();
 
           const labels = (cfg.labels || []).map(normalize);
           const all = Array.from(document.querySelectorAll('div,section,article,li'));
@@ -64,9 +68,9 @@ new_select = r'''def select_first_matching_market_block(page, labels):
 
             if (!goalSignal) continue;
 
-            const lines = raw.split(/\n+/).map(x => x.trim()).filter(Boolean).length;
-            const odds = (text.match(/\b\d+(?:[.,]\d+)?\b/g) || []).length;
-            const more = (text.match(/afficher plus|voir plus/g) || []).length;
+            const lines = raw.split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean).length;
+            const digitCount = Array.from(text).filter(c => c >= '0' && c <= '9').length;
+            const more = text.includes('afficher plus') || text.includes('voir plus');
             const labelHit = labels.some(x => text.startsWith(x) || text.includes(x));
 
             let score = 0;
@@ -75,9 +79,9 @@ new_select = r'''def select_first_matching_market_block(page, labels):
             if (text.startsWith('buteur')) score += 180;
             if (text.includes('2 buts ou plus')) score += 90;
             if (text.includes('1 but ou plus')) score += 60;
-            if (odds >= 6) score += 40;
+            if (digitCount >= 6) score += 40;
             if (lines >= 5 && lines <= 180) score += 25;
-            if (more <= 10) score += 15;
+            if (more) score += 15;
             if (text.includes('nombre de points') && !text.includes('buteur') && !text.includes('nombre de buts')) score -= 300;
             if (text.includes('nombre de passes decisives') && !text.includes('buteur') && !text.includes('nombre de buts')) score -= 300;
             if (text.length > 10000) score -= 300;
@@ -101,6 +105,7 @@ new_select = r'''def select_first_matching_market_block(page, labels):
         return None, None
 
     return "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
+'''
 '''
 s = s[:start] + new_select + s[end:]
 
