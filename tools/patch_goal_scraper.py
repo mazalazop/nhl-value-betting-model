@@ -36,75 +36,65 @@ s = s2
 start = s.index("def select_first_matching_market_block(page, labels):")
 end = s.index("\ndef click_all_see_more_in_block", start)
 new_select = r'''def select_first_matching_market_block(page, labels):
-    result = page.evaluate(
-        """
-        (cfg) => {
-          const normalize = (v) => String(v || '')
-            .toLowerCase()
-            .replaceAll(String.fromCharCode(10), ' ')
-            .replaceAll(String.fromCharCode(13), ' ')
-            .replaceAll(String.fromCharCode(9), ' ')
-            .replaceAll('  ', ' ')
-            .trim();
+    candidates = []
 
-          const labels = (cfg.labels || []).map(normalize);
-          const all = Array.from(document.querySelectorAll('div,section,article,li'));
+    for label in labels:
+        locators = [
+            page.get_by_text(label, exact=True),
+            page.locator(f"text={label}"),
+            page.get_by_text(label, exact=False),
+        ]
 
-          for (const el of document.querySelectorAll('[data-oai-goals-market-target]')) {
-            el.removeAttribute('data-oai-goals-market-target');
-          }
+        for loc in locators:
+            try:
+                count = safe_count(loc, 20)
+            except Exception:
+                count = 0
+            for idx in range(min(count, 20)):
+                try:
+                    heading = loc.nth(idx)
+                    if not heading.is_visible(timeout=1200):
+                        continue
 
-          const candidates = [];
-          for (const el of all) {
-            const raw = el.innerText || '';
-            const text = normalize(raw);
-            if (!text) continue;
+                    for level in range(1, 7):
+                        try:
+                            block = heading.locator("xpath=" + "/.." * level).first
+                            text = safe_inner_text(block)
+                            norm = normalize_for_match(text)
+                            if not norm:
+                                continue
 
-            const goalSignal =
-              text.includes('buteur') ||
-              text.includes('nombre de buts') ||
-              text.includes('2 buts ou plus') ||
-              text.includes('1 but ou plus');
+                            lines = [x for x in text.splitlines() if norm_spaces(x)]
+                            if "buteur" not in norm:
+                                continue
+                            if "2 buts ou plus" not in norm and len(lines) < 8:
+                                continue
 
-            if (!goalSignal) continue;
+                            score = 0.0
+                            if "2 buts ou plus" in norm:
+                                score += 50
+                            if "buteur" in norm:
+                                score += 30
+                            score += min(len(lines), 100) * 0.5
+                            if "nombre de points du joueur" in norm:
+                                score -= 100
+                            if "buteur double chance" in norm:
+                                score -= 100
 
-            const lines = raw.split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean).length;
-            const digitCount = Array.from(text).filter(c => c >= '0' && c <= '9').length;
-            const more = text.includes('afficher plus') || text.includes('voir plus');
-            const labelHit = labels.some(x => text.startsWith(x) || text.includes(x));
+                            candidates.append((score, -len(text), label, block))
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
 
-            let score = 0;
-            if (labelHit) score += 250;
-            if (text.startsWith('nombre de buts')) score += 220;
-            if (text.startsWith('buteur')) score += 180;
-            if (text.includes('2 buts ou plus')) score += 90;
-            if (text.includes('1 but ou plus')) score += 60;
-            if (digitCount >= 6) score += 40;
-            if (lines >= 5 && lines <= 180) score += 25;
-            if (more) score += 15;
-            if (text.includes('nombre de points') && !text.includes('buteur') && !text.includes('nombre de buts')) score -= 300;
-            if (text.includes('nombre de passes decisives') && !text.includes('buteur') && !text.includes('nombre de buts')) score -= 300;
-            if (text.length > 10000) score -= 300;
-            if (lines > 300) score -= 200;
-
-            candidates.push({el, score, text_length:text.length, line_count:lines});
-          }
-
-          candidates.sort((a,b) => b.score-a.score || a.text_length-b.text_length || a.line_count-b.line_count);
-
-          if (!candidates.length) return {found:false};
-
-          candidates[0].el.setAttribute('data-oai-goals-market-target', '1');
-          return {found:true, score:candidates[0].score, text_length:candidates[0].text_length};
-        }
-        """,
-        {"labels": labels},
-    )
-
-    if not result.get("found"):
+    if not candidates:
         return None, None
 
-    return "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
+    candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    _, _, label, block = candidates[0]
+    log(f"market block selected: {label}")
+    return "BUTEUR", block
+'''
 '''
 s = s[:start] + new_select + s[end:]
 
