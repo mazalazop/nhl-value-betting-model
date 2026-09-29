@@ -195,6 +195,20 @@ def canonical_team_primary(team_code: Any) -> Optional[str]:
     return aliases[0]
 
 
+def bookmaker_team_code(label: Any) -> Optional[str]:
+    value = normalize_text(label)
+    if not value:
+        return None
+    # Unibet POINTS exposes labels such as "BOS Bruins" / "TOR MapleLeafs".
+    first = value.split()[0] if value.split() else ""
+    if len(first) == 3 and first.upper() in TEAM_CODE_TO_NAMES:
+        return first.upper()
+    for code, aliases in TEAM_CODE_TO_NAMES.items():
+        if value in aliases:
+            return code
+    return None
+
+
 def canonical_team_aliases(team_code: Any) -> List[str]:
     key = str(team_code or "").strip().upper()
     aliases = TEAM_CODE_TO_NAMES.get(key, [])
@@ -294,8 +308,14 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     df["player_name_normalized_raw"] = df["player_name"].apply(normalize_text)
     df["player_name_normalized_join"] = df["player_name"].apply(normalize_player_join_name)
     df["team_name_normalized_join"] = df["team"].apply(normalize_text)
+    df["home_team_code"] = df["home_team"].apply(bookmaker_team_code)
+    df["away_team_code"] = df["away_team"].apply(bookmaker_team_code)
     df["matchup_key"] = df.apply(
-        lambda r: matchup_key_from_team_names(r["home_team"], r["away_team"]),
+        lambda r: (
+            matchup_key_from_codes(r["home_team_code"], r["away_team_code"])
+            if r["home_team_code"] and r["away_team_code"]
+            else matchup_key_from_team_names(r["home_team"], r["away_team"])
+        ),
         axis=1,
     )
     return payload, df
