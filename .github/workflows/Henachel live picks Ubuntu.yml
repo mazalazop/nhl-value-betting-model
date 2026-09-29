@@ -219,7 +219,7 @@ jobs:
               )
               if not result.get("found"):
                   return None, None
-              return result.get("selected_block_label") or "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
+              return "BUTEUR", page.locator('[data-oai-goals-market-target="1"]').first
           '''
           s=s[:start]+new_func+s[end:]
           start=s.index("def parse_goals_rows(lines, teams):")
