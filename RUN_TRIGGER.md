@@ -2,3 +2,5 @@ Temporary trigger for the 2026-09-29 POINTS pipeline run. The production logic r
 Parser hotfix a399fb8 validated for next POINTS run.
 
 Batch stderr diagnostics trigger.
+
+Final parser syntax fix trigger.
