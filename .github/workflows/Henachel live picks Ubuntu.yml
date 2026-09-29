@@ -15,6 +15,11 @@ on:
         required: false
         type: boolean
         default: true
+      run_points_market:
+        description: "Scraper le marché POINTS"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: henachel-live-picks-${{ github.ref }}
@@ -41,10 +46,13 @@ jobs:
           if [ -z "$RUN_DATE" ]; then RUN_DATE="$(TZ=Europe/Paris date +%F)"; fi
           PUBLISH="${{ github.event.inputs.publish_to_sheet }}"
           if [ -z "$PUBLISH" ]; then PUBLISH="true"; fi
+          RUN_POINTS="${{ github.event.inputs.run_points_market }}"
+          if [ -z "$RUN_POINTS" ]; then RUN_POINTS="false"; fi
           echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
           echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
           echo "RUN_DATE=$RUN_DATE" >> "$GITHUB_ENV"
           echo "PUBLISH_TO_SHEET=$PUBLISH" >> "$GITHUB_ENV"
+          echo "RUN_POINTS_MARKET=$RUN_POINTS" >> "$GITHUB_ENV"
 
       - name: Checkout model repo
         uses: actions/checkout@v4
@@ -94,8 +102,16 @@ jobs:
           print(f"URLs découvertes: {len(urls)}")
           PY
 
+      - name: Write empty POINTS market
+        if: env.RUN_POINTS_MARKET != 'true'
+        working-directory: scraper_repo
+        shell: bash
+        run: |
+          mkdir -p export_bundle
+          printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
+
       - name: Run POINTS batch
-        if: steps.events.outputs.has_events == 'true'
+        if: env.RUN_POINTS_MARKET == 'true' && steps.events.outputs.has_events == 'true'
         working-directory: scraper_repo
         env:
           UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
@@ -103,7 +119,7 @@ jobs:
         run: python scrapers/unibet_event_points_batch_runner.py
 
       - name: Build POINTS acceptance report
-        if: steps.events.outputs.has_events == 'true'
+        if: env.RUN_POINTS_MARKET == 'true' && steps.events.outputs.has_events == 'true'
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -111,7 +127,7 @@ jobs:
           BATCH_SUMMARY_PATH="$BATCH/batch_summary.json" python scrapers/unibet_event_points_acceptance_report.py
 
       - name: Normalize POINTS
-        if: steps.events.outputs.has_events == 'true'
+        if: env.RUN_POINTS_MARKET == 'true' && steps.events.outputs.has_events == 'true'
         working-directory: scraper_repo
         shell: bash
         run: |
@@ -150,10 +166,12 @@ jobs:
           DISC="$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)"
           cp "$DISC/discovered_event_urls.json" export_bundle/discovered_event_urls.json
           if [ -n "$UNIBET_EVENT_URLS" ]; then
-            P="$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)"
+            if [ "$RUN_POINTS_MARKET" = "true" ]; then
+              P="$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)"
+              cp "$P/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+            fi
             G="$(ls -td artifacts/unibet_event_goals_batch_runner/* | head -n 1)"
             GN="$(ls -td "$G"/normalized_* | head -n 1)"
-            cp "$P/normalized_points_odds.json" export_bundle/normalized_points_odds.json
             cp "$GN/normalized_goals_odds.json" export_bundle/normalized_goals_odds.json
           else
             printf '%s\n' '{"rows_count":0,"rows":[]}' > export_bundle/normalized_points_odds.json
