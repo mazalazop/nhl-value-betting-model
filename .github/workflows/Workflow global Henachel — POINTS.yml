@@ -89,13 +89,13 @@ jobs:
           fi
 
           if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
-            DISCOVERY_MAX_MATCHES="12"
+            DISCOVERY_MAX_MATCHES="5"
           else
             DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
           fi
 
           if [ -z "$INPUT_MIN_ROWS_PER_EVENT" ]; then
-            MIN_ROWS_PER_EVENT="8"
+            MIN_ROWS_PER_EVENT="7"
           else
             MIN_ROWS_PER_EVENT="$INPUT_MIN_ROWS_PER_EVENT"
           fi
