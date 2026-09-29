@@ -52,7 +52,7 @@ env:
 jobs:
   scrape_points:
     name: Scraper Unibet POINTS
-    runs-on: [self-hosted, macOS, X64, morgan-runner]
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     outputs:
       run_date: ${{ steps.resolve.outputs.run_date }}
