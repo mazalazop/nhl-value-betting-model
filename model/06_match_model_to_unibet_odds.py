@@ -196,8 +196,31 @@ def canonical_team_aliases(team_code: Any) -> List[str]:
     return [normalize_text(x) for x in aliases if normalize_text(x)]
 
 
+BOOKMAKER_TEAM_LABEL_TO_CODE = {
+    "bos bruins": "BOS",
+    "ny rangers": "NYR",
+    "car hurricanes": "CAR",
+    "flo panthers": "FLA",
+    "tor mapleleafs": "TOR",
+    "mon canadiens": "MTL",
+    "edm oilers": "EDM",
+    "van canucks": "VAN",
+    "veg gknights": "VGK",
+    "chi blackhawks": "CHI",
+}
+
+def normalize_team_for_matchup(value: Any) -> str:
+    text = normalize_text(value)
+    if text in BOOKMAKER_TEAM_LABEL_TO_CODE:
+        return canonical_team_primary(BOOKMAKER_TEAM_LABEL_TO_CODE[text]) or text
+    # Generic sportsbook form such as "BOS Bruins".
+    for code in TEAM_CODE_TO_NAMES:
+        if text.startswith(code.lower() + " "):
+            return canonical_team_primary(code) or text
+    return text
+
 def matchup_key_from_team_names(team_a: Any, team_b: Any) -> Tuple[str, str]:
-    ordered = sorted([normalize_text(team_a), normalize_text(team_b)])
+    ordered = sorted([normalize_team_for_matchup(team_a), normalize_team_for_matchup(team_b)])
     return ordered[0], ordered[1]
 
 
