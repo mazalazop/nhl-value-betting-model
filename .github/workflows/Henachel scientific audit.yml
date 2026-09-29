@@ -48,6 +48,9 @@ jobs:
       - name: Build base match fusionnee
         run: python model/00b_build_base_match_fusionnee.py
 
+      - name: Refresh team standings
+        run: python model/00c_refresh_team_standings.py
+
       - name: Build features
         run: python model/01_build_base_features.py
 
