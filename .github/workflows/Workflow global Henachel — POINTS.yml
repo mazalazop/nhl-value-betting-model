@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - run-points-live-2026-09-29
+      - goal-model-live-2026-09-29
   workflow_dispatch:
     inputs:
       run_date:
@@ -295,6 +296,21 @@ jobs:
           cp _cached_predictions/unpacked/outputs/predictions_upcoming_point_enrichi_v2.csv outputs/
           echo "Prédictions POINT restaurées depuis le run #163."
           wc -l outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
+
+      - name: Train and validate goal model
+        run: python model/04_train_goal_model.py
+
+      - name: Predict upcoming goal probabilities
+        run: |
+          python model/05_predict_upcoming_goals.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+          echo "Top 10 probabilités buteur :"
+          python - <<'PY'
+          import pandas as pd
+          p="outputs/predictions_upcoming_goal_enrichi_calibre_v1.csv"
+          df=pd.read_csv(p)
+          cols=[c for c in ["nom","team_player_match","adversaire_match","proba_goal_1p_calibree","rank_proba_sur_date","rank_proba_sur_match"] if c in df.columns]
+          print(df.sort_values("proba_goal_1p_calibree",ascending=False).head(10)[cols].to_string(index=False))
+          PY
 
       - name: Match model to Unibet odds
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
