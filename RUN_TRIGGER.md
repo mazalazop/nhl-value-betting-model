@@ -1,0 +1,1 @@
+Temporary trigger for the 2026-09-29 POINTS pipeline run. The production logic remains in model/ and the scraper repository.
