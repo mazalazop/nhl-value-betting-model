@@ -298,6 +298,17 @@ jobs:
           echo "Prédictions POINT restaurées depuis le run #163."
           wc -l outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
 
+      - name: Recompute current point probabilities
+        run: |
+          python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+          echo "Top 10 probabilités POINTS du jour :"
+          python - <<'PY'
+          import pandas as pd
+          p="outputs/predictions_upcoming_point_enrichi_calibre_v2.csv"
+          df=pd.read_csv(p)
+          print(df[df["date_match"].astype(str) == "${{ needs.scrape_points.outputs.run_date }}"].sort_values("proba_point_1p_calibree", ascending=False).head(10)[["nom","team_player_match","adversaire_match","proba_point_1p_calibree"]].to_string(index=False))
+          PY
+
       - name: Train and validate goal model
         run: python model/04_train_goal_model.py
 
