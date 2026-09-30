@@ -39,6 +39,7 @@ on:
   schedule:
     - cron: "0 9 * * *"
 
+# Triggered by the daily automation branch; this comment preserves a deterministic push trigger.
 concurrency:
   group: henachel-points-${{ github.ref }}
   cancel-in-progress: true
