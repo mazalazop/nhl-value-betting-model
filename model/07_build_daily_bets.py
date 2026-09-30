@@ -140,7 +140,12 @@ def parse_args() -> argparse.Namespace:
 
 def load_candidates(path: Path) -> pd.DataFrame:
     require_file(path)
-    df = pd.read_csv(path, low_memory=False)
+    try:
+        df = pd.read_csv(path, low_memory=False)
+    except pd.errors.EmptyDataError:
+        # No bookmaker/model matches is a valid daily state: keep the pipeline alive
+        # so model-only outputs (notably BUTEURS) can still be published.
+        return pd.DataFrame(columns=REQUIRED_COLUMNS)
 
     missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing:
