@@ -1,0 +1,1 @@
+Trigger-only marker for Henachel run targeting 2026-10-02. No model logic change.
