@@ -131,7 +131,6 @@ def main() -> None:
     played_current = merged_matches[
         merged_matches["saison"].astype(str) == str(season)
     ].copy()
-    played_current = refresh_sources.pd.to_datetime(played_current["date_match"], errors="coerce") if False else played_current
     played_current["date_match_dt"] = pd.to_datetime(played_current["date_match"], errors="coerce")
 
     max_existing_date = pd.to_datetime(fusion_existing["date_match"], errors="coerce").max()
