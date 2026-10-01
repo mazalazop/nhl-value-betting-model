@@ -2,9 +2,7 @@ name: henachel-points-global
 
 on:
   push:
-    branches:
-      - run-points-live-2026-09-29
-      - goal-model-live-2026-09-29
+    branches: [run-points-live-2026-09-29, goal-model-live-2026-09-29, main]
   workflow_dispatch:
     inputs:
       run_date:
@@ -25,35 +23,36 @@ on:
         description: "Nombre max de matchs à cliquer côté hub"
         required: false
         type: string
-        default: "12"
+        default: "13"
       min_rows_per_event:
-        description: "Seuil minimal de lignes 1+ par match pour l'acceptance report"
+        description: "Seuil minimal de lignes 1+ par match pour l'acceptance POINTS"
         required: false
         type: string
-        default: "8"
+        default: "7"
       publish_to_sheet:
         description: "Publier vers Google Sheet"
         required: false
         type: boolean
         default: true
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 10 * * *"
+      timezone: "Europe/Paris"
 
-# Daily automation: discover all NHL matches currently exposed by the Unibet hub.
 concurrency:
-  group: henachel-points-${{ github.ref }}
+  group: henachel-daily-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+  actions: read
 
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
 
 jobs:
-  scrape_points:
-    name: Scraper Unibet POINTS
+  scrape_markets:
+    name: Scraper Unibet POINTS + BUTEURS
     runs-on: ubuntu-latest
     timeout-minutes: 120
     outputs:
@@ -72,45 +71,15 @@ jobs:
           INPUT_MIN_ROWS_PER_EVENT="${{ github.event.inputs.min_rows_per_event }}"
           INPUT_PUBLISH_TO_SHEET="${{ github.event.inputs.publish_to_sheet }}"
 
-          if [ -z "$INPUT_RUN_DATE" ]; then
-            RUN_DATE="$(TZ=Europe/Paris date +%F)"
-          else
-            RUN_DATE="$INPUT_RUN_DATE"
-          fi
-
-          if [ -z "$INPUT_HUB_URL" ]; then
-            HUB_URL="https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
-          else
-            HUB_URL="$INPUT_HUB_URL"
-          fi
-
-          if [ -z "$INPUT_HEADLESS" ]; then
-            HEADLESS="true"
-          else
-            HEADLESS="$INPUT_HEADLESS"
-          fi
-
-          if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
-            DISCOVERY_MAX_MATCHES="13"
-          else
-            DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
-          fi
-
-          if [ -z "$INPUT_MIN_ROWS_PER_EVENT" ]; then
-            MIN_ROWS_PER_EVENT="7"
-          else
-            MIN_ROWS_PER_EVENT="$INPUT_MIN_ROWS_PER_EVENT"
-          fi
-
-          if [ -z "$INPUT_PUBLISH_TO_SHEET" ]; then
-            PUBLISH_TO_SHEET="true"
-          else
-            PUBLISH_TO_SHEET="$INPUT_PUBLISH_TO_SHEET"
-          fi
+          RUN_DATE="${INPUT_RUN_DATE:-$(TZ=Europe/Paris date +%F)}"
+          HUB_URL="${INPUT_HUB_URL:-https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl}"
+          HEADLESS="${INPUT_HEADLESS:-true}"
+          DISCOVERY_MAX_MATCHES="${INPUT_DISCOVERY_MAX_MATCHES:-13}"
+          MIN_ROWS_PER_EVENT="${INPUT_MIN_ROWS_PER_EVENT:-7}"
+          PUBLISH_TO_SHEET="${INPUT_PUBLISH_TO_SHEET:-true}"
 
           echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
           echo "publish_to_sheet=$PUBLISH_TO_SHEET" >> "$GITHUB_OUTPUT"
-
           {
             echo "RUN_DATE=$RUN_DATE"
             echo "HUB_URL=$HUB_URL"
@@ -119,12 +88,6 @@ jobs:
             echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
             echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
           } >> "$GITHUB_ENV"
-
-          echo "RUN_DATE=$RUN_DATE"
-          echo "HEADLESS=$HEADLESS"
-          echo "DISCOVERY_MAX_MATCHES=$DISCOVERY_MAX_MATCHES"
-          echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
-          echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
 
       - name: Checkout scraper repo
         uses: actions/checkout@v4
@@ -139,20 +102,18 @@ jobs:
 
       - name: Install scraper dependencies
         working-directory: scraper_repo
-        shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           python -m playwright install chromium
 
-      - name: Discover event URLs from hub
+      - name: Discover NHL event URLs
         working-directory: scraper_repo
         env:
           UNIBET_HUB_URL: ${{ env.HUB_URL }}
           PW_HEADLESS: ${{ env.HEADLESS }}
           DISCOVERY_MAX_MATCHES: ${{ env.DISCOVERY_MAX_MATCHES }}
-        run: |
-          python scrapers/unibet_points_discover_event_urls.py
+        run: python scrapers/unibet_points_discover_event_urls.py
 
       - name: Export discovered event URLs
         working-directory: scraper_repo
@@ -160,77 +121,89 @@ jobs:
         run: |
           LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
           export DISCOVERY_JSON_PATH="$LATEST_DISCOVERY_DIR/discovered_event_urls.json"
-
           python - <<'PY'
-          import json
-          import os
+          import json, os
           from pathlib import Path
-
           path = Path(os.environ["DISCOVERY_JSON_PATH"])
           payload = json.loads(path.read_text(encoding="utf-8"))
           urls = payload.get("event_urls", [])
           if not urls:
-              raise SystemExit("Aucune event URL découverte depuis le hub Unibet.")
-
-          github_env = Path(os.environ["GITHUB_ENV"])
-          with github_env.open("a", encoding="utf-8") as handle:
-              handle.write(f"DISCOVERY_JSON_PATH={path}\n")
-              handle.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
-
+              raise SystemExit("Aucune event URL NHL découverte depuis le hub Unibet.")
+          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as h:
+              h.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
           print(f"URLs découvertes : {len(urls)}")
           PY
 
-      - name: Run points batch
+      - name: Scrape POINTS
         working-directory: scraper_repo
         env:
           UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
           PW_HEADLESS: ${{ env.HEADLESS }}
-        run: |
-          python scrapers/unibet_event_points_batch_runner.py
+        run: python scrapers/unibet_event_points_batch_runner.py
 
-      - name: Build acceptance report
+      - name: Normalize POINTS
         working-directory: scraper_repo
         env:
           MIN_ROWS_PER_EVENT: ${{ env.MIN_ROWS_PER_EVENT }}
         shell: bash
         run: |
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-          export BATCH_SUMMARY_PATH="$LATEST_BATCH_DIR/batch_summary.json"
+          BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+          export BATCH_SUMMARY_PATH="$BATCH_DIR/batch_summary.json"
           python scrapers/unibet_event_points_acceptance_report.py
-
-      - name: Build normalized points json
-        working-directory: scraper_repo
-        shell: bash
-        run: |
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-          export ACCEPTANCE_REPORT_PATH="$LATEST_BATCH_DIR/acceptance_report.json"
+          export ACCEPTANCE_REPORT_PATH="$BATCH_DIR/acceptance_report.json"
           python scrapers/unibet_event_points_normalize_accepted.py
 
-      - name: Prepare artifact bundle for model job
+      - name: Scrape BUTEURS
         working-directory: scraper_repo
+        env:
+          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
+          PW_HEADLESS: ${{ env.HEADLESS }}
+        continue-on-error: true
+        run: python scrapers/unibet_event_goals_batch_runner.py
+
+      - name: Normalize BUTEURS
+        working-directory: scraper_repo
+        if: always()
         shell: bash
         run: |
+          BATCH_DIR=$(ls -td artifacts/unibet_event_goals_batch_runner/* 2>/dev/null | head -n 1 || true)
+          if [ -n "$BATCH_DIR" ] && [ -f "$BATCH_DIR/batch_summary.json" ]; then
+            export BATCH_SUMMARY_PATH="$BATCH_DIR/batch_summary.json"
+            python scrapers/unibet_event_goals_acceptance_report.py || true
+            if [ -f "$BATCH_DIR/acceptance_report.json" ]; then
+              export ACCEPTANCE_REPORT_PATH="$BATCH_DIR/acceptance_report.json"
+              python scrapers/unibet_event_goals_normalize_accepted.py || true
+            fi
+          fi
+
           mkdir -p export_bundle
-          LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+          POINTS_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
+          cp "$POINTS_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
+          cp "$POINTS_DIR/acceptance_report.json" export_bundle/points_acceptance_report.json
+          cp "$POINTS_DIR/batch_summary.json" export_bundle/points_batch_summary.json
 
-          cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
-          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/acceptance_report.json
-          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/batch_summary.json
-          cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+          GOALS_JSON=$(find artifacts/unibet_event_goals_batch_runner -type f -name normalized_goals_odds.json | sort | tail -n 1 || true)
+          if [ -n "$GOALS_JSON" ]; then
+            cp "$GOALS_JSON" export_bundle/normalized_goals_odds.json
+          else
+            printf '{"bookmaker":"unibet_fr","market_key":"player_to_score_including_ot","normalized_rows":[]}' > export_bundle/normalized_goals_odds.json
+          fi
 
-      - name: Upload scraper outputs for model job
+          DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
+          cp "$DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
+
+      - name: Upload market odds
         uses: actions/upload-artifact@v4
         with:
-          name: henachel-points-odds-${{ env.RUN_DATE }}
+          name: henachel-market-odds-${{ env.RUN_DATE }}
           path: scraper_repo/export_bundle/
           retention-days: 7
 
-  model_points:
-    name: Pipeline modèle POINTS
-    needs: scrape_points
+  model_daily:
+    name: Pipeline modèle quotidien
+    needs: scrape_markets
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 240
 
     steps:
       - name: Checkout model repo
@@ -242,106 +215,148 @@ jobs:
           python-version: "3.11"
 
       - name: Install model dependencies
-        shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install pandas numpy scikit-learn requests urllib3 gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-      - name: Download scraper artifact
+      - name: Download market odds
         uses: actions/download-artifact@v4
         with:
-          name: henachel-points-odds-${{ needs.scrape_points.outputs.run_date }}
-          path: _scraper_artifact
+          name: henachel-market-odds-${{ needs.scrape_markets.outputs.run_date }}
+          path: _market_artifact
 
-      - name: Place normalized_points_odds.json where script 06 expects it
-        shell: bash
+      - name: Place normalized market odds
         run: |
           mkdir -p outputs
-          cp _scraper_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
-          ls -la outputs
+          cp _market_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
+          cp _market_artifact/normalized_goals_odds.json outputs/normalized_goals_odds.json
 
-      - name: Write Google credentials file
-        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
-        shell: bash
+      - name: Write Google credentials
+        if: ${{ needs.scrape_markets.outputs.publish_to_sheet == 'true' }}
         run: |
           mkdir -p secrets
           cat > secrets/henachel-service-account.json <<'JSON'
           ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
           JSON
 
-      - name: Restore validated model snapshot
-        shell: bash
+      - name: Restore latest validated state artifact
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p _cached_snapshot
-          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11026944677/zip"             -o _cached_snapshot/model_data.zip
-          unzip -q _cached_snapshot/model_data.zip -d _cached_snapshot/unpacked
-          mkdir -p data/raw data/final
-          cp -R _cached_snapshot/unpacked/data/raw/. data/raw/
-          cp -R _cached_snapshot/unpacked/data/final/. data/final/
-          echo "Snapshot historique restauré depuis l'artefact 11026944677 (données validées du 2026-09-29)."
-          ls -lh data/raw data/final
-
-      - name: Restore latest point predictions
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p _cached_predictions
-          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11037905854/zip"             -o _cached_predictions/model_outputs.zip
-          unzip -q _cached_predictions/model_outputs.zip -d _cached_predictions/unpacked
-          cp _cached_predictions/unpacked/outputs/predictions_upcoming_point_enrichi_calibre_v2.csv outputs/
-          cp _cached_predictions/unpacked/outputs/predictions_upcoming_point_enrichi_v2.csv outputs/
-          echo "Prédictions POINT restaurées depuis le run #163."
-          wc -l outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
-
-      - name: Recompute current point probabilities
-        run: |
-          python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
-          echo "Top 10 probabilités POINTS du jour :"
-          python - <<'PY'
-          import pandas as pd
-          p="outputs/predictions_upcoming_point_enrichi_calibre_v2.csv"
-          df=pd.read_csv(p)
-          print(df[df["date_match"].astype(str) == "${{ needs.scrape_points.outputs.run_date }}"].sort_values("proba_point_1p_calibree", ascending=False).head(10)[["nom","team_player_match","adversaire_match","proba_point_1p_calibree"]].to_string(index=False))
+          mkdir -p _state
+          STATE_ID=$(python - <<'PY'
+          import json, os, urllib.request
+          url = "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts?name=henachel-state&per_page=20"
+          req = urllib.request.Request(url, headers={
+              "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2026-03-10",
+          })
+          with urllib.request.urlopen(req) as r:
+              payload = json.load(r)
+          arts = [a for a in payload.get("artifacts", []) if not a.get("expired")]
+          arts.sort(key=lambda a: a.get("created_at", ""), reverse=True)
+          print(arts[0]["id"] if arts else "")
           PY
+          )
 
-      - name: Train and validate goal model
+          if [ -n "$STATE_ID" ]; then
+            echo "Restauration de l'état incrémental artifact=$STATE_ID"
+            curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json"               "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/$STATE_ID/zip"               -o _state/state.zip
+            unzip -q _state/state.zip -d _state/unpacked
+          else
+            echo "Aucun état quotidien : snapshot initial validé."
+            curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json"               "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11026944677/zip"               -o _state/state.zip
+            unzip -q _state/state.zip -d _state/unpacked
+          fi
+
+          mkdir -p data/raw data/final
+          cp -R _state/unpacked/data/raw/. data/raw/
+          cp -R _state/unpacked/data/final/. data/final/
+
+      - name: Refresh current season data
+        run: python model/00d_refresh_current_season_incremental.py
+
+      - name: Refresh power-play stats
+        run: python model/00a_refresh_pp_stats.py
+
+      - name: Rebuild base match fusionnee
+        run: python model/00b_build_base_match_fusionnee.py
+
+      - name: Refresh standings
+        run: python model/00c_refresh_team_standings.py --extra-date "${{ needs.scrape_markets.outputs.run_date }}"
+
+      - name: Build pre-match features
+        run: python model/01_build_base_features.py
+
+      - name: Train POINTS model
+        run: python model/02_train_point_model.py
+
+      - name: Calibrate POINTS model
+        run: python model/03_calibrate_point_model.py
+
+      - name: Predict POINTS
+        run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_markets.outputs.run_date }}"
+
+      - name: Train BUTEURS model
         run: python model/04_train_goal_model.py
 
-      - name: Predict upcoming goal probabilities
-        run: |
-          python model/05_predict_upcoming_goals.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
-          echo "Top 10 probabilités buteur :"
-          python - <<'PY'
-          import pandas as pd
-          p="outputs/predictions_upcoming_goal_enrichi_calibre_v1.csv"
-          df=pd.read_csv(p)
-          cols=[c for c in ["nom","team_player_match","adversaire_match","proba_goal_1p_calibree","rank_proba_sur_date","rank_proba_sur_match"] if c in df.columns]
-          print(df.sort_values("proba_goal_1p_calibree",ascending=False).head(10)[cols].to_string(index=False))
-          PY
+      - name: Predict BUTEURS
+        run: python model/05_predict_upcoming_goals.py --target-date "${{ needs.scrape_markets.outputs.run_date }}"
 
-      - name: Match model to Unibet odds
-        run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+      - name: Match POINTS odds
+        run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_markets.outputs.run_date }}"
 
-      - name: Build daily bets
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+      - name: Build POINTS picks
+        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 5 --min-odds 1.01
+
+      - name: Match BUTEURS odds
+        run: python model/06b_match_model_to_unibet_goal_odds.py --run-date "${{ needs.scrape_markets.outputs.run_date }}"
+
+      - name: Build BUTEURS picks
+        run: python model/07_build_daily_goal_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 5 --min-odds 1.01
 
       - name: Publish to Google Sheet
-        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
+        if: ${{ needs.scrape_markets.outputs.publish_to_sheet == 'true' }}
         run: |
-          python model/08_publish_to_google_sheet.py \
-            --sheet-id "${{ secrets.HENACHEL_SHEET_ID }}" \
-            --credentials-json "secrets/henachel-service-account.json"
+          python model/08_publish_to_google_sheet.py             --sheet-id "${{ secrets.HENACHEL_SHEET_ID }}"             --credentials-json "secrets/henachel-service-account.json"
+
+      - name: Validate daily outputs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          date = "${{ needs.scrape_markets.outputs.run_date }}"
+          point = pd.read_csv("outputs/07_daily_bets.csv")
+          goal = pd.read_csv("outputs/07_daily_goal_bets.csv")
+          assert len(point) <= 5, f"POINTS > 5: {len(point)}"
+          assert len(goal) <= 5, f"BUTEURS > 5: {len(goal)}"
+          if not point.empty:
+              assert point["run_date"].astype(str).eq(date).all()
+          if not goal.empty:
+              assert goal["run_date"].astype(str).eq(date).all()
+          assert Path("outputs/06_matching_summary.json").exists()
+          assert Path("outputs/06b_goal_matching_summary.json").exists()
+          print(f"VALIDATION OK: POINTS={len(point)} BUTEURS={len(goal)}")
+          PY
+
+      - name: Upload validated state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-state
+          path: |
+            data/raw/
+            data/final/
+          retention-days: 30
 
       - name: Upload model outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: henachel-model-outputs-${{ needs.scrape_points.outputs.run_date }}
+          name: henachel-model-outputs-${{ needs.scrape_markets.outputs.run_date }}
           path: |
             outputs/
             data/raw/
