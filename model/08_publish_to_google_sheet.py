@@ -16,7 +16,7 @@ DEFAULT_CREDS_JSON = PROJECT_ROOT / "secrets" / "henachel-service-account.json"
 DEFAULT_DAILY_WS = "daily_picks"
 DEFAULT_HISTORY_WS = "history_raw"
 DEFAULT_GOAL_WS = "goal_picks"
-DEFAULT_GOAL_INPUT_CSV = DEFAULT_OUTPUTS_DIR / "predictions_upcoming_goal_enrichi_calibre_v1.csv"
+DEFAULT_GOAL_INPUT_CSV = DEFAULT_OUTPUTS_DIR / "07_daily_goal_bets.csv"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -97,25 +97,33 @@ def load_daily_bets(path: Path) -> pd.DataFrame:
 
 def load_goal_predictions(path: Path, run_date: str) -> pd.DataFrame:
     if not path.exists():
-        raise FileNotFoundError(f"Fichier prédictions BUT introuvable : {path}")
+        raise FileNotFoundError(f"Input picks BUTEURS introuvable : {path}")
+
     df = pd.read_csv(path, low_memory=False)
-    prob_col = next((c for c in ["proba_goal_1p_calibree", "proba_goal_1p", "model_probability"] if c in df.columns), None)
-    name_col = next((c for c in ["nom", "player_name", "player_name_model"] if c in df.columns), None)
-    team_col = next((c for c in ["team_player_match", "team_code_model", "team"] if c in df.columns), None)
-    opp_col = next((c for c in ["adversaire_match", "opponent_code_model", "opponent"] if c in df.columns), None)
-    if not prob_col or not name_col or not team_col or not opp_col:
-        raise ValueError("Colonnes joueur/équipe/adversaire/probabilité absentes des prédictions BUT.")
+    if df.empty:
+        return pd.DataFrame(columns=[
+            "rang", "date_match", "joueur", "équipe", "adversaire",
+            "cote", "probabilité_but", "edge_pp", "ev_par_unité", "value_bet"
+        ])
+
+    df["run_date"] = df.get("run_date", run_date).astype(str)
+    df = df[df["run_date"] == str(run_date)].copy()
+
     out = pd.DataFrame({
-        "rang": range(1, len(df) + 1),
-        "date_match": run_date,
-        "joueur": df[name_col],
-        "équipe": df[team_col],
-        "adversaire": df[opp_col],
-        "probabilité_but": pd.to_numeric(df[prob_col], errors="coerce"),
+        "rang": pd.to_numeric(df.get("recommendation_rank"), errors="coerce"),
+        "date_match": df.get("date_match", run_date),
+        "joueur": df.get("player_name", ""),
+        "équipe": df.get("team", ""),
+        "adversaire": df.get("opponent", ""),
+        "cote": pd.to_numeric(df.get("odds_decimal"), errors="coerce").map(lambda x: _format_float(x, 2)),
+        "probabilité_but": pd.to_numeric(df.get("model_probability"), errors="coerce").map(_format_pct),
+        "edge_pp": pd.to_numeric(df.get("edge_probability"), errors="coerce").map(lambda x: f"{x * 100:.2f}" if not pd.isna(x) else ""),
+        "ev_par_unité": pd.to_numeric(df.get("ev_per_unit"), errors="coerce").map(lambda x: f"{x:.3f}" if not pd.isna(x) else ""),
+        "value_bet": df.get("is_value_bet_label", ""),
     })
-    out = out.sort_values("probabilité_but", ascending=False, na_position="last").head(5).reset_index(drop=True)
+
+    out = out.sort_values("rang", ascending=True, na_position="last").head(5).reset_index(drop=True)
     out["rang"] = range(1, len(out) + 1)
-    out["probabilité_but"] = out["probabilité_but"].map(_format_pct)
     return out
 
 def authorize_gspread(credentials_json: Path) -> gspread.Client:
