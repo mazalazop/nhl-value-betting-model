@@ -1641,7 +1641,9 @@ def main() -> None:
     print(f"Input standings: {TEAM_STANDINGS_PATH} (optionnel)")
 
     matchs = load_matchs()
-        matchs["_game_type"] = matchs["id_match"].astype(str).str.zfill(10).str[4:6]\n    matchs = matchs[matchs["_game_type"] == "02"].drop(columns=["_game_type"]).copy()\njoueurs = load_joueurs()
+    matchs["_game_type"] = matchs["id_match"].astype(str).str.zfill(10).str[4:6]
+    matchs = matchs[matchs["_game_type"] == "02"].drop(columns=["_game_type"]).copy()
+    joueurs = load_joueurs()
     history, target_col, date_col = load_history()
     _, standings_summary, standings_by_team = load_standings_optional()
 
