@@ -282,9 +282,6 @@ jobs:
       - name: Refresh power-play stats
         run: python model/00a_refresh_pp_stats.py
 
-      - name: Rebuild base match fusionnee
-        run: python model/00b_build_base_match_fusionnee.py
-
       - name: Refresh standings
         run: python model/00c_refresh_team_standings.py --extra-date "${{ needs.scrape_markets.outputs.run_date }}"
 
@@ -343,7 +340,6 @@ jobs:
           PY
 
       - name: Upload validated state
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: henachel-state
