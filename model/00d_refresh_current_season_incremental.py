@@ -83,7 +83,7 @@ def main() -> None:
     joueurs_existing = read_csv_required(joueurs_path)
     fusion_existing = read_csv_required(fusion_path)
 
-    session = refresh_sources.build_session()
+        # Production model = regular season only.\n    fusion_existing["_game_type"] = fusion_existing["id_match"].astype(str).str.zfill(10).str[4:6]\n    fusion_existing = fusion_existing[fusion_existing["_game_type"] == "02"].drop(columns=["_game_type"]).copy()\nsession = refresh_sources.build_session()
 
     print("=== 00d_refresh_current_season_incremental.py ===")
     print(f"Saison courante : {season}")
@@ -131,7 +131,7 @@ def main() -> None:
     played_current = merged_matches[
         merged_matches["saison"].astype(str) == str(season)
     ].copy()
-    played_current["date_match_dt"] = pd.to_datetime(played_current["date_match"], errors="coerce")
+        played_current["_game_type"] = played_current["id_match"].astype(str).str.zfill(10).str[4:6]\n    played_current = played_current[played_current["_game_type"] == "02"].drop(columns=["_game_type"]).copy()\nplayed_current["date_match_dt"] = pd.to_datetime(played_current["date_match"], errors="coerce")
 
     max_existing_date = pd.to_datetime(fusion_existing["date_match"], errors="coerce").max()
     cutoff = max_existing_date - pd.Timedelta(days=recent_days) if pd.notna(max_existing_date) else pd.Timestamp("1900-01-01")
