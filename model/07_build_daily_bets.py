@@ -99,14 +99,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-picks",
         type=int,
-        default=10,
-        help="Nombre maximum de picks recommandés.",
+        default=5,
+        help="Nombre maximum de picks POINTS recommandés.",
     )
     parser.add_argument(
         "--min-odds",
         type=float,
-        default=1.40,
-        help="Cote minimale par défaut pour conserver un pick.",
+        default=1.01,
+        help="Cote minimale mécanique : > 1.00, sans bloquer sur l'edge.",
     )
     parser.add_argument(
         "--override-min-model-proba",
