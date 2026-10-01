@@ -282,10 +282,11 @@ jobs:
             unzip -q _state/state.zip -d _state/unpacked
           fi
 
-          if [ -d "_state/data/raw" ]; then
-            STATE_ROOT="_state"
-          else
-            STATE_ROOT="_state/unpacked"
+          STATE_ROOT=$(find _state -type d -path '*/data/raw' -print -quit | sed 's#/data/raw$##')
+          if [ -z "$STATE_ROOT" ]; then
+            echo "Impossible de trouver data/raw dans l'état téléchargé."
+            find _state -maxdepth 4 -type d | sort
+            exit 1
           fi
 
           mkdir -p data/raw data/final
