@@ -39,7 +39,7 @@ on:
   schedule:
     - cron: "0 9 * * *"
 
-# Triggered by the daily automation branch; this comment preserves a deterministic push trigger.
+# Daily automation: discover all NHL matches currently exposed by the Unibet hub.
 concurrency:
   group: henachel-points-${{ github.ref }}
   cancel-in-progress: true
@@ -91,7 +91,7 @@ jobs:
           fi
 
           if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
-            DISCOVERY_MAX_MATCHES="5"
+            DISCOVERY_MAX_MATCHES="13"
           else
             DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
           fi
