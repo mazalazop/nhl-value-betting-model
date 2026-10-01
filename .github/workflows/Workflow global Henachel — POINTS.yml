@@ -40,6 +40,7 @@ on:
     - cron: "0 9 * * *"
 
 # Triggered by the daily automation branch; this comment preserves a deterministic push trigger.
+# Temporary target: 2026-10-02 Paris / 8 Unibet games from the user-provided slate.
 concurrency:
   group: henachel-points-${{ github.ref }}
   cancel-in-progress: true
@@ -73,7 +74,12 @@ jobs:
           INPUT_PUBLISH_TO_SHEET="${{ github.event.inputs.publish_to_sheet }}"
 
           if [ -z "$INPUT_RUN_DATE" ]; then
-            RUN_DATE="$(TZ=Europe/Paris date +%F)"
+            # Temporary push-triggered execution for the 8 Unibet games shown for Friday 02/10 Paris time.
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              RUN_DATE="2026-10-02"
+            else
+              RUN_DATE="$(TZ=Europe/Paris date +%F)"
+            fi
           else
             RUN_DATE="$INPUT_RUN_DATE"
           fi
@@ -91,7 +97,7 @@ jobs:
           fi
 
           if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
-            DISCOVERY_MAX_MATCHES="5"
+            DISCOVERY_MAX_MATCHES="8"
           else
             DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
           fi
