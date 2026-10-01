@@ -281,16 +281,20 @@ def played_matches_only(df_matchs: pd.DataFrame) -> pd.DataFrame:
     df["id_match"] = pd.to_numeric(df["id_match"], errors="coerce").astype("Int64")
     df["date_match"] = pd.to_datetime(df["date_match"], errors="coerce").dt.strftime("%Y-%m-%d")
     df["buts_domicile"] = pd.to_numeric(df["buts_domicile"], errors="coerce")
-    df["buts_exterieur"] = pd.to_numeric(df["buts_exterieur"], errors="coerce")    df["_game_type"] = df["id_match"].astype(str).str.zfill(10).str[4:6]\n
+    df["buts_exterieur"] = pd.to_numeric(df["buts_exterieur"], errors="coerce")
+    df["_game_type"] = df["id_match"].astype(str).str.zfill(10).str[4:6]
 
     played = df[
         df["id_match"].notna()
         & df["date_match"].notna()
         & df["buts_domicile"].notna()
         & df["buts_exterieur"].notna()
+        & (df["_game_type"] == "02")
     ].copy()
 
-        played = played[played["_game_type"] == "02"].drop(columns=["_game_type"], errors="ignore").copy()\nreturn played.sort_values(["date_match", "id_match"]).reset_index(drop=True)
+    return played.drop(columns=["_game_type"], errors="ignore").sort_values(
+        ["date_match", "id_match"]
+    ).reset_index(drop=True)
 
 
 def parse_player_rows_for_side(
