@@ -34,3 +34,10 @@ def test_stale_roster_explicit_fallback():
     hist=games_fixture();r=pd.DataFrame([dict(id_joueur=99,nom='Rookie',position='C',id_equipe='TOR',observed_at='2020-01-01T00:00:00Z')])
     with pytest.warns(UserWarning):pool=choose_players(hist,r,['TOR'],'2026-10-02',pd.Timestamp('2026-10-02T10:00:00Z'))
     assert pool.empty
+
+def test_roster_absence_and_transfer_do_not_reappear_in_fallback():
+    hist=games_fixture();target=pd.Timestamp(hist.date_match.max())+pd.Timedelta(days=1);now=pd.Timestamp(target,tz='UTC')
+    roster=pd.DataFrame([dict(id_joueur=1,nom='Player 1',position='C',id_equipe='NYR',observed_at=now),dict(id_joueur=99,nom='Rookie',position='C',id_equipe='NYR',observed_at=now)])
+    with pytest.warns(UserWarning):pool=choose_players(hist,roster,['TOR','NYR'],target,now)
+    assert set(pool.id_joueur)=={1,99}  # Player 2 absent from the authoritative NYR roster.
+    assert pool.team_player_match.eq('NYR').all()  # Player 1 must not return through TOR fallback.

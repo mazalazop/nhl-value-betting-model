@@ -51,3 +51,15 @@ def test_standings_refresh_requests_previous_days(tmp_path):
     p=tmp_path/'base.csv'
     pd.DataFrame({'date_match':['2024-10-02','2024-10-04']}).to_csv(p,index=False)
     assert m.load_target_dates_from_base_match(p,None,None)==['2024-10-01','2024-10-03']
+
+def test_invalid_complete_standings_snapshot_is_refetched():
+    refresh=load_script('00c_refresh_team_standings')
+    existing=pd.DataFrame({'date_snapshot':['2026-10-01']*32,'api_date':['2026-09-01']*32,'season_id':[20262027]*32,'team_abbrev':[f'T{i}' for i in range(32)]})
+    missing,_=refresh.compute_missing_dates(['2026-10-01'],existing)
+    assert missing==['2026-10-01']
+
+@pytest.mark.parametrize('value',[-1,float('inf')])
+def test_invalid_pp_duration_is_not_observed(value):
+    from henachel.quality import merge_pp
+    source=pd.DataFrame({'id_match':[1],'id_joueur':[1]})
+    with pytest.raises(ValueError):merge_pp(source,source.assign(temps_pp=value))

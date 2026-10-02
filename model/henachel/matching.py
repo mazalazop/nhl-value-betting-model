@@ -67,7 +67,7 @@ def match_point_rows(model,odds,run_date,team_names,now=None):
                 raise ValueError('unsupported_market')
             if str(o.get('outcome_key','')).lower() not in {'1_plus','points_1_plus','1+','over_0.5'}:
                 raise ValueError('unsupported_outcome')
-            if not str(o.get('bookmaker','')).strip() or not str(o.get('event_id','')).strip(): raise ValueError('missing_event_identity')
+            if any(pd.isna(o.get(k)) or not str(o.get(k,'')).strip() for k in ['bookmaker','event_id']): raise ValueError('missing_event_identity')
             start,captured=utc(o.get('event_start_utc')),utc(o.get('captured_at'))
             if now>=start: raise ValueError('event_already_started')
             if not pd.Timedelta(0)<=now-captured<=MAX_ODDS_AGE: raise ValueError('stale_or_future_odds')

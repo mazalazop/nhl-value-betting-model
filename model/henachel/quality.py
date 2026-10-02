@@ -1,10 +1,16 @@
 import warnings
+import numpy as np
 import pandas as pd
 
 
 def merge_pp(source, pp, min_coverage=.90, policy='error'):
     if policy not in {'error','warn'} or not 0 <= min_coverage <= 1:
         raise ValueError('Invalid PP coverage policy')
+    pp = pp.copy()
+    pp['temps_pp'] = pd.to_numeric(pp['temps_pp'], errors='raise')
+    observed = pp['temps_pp'].dropna()
+    if not np.isfinite(observed).all() or (observed < 0).any():
+        raise ValueError('Invalid PP duration')
     if pp.duplicated(['id_match','id_joueur']).any(): raise ValueError('Duplicate PP keys')
     out=source.drop(columns=['temps_pp'],errors='ignore').merge(
         pp[['id_match','id_joueur','temps_pp']],on=['id_match','id_joueur'],how='left',validate='one_to_one')

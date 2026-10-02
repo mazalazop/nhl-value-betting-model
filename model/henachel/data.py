@@ -13,8 +13,8 @@ def normalize_team(value):
 
 
 def game_state(status, schedule_state=None):
-    state=str(status or '').upper()
-    schedule=str(schedule_state or '').upper()
+    state='' if pd.isna(status) else str(status).upper()
+    schedule='' if pd.isna(schedule_state) else str(schedule_state).upper()
     if state in {'PPD','POSTPONED'} or schedule in {'PPD','POSTPONED'}: return 'postponed'
     if state in {'CANC','CANCELLED','CANCELED'} or schedule in {'CANC','CANCELLED','CANCELED'}: return 'cancelled'
     if state in FINAL_STATES: return 'final'

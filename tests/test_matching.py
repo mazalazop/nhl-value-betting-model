@@ -38,3 +38,20 @@ def test_ambiguous_initials_rejected_both_directions():
 def test_duplicate_event_ambiguous_and_empty_safe():
     m,o=rows();out,_,_,_=run(m,pd.concat([o,o],ignore_index=True));assert out.empty
     out,_,_,_=run(m,o.iloc[:0]);assert 'bet_id' in out
+
+@pytest.mark.parametrize('field',['event_id','bookmaker','event_start_utc','captured_at','date_match','team','player_name'])
+def test_null_required_identity_fields_rejected(field):
+    m,o=rows();o[field]=float('nan')
+    out,_,rejected,_=run(m,o)
+    assert out.empty;assert len(rejected)==1
+
+def test_explicit_nhl_game_id_must_agree():
+    m,o=rows();o['nhl_game_id']=999
+    assert run(m,o)[0].empty
+    o['nhl_game_id']=1
+    assert len(run(m,o)[0])==1
+
+@pytest.mark.parametrize('probability',[-.01,1.01,float('nan'),float('inf')])
+def test_invalid_model_probabilities_rejected(probability):
+    m,o=rows();m['proba_point_1p_calibree']=probability
+    assert run(m,o)[0].empty

@@ -94,7 +94,7 @@ def parse_args() -> RefreshConfig:
     parser.add_argument(
         "--no-include-today",
         action="store_true",
-        help="N'ajoute pas automatiquement la date du jour Europe/Paris aux dates à récupérer.",
+        help="N'ajoute pas automatiquement hier Europe/Paris (snapshot pré-match) aux dates à récupérer.",
     )
     parser.add_argument(
         "--sleep-seconds",
@@ -295,7 +295,14 @@ def compute_missing_dates(target_dates: list[str], existing: pd.DataFrame) -> tu
     if existing.empty:
         return target_dates, []
 
-    counts = existing.groupby("date_snapshot")["team_abbrev"].nunique().to_dict()
+    valid = existing.copy()
+    if not {'api_date', 'season_id'}.issubset(valid):
+        return target_dates, sorted(existing.date_snapshot.unique())
+    snapshot = pd.to_datetime(valid.date_snapshot, errors='coerce')
+    api = pd.to_datetime(valid.api_date, errors='coerce')
+    season = pd.to_numeric(valid.season_id, errors='coerce')
+    valid = valid[snapshot.notna() & api.eq(snapshot) & season.notna() & (season % 10000 == season // 10000 + 1)]
+    counts = valid.groupby("date_snapshot")["team_abbrev"].nunique().reindex(existing.date_snapshot.unique(), fill_value=0).to_dict()
     complete_dates = {date for date, count in counts.items() if int(count) == EXPECTED_TEAMS_PER_DAY}
     incomplete_dates = sorted(date for date, count in counts.items() if int(count) != EXPECTED_TEAMS_PER_DAY)
 
@@ -307,7 +314,8 @@ def merge_and_save(existing: pd.DataFrame, fresh: pd.DataFrame, output_path: Pat
     combined = pd.concat([existing, fresh], ignore_index=True)
     if combined.empty:
         combined = pd.DataFrame(columns=["date_snapshot","api_date","season_id","team_abbrev","conference_abbrev","division_abbrev","games_played","games_remaining","points","conference_sequence","division_sequence","wildcard_sequence","point_pctg","goal_differential","l10_points"])
-        combined.to_csv(output_path, index=False)
+        from henachel.history import atomic_csv
+        atomic_csv(combined, output_path)
         return combined
 
     combined["date_snapshot"] = pd.to_datetime(combined["date_snapshot"], errors="coerce")
@@ -355,7 +363,8 @@ def merge_and_save(existing: pd.DataFrame, fresh: pd.DataFrame, output_path: Pat
             combined[col] = pd.to_numeric(combined[col], errors="coerce")
 
     combined = combined.sort_values(["date_snapshot", "conference_abbrev", "division_abbrev", "team_abbrev"])
-    combined.to_csv(output_path, index=False)
+    from henachel.history import atomic_csv
+    atomic_csv(combined, output_path)
     return combined
 
 
@@ -398,8 +407,7 @@ def main() -> None:
 
     fresh = pd.concat(fetched_frames, ignore_index=True) if fetched_frames else pd.DataFrame()
 
-    if not existing.empty and incomplete_existing_dates:
-        existing = existing[~existing["date_snapshot"].isin(incomplete_existing_dates)].copy()
+    # Preserve older partial snapshots if refresh fails; consumers validate each join.
 
     combined = merge_and_save(existing, fresh, config.output_path)
 
