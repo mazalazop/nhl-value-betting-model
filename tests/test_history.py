@@ -33,3 +33,21 @@ def test_canonical_append_rejects_duplicate_and_conflicting_identity(tmp_path):
 def test_empty_history_has_canonical_schema(tmp_path):
     path=tmp_path/'history.csv';picks.append_history(path,candidate().iloc[:0]);saved=pd.read_csv(path)
     assert {'id_match','id_joueur','bet_id','settled_at'}.issubset(saved)
+
+def test_atomic_failure_preserves_original_ledger(tmp_path,monkeypatch):
+    import henachel.history as history
+    path=tmp_path/'history.csv';original=candidate();picks.append_history(path,original);before=path.read_bytes()
+    additional=original.copy();additional['bet_id']='second';additional['id_joueur']=99
+    def fail(*args):raise OSError('simulated disk failure')
+    monkeypatch.setattr(history.os,'replace',fail)
+    with pytest.raises(OSError):picks.append_history(path,additional)
+    assert path.read_bytes()==before
+
+
+def test_concurrent_append_has_no_duplicates(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    path=tmp_path/'history.csv';data=candidate()
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures=[pool.submit(picks.append_history,path,data) for _ in range(8)]
+        for future in futures:future.result()
+    assert len(pd.read_csv(path))==1

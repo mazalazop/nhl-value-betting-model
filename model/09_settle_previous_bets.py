@@ -21,11 +21,22 @@ def main():
         history=read_ledger(args.history_csv)
         stats=pd.read_csv(args.stats_csv);matches=pd.read_csv(args.matches_csv)
         updated,changes,unresolved=settle(history,stats,matches,pd.Timestamp.now(tz='UTC').isoformat())
-        # Record revisions before updating ledger. A crash can repeat an audit record, never erase a result.
+        # Persist a stable transition ID before the ledger; retries reuse that revision.
         audit=args.history_csv.with_name('settlement_revisions.csv')
         if len(changes):
             previous=pd.read_csv(audit) if audit.exists() else changes.iloc[:0]
-            atomic_csv(pd.concat([previous,changes],ignore_index=True),audit)
+            if 'revision_id' in previous:
+                seen = previous.dropna(subset=['revision_id']).set_index('revision_id')
+                for index, change in changes.iterrows():
+                    if change.revision_id in seen.index:
+                        timestamp = seen.loc[change.revision_id, 'settled_at']
+                        changes.at[index, 'settled_at'] = timestamp
+                        updated.loc[updated.bet_id.eq(change.bet_id), 'settled_at'] = timestamp
+                additions = changes[~changes.revision_id.isin(seen.index)]
+            else:
+                additions = changes
+            merged = pd.concat([previous, additions], ignore_index=True) if len(previous) else additions
+            atomic_csv(merged, audit)
         atomic_csv(updated,args.history_csv)
     atomic_csv(changes,args.output_dir/'09_settled_rows.csv')
     atomic_csv(unresolved,args.output_dir/'09_unresolved_pending_rows.csv')
