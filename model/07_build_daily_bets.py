@@ -195,7 +195,7 @@ def load_candidates(path: Path) -> pd.DataFrame:
         df["hard_exclude_hot_streak_pre"] = np.nan
     df["hard_exclude_hot_streak_pre"] = pd.to_numeric(
         df["hard_exclude_hot_streak_pre"], errors="coerce"
-    ).fillna(0)
+    )
     df["hard_exclude_hot_streak_pre"] = df["hard_exclude_hot_streak_pre"].astype("Int64")
 
     return df
