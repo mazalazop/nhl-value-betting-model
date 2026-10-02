@@ -1273,11 +1273,29 @@ def build_recent_player_pool(
         target_date.normalize() - pd.to_datetime(latest["date_match"], errors="coerce").dt.normalize()
     ).dt.days
 
+    # In the first weeks of a new season, the preceding regular-season games
+    # are the relevant roster evidence. Preseason games are never included in
+    # the feature history (game type 02 only).
+    # Do not discard every veteran merely because the offseason exceeds 45 days.
+    season_start = pd.Timestamp(year=target_date.year if target_date.month >= 7 else target_date.year - 1, month=9, day=1)
+    early_season = target_date.normalize() < season_start + pd.Timedelta(days=65)
+    max_days = max(recent_lookback_days, 240) if early_season else recent_lookback_days
     latest = latest[
         latest["days_since_last_game"].notna()
         & (latest["days_since_last_game"] >= 0)
-        & (latest["days_since_last_game"] <= recent_lookback_days)
+        & (latest["days_since_last_game"] <= max_days)
     ].copy()
+    # If a player has a current team assignment, prevent last season's team
+    # from creating a phantom candidate after an offseason transfer.
+    # Missing current assignments are kept rather than silently dropping players.
+    latest = latest.merge(
+        joueurs_lookup[["id_joueur", "id_equipe"]].rename(columns={"id_equipe": "_current_team"}),
+        on="id_joueur", how="left", validate="one_to_one",
+    )
+    latest["_current_team"] = latest["_current_team"].apply(normalize_team_code)
+    latest = latest[
+        latest["_current_team"].isna() | (latest["_current_team"] == latest["team_player_match"])
+    ].drop(columns=["_current_team"]).copy()
 
     joueurs_lookup = joueurs_lookup.copy().rename(
         columns={"nom": "nom_lookup", "position": "position_lookup", "id_equipe": "id_equipe_lookup"}
