@@ -421,6 +421,8 @@ def build_stats_dataframe(
     df_matchs_played: pd.DataFrame,
     sleep_seconds: float,
 ) -> pd.DataFrame:
+    from henachel.nhl_cache import BoxscoreCache
+    cache = BoxscoreCache(get_raw_dir() / "boxscores", full_refresh=getattr(session, "henachel_full_refresh", False))
     all_rows: List[Dict[str, Any]] = []
     total_games = len(df_matchs_played)
 
@@ -431,7 +433,7 @@ def build_stats_dataframe(
         date_match = str(match_row["date_match"])
         season_source = str(match_row["saison"])
 
-        payload = fetch_game_payload(session, game_id)
+        payload = cache.get(game_id, date_match, lambda gid: fetch_game_payload(session, gid))
         game_rows = parse_game_to_stats_rows(
             payload=payload,
             game_id=game_id,
@@ -449,6 +451,7 @@ def build_stats_dataframe(
 
         time.sleep(sleep_seconds)
 
+    print(f"[boxscore cache] HTTP fetches={cache.fetches} hits={cache.hits}")
     if not all_rows:
         raise ValueError("stats.csv vide : aucune stat joueur collectée.")
 
@@ -613,6 +616,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_SLEEP_SECONDS,
         help="Pause entre appels API.",
     )
+    parser.add_argument("--full-refresh", action="store_true", help="Recharger tous les boxscores finaux sans cache")
     return parser.parse_args()
 
 
@@ -646,6 +650,7 @@ def main() -> None:
     print("")
 
     session = build_session()
+    session.henachel_full_refresh = args.full_refresh
 
     # 1) stats.csv
     df_stats = build_stats_dataframe(

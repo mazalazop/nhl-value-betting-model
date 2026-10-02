@@ -583,7 +583,10 @@ def collect_players_from_boxscores(
     sleep_seconds: float,
 ) -> pd.DataFrame:
     rows: List[Dict[str, Any]] = []
-    unique_games = matches_df[["id_match", "saison"]].drop_duplicates().reset_index(drop=True)
+    from henachel.data import final_mask
+    from henachel.nhl_cache import BoxscoreCache
+    cache = BoxscoreCache(get_raw_dir() / "boxscores", full_refresh=getattr(session, "henachel_full_refresh", False))
+    unique_games = matches_df.loc[final_mask(matches_df), ["id_match", "saison", "date_match"]].drop_duplicates().reset_index(drop=True)
 
     total_games = len(unique_games)
     print(f"[joueurs/boxscores] matchs à parcourir : {total_games}")
@@ -592,7 +595,7 @@ def collect_players_from_boxscores(
         game_id = int(row["id_match"])
         season = int(row["saison"])
 
-        payload = fetch_boxscore_with_fallback(session, game_id)
+        payload = cache.get(game_id, row["date_match"], lambda gid: fetch_boxscore_with_fallback(session, gid))
         rows.extend(parse_boxscore_players(payload, season=season))
 
         if (idx + 1) % 200 == 0 or (idx + 1) == total_games:
@@ -600,6 +603,7 @@ def collect_players_from_boxscores(
 
         time.sleep(sleep_seconds)
 
+    print(f"[boxscore cache] HTTP fetches={cache.fetches} hits={cache.hits}")
     if not rows:
         raise ValueError("Aucun joueur collecté via boxscores.")
 
@@ -680,6 +684,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Ne pas compléter joueurs.csv avec les boxscores.",
     )
+    parser.add_argument("--full-refresh", action="store_true", help="Recharger tous les boxscores finaux sans cache")
     return parser.parse_args()
 
 
@@ -704,6 +709,7 @@ def main() -> None:
     args = parse_args()
     raw_dir = get_raw_dir()
     session = build_session()
+    session.henachel_full_refresh = args.full_refresh
 
     print("=== 00_refresh_sources.py ===")
     print(f"Repo root : {get_repo_root()}")
