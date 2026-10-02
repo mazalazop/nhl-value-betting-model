@@ -683,6 +683,23 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def refresh_current_rosters(session, matches_df, raw_dir):
+    from henachel.history import atomic_csv
+    now = pd.Timestamp.now(tz='UTC')
+    teams = sorted(set(matches_df.id_equipe_domicile) | set(matches_df.id_equipe_exterieur))
+    rows = []
+    for team in teams:
+        if team in {'ARI', 'PHX', 'PHO'}: continue
+        try:
+            payload = safe_json_get(session, f'{BASE_URL}/roster/{team}/current')
+            parsed = parse_roster_payload(payload, team, int(matches_df.saison.max()))
+            for row in parsed: row['observed_at'] = now.isoformat()
+            rows.extend(parsed)
+        except (requests.RequestException, ValueError) as exc:
+            print(f'[roster] unavailable {team}: {type(exc).__name__}')
+    atomic_csv(pd.DataFrame(rows, columns=['id_joueur','nom','position','id_equipe','saison','source_priority','observed_at']), raw_dir / 'roster_current.csv')
+
+
 def main() -> None:
     args = parse_args()
     raw_dir = get_raw_dir()
@@ -711,6 +728,7 @@ def main() -> None:
 
     matches_path = raw_dir / "matchs.csv"
     save_csv(matches_df, matches_path)
+    refresh_current_rosters(session, matches_df, raw_dir)
 
     print("")
     print(f"[matchs] nb lignes : {len(matches_df)}")

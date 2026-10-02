@@ -1425,7 +1425,9 @@ def build_future_features(history, matches, players, standings=None):
         for home, team, opp in [(1, match['id_equipe_domicile'], match['id_equipe_exterieur']),
                                  (0, match['id_equipe_exterieur'], match['id_equipe_domicile'])]:
             for player in players[players.team_player_match == team].to_dict('records'):
-                row = {**match, **player, 'date_match': cutoff, 'id_match': match['id_match'],
+                row = {**player, **match, 'id_joueur': player['id_joueur'],
+                       'nom': player.get('nom'), 'position': player.get('position'),
+                       'date_match': cutoff, 'id_match': match['id_match'],
                        'is_home_player': home, 'team_player_match': team, 'adversaire_match': opp,
                        'season_source': str(int(match['saison'])), 'status': 'FUT'}
                 row.update({col: 0.0 for col in result_cols})
