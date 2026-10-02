@@ -1,10 +1,15 @@
 """Historical feature CLI; shared definitions also used by script 05."""
 from henachel.features import *
+import argparse
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--min-pp-coverage', type=float, default=.90)
+    parser.add_argument('--pp-coverage-policy', choices=['warn','error'], default='error')
+    args = parser.parse_args()
     ensure_directories()
 
-    df_source, pp_summary = charger_source_avec_pp()
+    df_source, pp_summary = charger_source_avec_pp(args.min_pp_coverage, args.pp_coverage_policy)
     standings_df, standings_file_summary = charger_standings(INPUT_TEAM_STANDINGS)
 
     base_canonique = build_base_canonique(df_source)

@@ -145,11 +145,10 @@ def infer_date_range_from_project(repo_root: Path) -> Tuple[date, date]:
 
     date_candidates = ["date_match", "game_date", "date", "match_date"]
 
-    if base_path.exists():
-        return _extract_date_range_from_csv(base_path, date_candidates)
-
     if fallback_path.exists():
         return _extract_date_range_from_csv(fallback_path, date_candidates)
+    if base_path.exists():
+        return _extract_date_range_from_csv(base_path, date_candidates)
 
     raise FileNotFoundError(
         f"Fichier introuvable : {base_path} ; fallback introuvable aussi : {fallback_path}"
@@ -303,9 +302,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--start-date", type=str, default=None, help="YYYY-MM-DD")
     parser.add_argument("--end-date", type=str, default=None, help="YYYY-MM-DD")
-    parser.add_argument("--game-type-id", type=int, default=2, help="2 = saison régulière NHL")
+    parser.add_argument("--game-type-id", type=int, default=None, help="Legacy single game type; prefer --game-types")
     parser.add_argument("--sleep-seconds", type=float, default=SLEEP_SECONDS)
-    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--game-types", default="2,3", help="Regular season and playoffs")
+    parser.add_argument("--force", action="store_true", help="Compatibility alias: this script performs a full date-range refresh")
     return parser.parse_args()
 
 
@@ -328,10 +328,13 @@ def main() -> None:
     if start_date > end_date:
         raise ValueError("start_date > end_date")
 
+    game_types = [args.game_type_id] if args.game_type_id is not None else [int(x) for x in args.game_types.split(",")]
+    if not game_types or not set(game_types) <= {2,3}:
+        raise ValueError("Only regular season (2) and playoffs (3) are supported")
     config = Config(
         start_date=start_date,
         end_date=end_date,
-        game_type_id=args.game_type_id,
+        game_type_id=game_types[0],
         sleep_seconds=args.sleep_seconds,
         force=args.force,
     )
@@ -362,15 +365,13 @@ def main() -> None:
 
     for i, (chunk_start, chunk_end) in enumerate(chunks, start=1):
         print(f"[{i}/{len(chunks)}] {chunk_start} -> {chunk_end}")
-        rows = fetch_one_chunk(
-            session=session,
-            start_date=chunk_start,
-            end_date=chunk_end,
-            game_type_id=config.game_type_id,
-        )
-        print(f"  lignes récupérées : {len(rows)}")
-        all_rows.extend(rows)
-        time.sleep(config.sleep_seconds)
+        for game_type in game_types:
+            rows = fetch_one_chunk(session, chunk_start, chunk_end, game_type)
+            for row in rows:
+                row['game_type'] = game_type
+            all_rows.extend(rows)
+            print(f"  type={game_type}, rows={len(rows)}")
+            time.sleep(config.sleep_seconds)
 
     if not all_rows:
         raise ValueError("Aucune ligne récupérée depuis l'endpoint PP stats.")
@@ -382,6 +383,7 @@ def main() -> None:
     df.to_csv(csv_path, index=False)
 
     summary = build_summary(df, config, chunks, end_date_was_capped=end_date_was_capped)
+    summary["game_types"] = game_types
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("")

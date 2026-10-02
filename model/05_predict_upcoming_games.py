@@ -612,87 +612,11 @@ def _compute_conference_cutoff_points(group: pd.DataFrame) -> float:
     return np.nan
 
 
-def load_standings_optional() -> Tuple[Optional[pd.DataFrame], Dict[str, Any], Dict[str, pd.DataFrame]]:
-    if not TEAM_STANDINGS_PATH.exists():
-        return None, {
-            "standings_loaded": False,
-            "standings_file": str(TEAM_STANDINGS_PATH),
-            "reason": "file_missing",
-        }, {}
-
-    standings = pd.read_csv(TEAM_STANDINGS_PATH, low_memory=False)
-    required = [
-        "date_snapshot",
-        "team_abbrev",
-        "conference_abbrev",
-        "division_abbrev",
-        "games_played",
-        "games_remaining",
-        "points",
-        "conference_sequence",
-        "division_sequence",
-    ]
-    verifier_colonnes(standings, required)
-
-    standings = standings.copy()
-    standings["date_snapshot"] = pd.to_datetime(standings["date_snapshot"], errors="coerce")
-    standings = standings[standings["date_snapshot"].notna()].copy()
-    standings["team_abbrev"] = standings["team_abbrev"].apply(normalize_team_code)
-    standings["conference_abbrev"] = standings["conference_abbrev"].astype(str).str.upper().str.strip()
-    standings["division_abbrev"] = standings["division_abbrev"].astype(str).str.upper().str.strip()
-
-    numeric_cols = [
-        "games_played",
-        "games_remaining",
-        "points",
-        "conference_sequence",
-        "division_sequence",
-        "wildcard_sequence",
-        "point_pctg",
-        "goal_differential",
-        "l10_points",
-    ]
-    for col in numeric_cols:
-        if col in standings.columns:
-            standings[col] = pd.to_numeric(standings[col], errors="coerce")
-
-    standings = standings.sort_values(
-        ["date_snapshot", "conference_abbrev", "conference_sequence", "team_abbrev"]
-    ).reset_index(drop=True)
-
-    conf_cutoff = (
-        standings.dropna(subset=["conference_abbrev"])
-        .groupby(["date_snapshot", "conference_abbrev"], dropna=False)
-        .apply(_compute_conference_cutoff_points)
-        .reset_index(name="conference_cutoff_points")
-    )
-    standings = standings.merge(
-        conf_cutoff,
-        on=["date_snapshot", "conference_abbrev"],
-        how="left",
-        validate="many_to_one",
-    )
-    standings["wildcard_distance"] = pd.to_numeric(standings["points"], errors="coerce") - pd.to_numeric(
-        standings["conference_cutoff_points"], errors="coerce"
-    )
-    standings["standings_lookup_date"] = standings["date_snapshot"]
-    standings = standings.sort_values(["team_abbrev", "standings_lookup_date"]).reset_index(drop=True)
-
-    standings_by_team = {
-        str(team): grp.sort_values("standings_lookup_date").reset_index(drop=True)
-        for team, grp in standings.groupby("team_abbrev", sort=False)
-    }
-
-    summary = {
-        "standings_loaded": True,
-        "standings_file": str(TEAM_STANDINGS_PATH),
-        "standings_rows": int(len(standings)),
-        "standings_dates": int(standings["date_snapshot"].nunique()),
-        "standings_teams": int(standings["team_abbrev"].nunique()),
-        "standings_min_date": standings["date_snapshot"].min().strftime("%Y-%m-%d") if len(standings) else None,
-        "standings_max_date": standings["date_snapshot"].max().strftime("%Y-%m-%d") if len(standings) else None,
-    }
-    return standings, summary, standings_by_team
+def load_standings_optional():
+    from henachel.features import charger_standings
+    standings, summary = charger_standings(TEAM_STANDINGS_PATH)
+    by_team = {str(team): group.copy() for team, group in standings.groupby('team_abbrev')} if standings is not None else {}
+    return standings, summary, by_team
 
 
 def select_future_matches(matchs: pd.DataFrame, target_date: pd.Timestamp) -> pd.DataFrame:

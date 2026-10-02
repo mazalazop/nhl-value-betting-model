@@ -335,7 +335,7 @@ def collect_matches(
 
             for game in games:
                 row = build_match_row(game, season)
-                if row is not None:
+                if row is not None and row["game_type"] in {2, 3}:
                     all_rows.append(row)
 
             time.sleep(sleep_seconds)

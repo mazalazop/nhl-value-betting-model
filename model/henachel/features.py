@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from henachel.data import validate_player_games, final_mask
+from henachel.quality import merge_pp
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -480,7 +481,7 @@ def _compute_conference_cutoff_points(group: pd.DataFrame) -> float:
     return np.nan
 
 
-def charger_source_avec_pp() -> tuple[pd.DataFrame, dict]:
+def charger_source_avec_pp(min_coverage=.90, policy="error") -> tuple[pd.DataFrame, dict]:
     if not INPUT_BASE_MATCH_FUSIONNEE.exists():
         raise FileNotFoundError(
             f"Fichier introuvable : {INPUT_BASE_MATCH_FUSIONNEE}\n"
@@ -500,19 +501,15 @@ def charger_source_avec_pp() -> tuple[pd.DataFrame, dict]:
 
     pp_for_merge, pp_summary = charger_pp_stats_officiels(INPUT_PP_STATS_GAME)
 
-    source = source.merge(
-        pp_for_merge,
-        on=["id_joueur", "id_match"],
-        how="left",
-        validate="many_to_one",
-    )
+    source, quality_report = merge_pp(source, pp_for_merge, min_coverage, policy)
 
     pp_found_mask = source["temps_pp"].notna()
     pp_rows_merged = int(pp_found_mask.sum())
     pp_rows_missing_after_merge = int((~pp_found_mask).sum())
     pp_merge_coverage = float(pp_found_mask.mean()) if len(source) > 0 else 0.0
 
-    source["temps_pp"] = source["temps_pp"].fillna(0.0)
+    # Unknown PP stays NaN; measured zero is preserved.
+    pp_summary["quality"] = quality_report
 
     merge_summary = {
         "input_base_file": str(INPUT_BASE_MATCH_FUSIONNEE),
@@ -878,6 +875,7 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "count_matches_last_2_seasons_pre",
         "prev_season_games",
     ]
+    fill_zero_cols = [c for c in fill_zero_cols if c not in {"pp_moy_5", "season_pp_before_match"}]
     for c in fill_zero_cols:
         if c in df.columns:
             df[c] = df[c].fillna(0.0)
@@ -891,12 +889,12 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "goal_hit_rate_season_pre": 0.20,
         "points_per_game_season_pre": DEFAULT_POINTS_PER_GAME,
         "toi_moy_season_pre": 15.0,
-        "pp_moy_season_pre": 1.5,
+
         "point_hit_rate_prev_season": DEFAULT_SEASON_HIT_RATE,
         "goal_hit_rate_prev_season": 0.20,
         "points_per_game_prev_season": DEFAULT_POINTS_PER_GAME,
         "toi_moy_prev_season": 15.0,
-        "pp_moy_prev_season": 1.5,
+
         "recent_hit_rate_composite": DEFAULT_LAST10_HIT_RATE,
     }
     for col, val in hit_rate_defaults.items():
@@ -1217,18 +1215,28 @@ def enrichir_contexte_v2(
     }
     if standings is not None and len(standings) > 0:
         standings_lookup = standings.copy()
+        for required in ['api_date','season_id','date_snapshot']:
+            if required not in standings_lookup:
+                raise ValueError(f'Standings missing {required}')
+        snapshot_date = pd.to_datetime(standings_lookup['date_snapshot'], errors='coerce').dt.normalize()
+        api_date = pd.to_datetime(standings_lookup['api_date'], errors='coerce').dt.normalize()
+        standings_lookup = standings_lookup[snapshot_date.notna() & api_date.eq(snapshot_date)].copy()
+        standings_lookup['season_key'] = pd.to_numeric(standings_lookup['season_id'], errors='raise').astype('Int64').astype(str)
+
         standings_lookup["standings_lookup_date"] = pd.to_datetime(
             standings_lookup["standings_lookup_date"],
             errors="coerce",
-        )
+        ).astype("datetime64[ns]")
         standings_lookup = standings_lookup.sort_values(["standings_lookup_date", "team_abbrev"]).reset_index(drop=True)
 
         merge_left = df[["team_player_match", "date_match"]].copy()
+        merge_left["season_key"] = df["season_source"].astype(str)
         merge_left["lookup_date"] = pd.to_datetime(merge_left["date_match"], errors="coerce") - pd.Timedelta(days=1)
         merge_left = merge_left.rename(columns={"team_player_match": "team_abbrev"})
         merge_left = merge_left.sort_values(["lookup_date", "team_abbrev"]).reset_index(drop=False)
 
         standings_cols = [
+            "season_key",
             "team_abbrev",
             "standings_lookup_date",
             "conference_abbrev",
@@ -1252,7 +1260,8 @@ def enrichir_contexte_v2(
             standings_lookup,
             left_on="lookup_date",
             right_on="standings_lookup_date",
-            by="team_abbrev",
+            by=["team_abbrev", "season_key"],
+            tolerance=pd.Timedelta(days=max(0, config.get("standings_max_age_days", 3)-1)),
             direction="backward",
             allow_exact_matches=True,
         ).sort_values("index")
@@ -1360,7 +1369,7 @@ def enrichir_contexte_v2(
             df[col] = df[col].fillna(val)
 
     # indicateurs utiles de disponibilité
-    df["standings_context_found"] = pd.to_numeric(df["conference_rank_pre"], errors="coerce").notna().astype(int)
+    df["standings_context_found"] = df["standings_lookup_date_pre"].notna().astype(int)
     if standings is None or len(standings) == 0:
         df["standings_context_found"] = 0
 
@@ -1433,4 +1442,3 @@ def build_future_features(history, matches, players, standings=None):
     if extra:
         out = out.merge(targets[['id_match','id_joueur']+extra], on=['id_match','id_joueur'], validate='one_to_one')
     return out.drop(columns=result_cols + ['a_marque_un_point', 'a_marque_un_but'], errors='ignore').reset_index(drop=True)
-
