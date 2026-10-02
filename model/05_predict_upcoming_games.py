@@ -105,6 +105,7 @@ DATE_CANDIDATES = [
 ]
 
 META_OUTPUT_COLUMNS = [
+    "start_time_utc",
     "date_match",
     "id_match",
     "saison",

@@ -264,7 +264,7 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     if not isinstance(rows, list):
         raise ValueError("normalized_points_odds.json['rows'] doit être une liste.")
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=REQUIRED_ODDS_ROW_COLUMNS)
     missing_cols = [c for c in REQUIRED_ODDS_ROW_COLUMNS if c not in df.columns]
     if missing_cols:
         raise ValueError(f"Colonnes manquantes dans les rows bookmaker : {missing_cols}")
@@ -285,283 +285,14 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     return payload, df
 
 
-def exact_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.DataFrame:
-    subset = odds_df[
-        (odds_df["matchup_key"] == model_row["matchup_key"])
-        & (odds_df["player_name_normalized_join"] == model_row["player_name_normalized"])
-    ].copy()
-    if subset.empty:
-        return subset
-    aliases = set(model_row["team_aliases"] or [])
-    if aliases:
-        subset = subset[subset["team_name_normalized_join"].isin(aliases)].copy()
-    return subset
+def match_rows(model_df, odds_df, run_date, now=None):
+    from henachel.matching import match_point_rows
+    return match_point_rows(model_df, odds_df, run_date, TEAM_CODE_TO_NAMES, now=now)
 
 
-def fuzzy_candidate_subset(model_row: pd.Series, odds_df: pd.DataFrame) -> pd.DataFrame:
-    if model_row["model_name_is_numeric"]:
-        return odds_df.iloc[0:0].copy()
-
-    subset = odds_df[
-        (odds_df["matchup_key"] == model_row["matchup_key"])
-        & (odds_df["team_name_normalized_join"].isin(set(model_row["team_aliases"] or [])))
-    ].copy()
-    if subset.empty:
-        return subset
-
-    model_name = model_row["player_name_normalized"]
-    subset["fuzzy_score"] = subset["player_name_normalized_join"].apply(
-        lambda x: SequenceMatcher(None, model_name, x).ratio()
-    )
-    subset = subset.sort_values(["fuzzy_score", "odds_decimal"], ascending=[False, True]).reset_index()
-    subset = subset[subset["fuzzy_score"] >= FUZZY_MIN_SCORE].copy()
-    if subset.empty:
-        return subset
-
-    best = float(subset.iloc[0]["fuzzy_score"])
-    subset = subset[subset["fuzzy_score"] == best].copy()
-    return subset
-
-
-def kelly_fraction_decimal_odds(p: float, odds_decimal: float) -> float:
-    if p is None or pd.isna(p) or odds_decimal is None or pd.isna(odds_decimal):
-        return np.nan
-    if p <= 0 or odds_decimal <= 1:
-        return 0.0
-    b = float(odds_decimal - 1.0)
-    q = float(1.0 - p)
-    k = (b * p - q) / b
-    return float(max(k, 0.0))
-
-
-def make_bet_id(
-    date_match: Optional[str],
-    bookmaker: Any,
-    market: Any,
-    stat: Any,
-    threshold: Any,
-    player_name_normalized: str,
-    team_code: Any,
-    opponent_code: Any,
-) -> str:
-    raw = "|".join([
-        str(date_match or ""),
-        str(bookmaker or ""),
-        str(market or ""),
-        str(stat or ""),
-        str(threshold or ""),
-        str(player_name_normalized or ""),
-        str(team_code or ""),
-        str(opponent_code or ""),
-    ])
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:20]
-
-
-def build_matched_row(
-    model_row: pd.Series,
-    odds_row: pd.Series,
-    match_method: str,
-    fuzzy_score: Optional[float],
-    run_date: str,
-) -> Dict[str, Any]:
-    model_proba = float(model_row["proba_point_1p_calibree"])
-    raw_proba = float(model_row["proba_point_1p_raw"])
-    implied = float(odds_row["implied_probability"])
-    odds_decimal = float(odds_row["odds_decimal"])
-    date_match = model_row["date_match"].strftime("%Y-%m-%d") if pd.notna(model_row["date_match"]) else None
-
-    fair_odds = float(np.nan if model_proba <= 0 else 1.0 / model_proba)
-    edge_probability = float(model_proba - implied)
-    ev_per_unit = float(model_proba * (odds_decimal - 1.0) - (1.0 - model_proba))
-    kelly = kelly_fraction_decimal_odds(model_proba, odds_decimal)
-    player_norm = model_row["player_name_normalized"]
-
-    return {
-        "bet_id": make_bet_id(
-            date_match=date_match,
-            bookmaker=odds_row["bookmaker"],
-            market=odds_row["market"],
-            stat=odds_row["stat"],
-            threshold=odds_row["threshold"],
-            player_name_normalized=player_norm,
-            team_code=model_row["team_player_match"],
-            opponent_code=model_row["adversaire_match"],
-        ),
-        "run_date": run_date,
-        "bet_status": "pending",
-        "result": "",
-        "actual_stat_value": np.nan,
-        "settled_at": "",
-        "recommended_flag": False,
-        "recommendation_rank": np.nan,
-        "date_match": date_match,
-        "id_match": int(model_row["id_match"]) if pd.notna(model_row["id_match"]) else None,
-        "id_joueur": int(model_row["id_joueur"]) if pd.notna(model_row["id_joueur"]) else None,
-        "player_name": model_row["nom"],
-        "player_name_normalized": player_norm,
-        "player_name_bookmaker": odds_row["player_name"],
-        "position": model_row["position"],
-        "team": model_row["team_player_match"],
-        "opponent": model_row["adversaire_match"],
-        "is_home": float(model_row["is_home_player"]) if pd.notna(model_row["is_home_player"]) else None,
-        "team_name_model": model_row["team_primary_name"],
-        "opponent_name_model": model_row["opponent_primary_name"],
-        "bookmaker": odds_row["bookmaker"],
-        "market": odds_row["market"],
-        "stat": odds_row["stat"],
-        "threshold": int(odds_row["threshold"]) if pd.notna(odds_row["threshold"]) else None,
-        "outcome_label": odds_row["outcome_label"],
-        "outcome_key": odds_row["outcome_key"],
-        "event_url": odds_row["event_url"],
-        "event_id": odds_row["event_id"],
-        "event_slug": odds_row["event_slug"],
-        "home_team": odds_row["home_team"],
-        "away_team": odds_row["away_team"],
-        "team_name_bookmaker": odds_row["team"],
-        "odds_decimal": odds_decimal,
-        "implied_probability": implied,
-        "model_probability_raw": raw_proba,
-        "model_probability": model_proba,
-        "fair_odds_model": fair_odds,
-        "edge_probability": edge_probability,
-        "edge_probability_pct_points": edge_probability * 100.0,
-        "ev_per_unit": ev_per_unit,
-        "kelly_fraction": kelly,
-        "is_positive_ev": bool(ev_per_unit > 0),
-        "rank_proba_sur_date": int(model_row["rank_proba_sur_date"]) if pd.notna(model_row["rank_proba_sur_date"]) else None,
-        "rank_proba_sur_match": int(model_row["rank_proba_sur_match"]) if pd.notna(model_row["rank_proba_sur_match"]) else None,
-        "match_method": match_method,
-        "fuzzy_score": fuzzy_score,
-    }
-
-
-def match_rows(model_df: pd.DataFrame, odds_df: pd.DataFrame, run_date: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, Any]]:
-    matched_rows: List[Dict[str, Any]] = []
-    unmatched_model_rows: List[Dict[str, Any]] = []
-    matched_odds_indices = set()
-
-    exact_match_count = 0
-    fuzzy_match_count = 0
-    duplicate_candidate_count = 0
-
-    for _, model_row in model_df.sort_values(
-        ["date_match", "rank_proba_sur_match", "rank_proba_sur_date", "nom"],
-        ascending=[True, True, True, True],
-    ).iterrows():
-        subset_exact = exact_candidate_subset(model_row, odds_df)
-        subset_exact = subset_exact[~subset_exact.index.isin(matched_odds_indices)].copy()
-
-        if len(subset_exact) == 1:
-            odds_idx = subset_exact.index[0]
-            matched_odds_indices.add(odds_idx)
-            matched_rows.append(build_matched_row(model_row, subset_exact.loc[odds_idx], "exact", None, run_date))
-            exact_match_count += 1
-            continue
-
-        if len(subset_exact) > 1:
-            duplicate_candidate_count += 1
-            unmatched_model_rows.append({
-                "reason": "multiple_exact_candidates",
-                "candidate_count": int(len(subset_exact)),
-                "date_match": model_row["date_match"].strftime("%Y-%m-%d") if pd.notna(model_row["date_match"]) else None,
-                "id_match": model_row["id_match"],
-                "id_joueur": model_row["id_joueur"],
-                "nom": model_row["nom"],
-                "player_name_normalized": model_row["player_name_normalized"],
-                "team_player_match": model_row["team_player_match"],
-                "adversaire_match": model_row["adversaire_match"],
-                "proba_point_1p_calibree": model_row["proba_point_1p_calibree"],
-            })
-            continue
-
-        subset_fuzzy = fuzzy_candidate_subset(model_row, odds_df)
-        subset_fuzzy = subset_fuzzy[~subset_fuzzy["index"].isin(matched_odds_indices)].copy() if "index" in subset_fuzzy.columns else subset_fuzzy
-
-        if len(subset_fuzzy) == 1:
-            odds_idx = int(subset_fuzzy.iloc[0]["index"])
-            matched_odds_indices.add(odds_idx)
-            matched_rows.append(build_matched_row(
-                model_row,
-                odds_df.loc[odds_idx],
-                "fuzzy",
-                float(subset_fuzzy.iloc[0]["fuzzy_score"]),
-                run_date,
-            ))
-            fuzzy_match_count += 1
-            continue
-
-        unmatched_model_rows.append({
-            "reason": "no_match",
-            "candidate_count": int(len(subset_fuzzy)) if len(subset_fuzzy) > 0 else 0,
-            "date_match": model_row["date_match"].strftime("%Y-%m-%d") if pd.notna(model_row["date_match"]) else None,
-            "id_match": model_row["id_match"],
-            "id_joueur": model_row["id_joueur"],
-            "nom": model_row["nom"],
-            "player_name_normalized": model_row["player_name_normalized"],
-            "model_name_is_numeric": bool(model_row["model_name_is_numeric"]),
-            "team_player_match": model_row["team_player_match"],
-            "adversaire_match": model_row["adversaire_match"],
-            "proba_point_1p_calibree": model_row["proba_point_1p_calibree"],
-            "rank_proba_sur_match": model_row["rank_proba_sur_match"],
-            "rank_proba_sur_date": model_row["rank_proba_sur_date"],
-        })
-
-    unmatched_odds_df = odds_df[~odds_df.index.isin(matched_odds_indices)].copy()
-
-    matched_df = pd.DataFrame(matched_rows)
-    unmatched_model_df = pd.DataFrame(unmatched_model_rows)
-    unmatched_bookmaker_df = unmatched_odds_df[[
-        "bookmaker",
-        "market",
-        "stat",
-        "threshold",
-        "outcome_label",
-        "outcome_key",
-        "event_url",
-        "event_id",
-        "event_slug",
-        "home_team",
-        "away_team",
-        "team",
-        "player_name",
-        "odds_decimal",
-        "implied_probability",
-    ]].rename(columns={"team": "team_name_bookmaker", "player_name": "player_name_bookmaker"}).copy()
-
-    summary = {
-        "model_rows_count": int(len(model_df)),
-        "bookmaker_rows_count": int(len(odds_df)),
-        "matched_rows_count": int(len(matched_df)),
-        "unmatched_model_rows_count": int(len(unmatched_model_df)),
-        "unmatched_bookmaker_rows_count": int(len(unmatched_bookmaker_df)),
-        "exact_match_count": int(exact_match_count),
-        "fuzzy_match_count": int(fuzzy_match_count),
-        "duplicate_candidate_count": int(duplicate_candidate_count),
-        "match_rate_vs_bookmaker_rows": float(len(matched_df) / len(odds_df)) if len(odds_df) else 0.0,
-        "match_rate_vs_model_rows": float(len(matched_df) / len(model_df)) if len(model_df) else 0.0,
-    }
-    return matched_df, unmatched_model_df, unmatched_bookmaker_df, summary
-
-
-def append_master_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
-    if daily_df.empty:
-        if not master_path.exists():
-            pd.DataFrame().to_csv(master_path, index=False)
-        return {"rows_before": 0, "rows_added": 0, "rows_after": 0}
-
-    if master_path.exists():
-        master_df = pd.read_csv(master_path, low_memory=False)
-    else:
-        master_df = pd.DataFrame(columns=daily_df.columns)
-
-    rows_before = len(master_df)
-    combined = pd.concat([master_df, daily_df], ignore_index=True)
-    if "bet_id" in combined.columns:
-        combined = combined.drop_duplicates(subset=["bet_id"], keep="last").copy()
-    rows_after = len(combined)
-    rows_added = rows_after - rows_before
-    combined.to_csv(master_path, index=False)
-    return {"rows_before": int(rows_before), "rows_added": int(rows_added), "rows_after": int(rows_after)}
+def append_master_history(master_path, daily_df):
+    from henachel.history import append_ledger
+    return append_ledger(master_path, daily_df)
 
 
 def parse_args() -> argparse.Namespace:
@@ -646,7 +377,7 @@ def main() -> None:
     top_positive_ev = positive_ev_df.head(20)[top_positive_ev_cols].to_dict(orient="records") if not positive_ev_df.empty else []
 
     summary_payload = {
-        "status": "ok",
+        "status": "ok" if len(matched_df) else ("no_odds" if odds_df.empty else "no_verified_matches"),
         "run_date": args.run_date,
         "market": "player_points",
         "threshold": 1,

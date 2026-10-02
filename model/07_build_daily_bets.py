@@ -16,6 +16,8 @@ DEFAULT_INPUT_CSV = DEFAULT_OUTPUTS_DIR / "06_matched_point_edges.csv"
 
 REQUIRED_COLUMNS = [
     "bet_id",
+    "id_match",
+    "id_joueur",
     "run_date",
     "bet_status",
     "result",
@@ -131,7 +133,10 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Désactiver l'exclusion des joueurs en série chaude anormale.",
     )
-    return parser.parse_args()
+    parser.add_argument("--enable-hot-streak-exclude", action="store_true", help="Activer explicitement la règle hot streak (non validée prédictivement).")
+    args = parser.parse_args()
+    args.disable_hot_streak_exclude = args.disable_hot_streak_exclude or not args.enable_hot_streak_exclude
+    return args
 
 
 # -----------------------------------------------------------------------------
@@ -187,11 +192,11 @@ def load_candidates(path: Path) -> pd.DataFrame:
 
     # hot streak flag if present, else neutral
     if "hard_exclude_hot_streak_pre" not in df.columns:
-        df["hard_exclude_hot_streak_pre"] = 0
+        df["hard_exclude_hot_streak_pre"] = np.nan
     df["hard_exclude_hot_streak_pre"] = pd.to_numeric(
         df["hard_exclude_hot_streak_pre"], errors="coerce"
     ).fillna(0)
-    df["hard_exclude_hot_streak_pre"] = df["hard_exclude_hot_streak_pre"].astype(int)
+    df["hard_exclude_hot_streak_pre"] = df["hard_exclude_hot_streak_pre"].astype("Int64")
 
     return df
 
@@ -251,6 +256,8 @@ def build_daily_bets(
 
     # Hard exclude hot streak if present
     if not disable_hot_streak_exclude:
+        if df["hard_exclude_hot_streak_pre"].isna().any():
+            raise ValueError("Missing hot streak eligibility when exclusion is enabled")
         hot_mask = df["hard_exclude_hot_streak_pre"].fillna(0).astype(int) == 1
         stats["rows_removed_hot_streak"] = int(hot_mask.sum())
         df = df[~hot_mask].copy()
@@ -266,7 +273,7 @@ def build_daily_bets(
     ).reset_index(drop=True)
 
     if one_pick_per_player:
-        df = df.drop_duplicates(subset=["player_name"], keep="first").reset_index(drop=True)
+        df = df.drop_duplicates(subset=["id_joueur"], keep="first").reset_index(drop=True)
 
     stats["rows_after_player_dedup"] = int(len(df))
 
@@ -324,36 +331,10 @@ def build_daily_bets(
 # History
 # -----------------------------------------------------------------------------
 
-def append_history(master_path: Path, daily_df: pd.DataFrame) -> Dict[str, int]:
-    master_path.parent.mkdir(parents=True, exist_ok=True)
+def append_history(master_path, daily_df):
+    from henachel.history import append_ledger
+    return append_ledger(master_path, daily_df)
 
-    if master_path.exists():
-        master_df = pd.read_csv(master_path, low_memory=False)
-        rows_before = len(master_df)
-    else:
-        master_df = pd.DataFrame(columns=daily_df.columns)
-        rows_before = 0
-
-    existing_bet_ids = (
-        set(master_df["bet_id"].astype(str).tolist())
-        if (not master_df.empty and "bet_id" in master_df.columns)
-        else set()
-    )
-
-    to_add_df = daily_df[~daily_df["bet_id"].astype(str).isin(existing_bet_ids)].copy()
-    combined_df = pd.concat([master_df, to_add_df], ignore_index=True)
-    combined_df.to_csv(master_path, index=False)
-
-    return {
-        "rows_before": int(rows_before),
-        "rows_added": int(len(to_add_df)),
-        "rows_after": int(len(combined_df)),
-    }
-
-
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
 
 def main() -> None:
     args = parse_args()
