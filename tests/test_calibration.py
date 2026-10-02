@@ -58,3 +58,9 @@ def test_test_labels_do_not_enter_calibration():
     y[80:] = 1-y[80:]
     b,_ = select_calibrator(p[:80],y[:80],dates[:80])
     np.testing.assert_array_equal(a.predict(p[80:]),b.predict(p[80:]))
+
+
+def test_overlapping_evaluation_window_rejected():
+    from henachel.calibration import validate_evaluation_window
+    with pytest.raises(ValueError):validate_evaluation_window(['2026-01-02'],['2026-01-01','2026-01-02'])
+    validate_evaluation_window(['2026-01-01'],['2026-01-02'])

@@ -18,9 +18,9 @@ Principes
 ---------
 - aucune donnée du match futur n'est utilisée comme cible déguisée ;
 - seules des features connues avant match sont construites ;
-- l'univers des joueurs à prédire est construit d'abord depuis l'historique réel du pipeline ;
+- l'univers utilise un roster NHL récent, avec fallback historique explicite ;
 - le modèle POINT est réentraîné localement dans ce script ;
-- calibration sigmoid temporellement propre sur une fenêtre récente antérieure à la date cible ;
+- calibration commune à 03, choisie temporellement avant la date cible ;
 - prise en compte du contexte standings / fin de saison quand team_standings_daily.csv existe.
 
 Sorties
@@ -359,19 +359,8 @@ def parse_mmss_to_minutes(value: Any) -> float:
         return np.nan
 
 
-def safe_mean_last_n(series: pd.Series, n: int) -> float:
-    s = pd.to_numeric(series, errors="coerce").dropna()
-    if len(s) == 0:
-        return 0.0
-    return float(s.tail(n).mean())
 
 
-def safe_ratio(num: float, den: float) -> float:
-    if den is None or pd.isna(den) or den == 0:
-        return np.nan
-    if num is None or pd.isna(num):
-        return np.nan
-    return float(num / den)
 
 
 def find_target_column(df):
@@ -437,26 +426,8 @@ def normalize_season_code(value: Any) -> Optional[str]:
     return s[:8]
 
 
-def previous_season_code(value: Any) -> Optional[str]:
-    s = normalize_season_code(value)
-    if s is None:
-        return None
-    try:
-        start = int(s[:4]) - 1
-        end = int(s[4:8]) - 1
-        return f"{start}{end}"
-    except ValueError:
-        return None
 
 
-def parse_season_start_year(value: Any) -> Optional[int]:
-    s = normalize_season_code(value)
-    if s is None:
-        return None
-    try:
-        return int(s[:4])
-    except ValueError:
-        return None
 
 
 def choose_target_date(matchs, target_date_str):
@@ -549,20 +520,6 @@ def load_history() -> Tuple[pd.DataFrame, str, str]:
     return df.reset_index(drop=True), target_col, date_col
 
 
-def _compute_conference_cutoff_points(group: pd.DataFrame) -> float:
-    conf_seq = pd.to_numeric(group.get("conference_sequence"), errors="coerce")
-    points = pd.to_numeric(group.get("points"), errors="coerce")
-
-    mask = conf_seq.notna() & points.notna() & (conf_seq == 8)
-    if mask.any():
-        return float(points.loc[mask].iloc[0])
-
-    points_sorted = points.dropna().sort_values(ascending=False).tolist()
-    if len(points_sorted) >= 8:
-        return float(points_sorted[7])
-    if len(points_sorted) > 0:
-        return float(points_sorted[-1])
-    return np.nan
 
 
 def load_standings_optional():
@@ -885,7 +842,7 @@ def main() -> None:
             "joueurs.csv utilisé comme lookup complémentaire, pas comme roster large principal",
             "Aucune colonne de résultat futur utilisée",
             "Réentraînement local nécessaire car le repo ne sauvegarde pas encore d'artefact modèle POINT",
-            "Calibration sigmoid ajustée sur une fenêtre historique récente antérieure à la date cible",
+            "Calibration choisie sur une séparation temporelle interne puis ajustée avant la date cible",
             "Le contexte standings / playoffs est injecté si team_standings_daily.csv est disponible",
         ],
     }

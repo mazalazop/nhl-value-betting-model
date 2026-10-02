@@ -110,3 +110,12 @@ def select_calibrator(proba, labels, dates, policy='auto'):
     selected=scores[0]['method']
     info.update(method=selected,reason='selected_on_temporal_calibration_eval',selection=scores)
     return fit_method(selected,p,y),info
+
+
+def validate_evaluation_window(calibration_dates,evaluation_dates):
+    calibration=pd.DatetimeIndex(pd.to_datetime(calibration_dates,errors='raise'))
+    evaluation=pd.DatetimeIndex(pd.to_datetime(evaluation_dates,errors='raise'))
+    if not len(calibration) or not len(evaluation) or calibration.hasnans or evaluation.hasnans:
+        raise ValueError('Empty or invalid calibration/evaluation dates')
+    if calibration.max()>=evaluation.min():
+        raise ValueError('Calibration must end strictly before the evaluation window')

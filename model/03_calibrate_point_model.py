@@ -157,44 +157,6 @@ def calculer_metrics(y_true: np.ndarray, proba: np.ndarray) -> Dict[str, float]:
     return out
 
 
-def split_calibration_temporel(
-    df: pd.DataFrame,
-    date_col: str,
-    fit_ratio: float = 0.50,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
-    temp = df.copy()
-    temp[date_col] = pd.to_datetime(temp[date_col], errors="coerce")
-    if temp[date_col].isna().any(): raise ValueError("Missing calibration date")
-
-    if temp.empty:
-        raise ValueError("Aucune date exploitable pour la calibration.")
-
-    sort_cols: List[str] = [date_col]
-    match_id_col = first_existing_column_or_none(temp, MATCH_ID_CANDIDATES)
-    player_id_col = first_existing_column_or_none(temp, PLAYER_ID_CANDIDATES)
-
-    if match_id_col is not None:
-        sort_cols.append(match_id_col)
-    if player_id_col is not None:
-        sort_cols.append(player_id_col)
-
-    temp = temp.sort_values(sort_cols).reset_index(drop=True)
-
-    dates_uniques = sorted(pd.Series(temp[date_col].dt.normalize().unique()).tolist())
-    if len(dates_uniques) < 3:
-        raise ValueError("Pas assez de dates uniques pour réaliser une calibration temporelle propre.")
-
-    idx_cut = int(np.floor(len(dates_uniques) * fit_ratio))
-    idx_cut = max(1, min(idx_cut, len(dates_uniques) - 1))
-    date_cut = pd.Timestamp(dates_uniques[idx_cut])
-
-    calib_fit = temp[temp[date_col] < date_cut].copy()
-    calib_eval = temp[temp[date_col] >= date_cut].copy()
-
-    if calib_fit.empty or calib_eval.empty:
-        raise ValueError("Split de calibration invalide : calib_fit ou calib_eval est vide.")
-
-    return calib_fit, calib_eval, date_cut
 
 
 
@@ -230,19 +192,6 @@ def standardize_prediction_frame(df: pd.DataFrame) -> Tuple[pd.DataFrame, str, s
     return temp.reset_index(drop=True), target_col, proba_col, date_col
 
 
-def build_selection_df(
-    y_eval: np.ndarray,
-    p_eval_raw: np.ndarray,
-    p_eval_sigmoid: np.ndarray,
-    p_eval_isotonic: np.ndarray,
-) -> pd.DataFrame:
-    selection_df = pd.DataFrame([
-        {"method": "raw", **calculer_metrics(y_eval, p_eval_raw)},
-        {"method": "sigmoid", **calculer_metrics(y_eval, p_eval_sigmoid)},
-        {"method": "isotonic", **calculer_metrics(y_eval, p_eval_isotonic)},
-    ])
-    selection_df = selection_df.sort_values(["logloss", "brier"], ascending=[True, True]).reset_index(drop=True)
-    return selection_df
 
 
 def add_calibrated_columns(
@@ -295,6 +244,8 @@ def main() -> None:
 
     validation_df, target_col_val, proba_col_val, date_col_val = standardize_prediction_frame(validation_df_raw)
     test_df, target_col_test, proba_col_test, date_col_test = standardize_prediction_frame(test_df_raw)
+    from henachel.calibration import validate_evaluation_window
+    validate_evaluation_window(validation_df[date_col_val], test_df[date_col_test])
 
     print("")
     print("=== COLONNES DETECTEES ===")

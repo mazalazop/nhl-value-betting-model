@@ -4,18 +4,13 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import math
-import re
-import unicodedata
 from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from difflib import SequenceMatcher
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -106,14 +101,6 @@ TEAM_CODE_TO_NAMES = {
     "WPG": ["winnipeg jets"],
 }
 
-PLAYER_NAME_OVERRIDES = {
-    "sebastian aho fin": "sebastian aho",
-    "sebastian aho (fin)": "sebastian aho",
-}
-
-FUZZY_MIN_SCORE = 0.965
-
-
 def require_file(path: Path) -> None:
     if not path.exists():
         raise FileNotFoundError(f"Fichier introuvable : {path}")
@@ -125,87 +112,6 @@ def ensure_dir(path: Path) -> None:
 
 def write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def strip_accents(text: str) -> str:
-    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
-
-
-def normalize_spaces(text: str) -> str:
-    return re.sub(r"\s+", " ", (text or "").strip())
-
-
-def normalize_text(text: Any) -> str:
-    if text is None or (isinstance(text, float) and math.isnan(text)):
-        return ""
-    value = str(text).strip().lower()
-    value = strip_accents(value)
-    value = value.replace("’", "'").replace("`", "'")
-    value = re.sub(r"\([^)]*\)", " ", value)
-    value = value.replace(".", " ")
-    value = re.sub(r"[^a-z0-9'\- ]+", " ", value)
-    value = value.replace("-", " ")
-    value = PLAYER_NAME_OVERRIDES.get(value, value)
-    value = re.sub(r"\b(jr|sr)\b", " ", value)
-    return normalize_spaces(value)
-
-
-def normalize_player_join_name(text: Any) -> str:
-    """
-    Build a stable join key that aligns abbreviated model names such as
-    "J. Hughes" with full bookmaker names such as "Jack Hughes".
-
-    Rule used:
-    - strip accents/punctuation via normalize_text
-    - keep first initial
-    - keep surname (last token)
-
-    Examples:
-    - "J. Hughes" -> "j hughes"
-    - "Jack Hughes" -> "j hughes"
-    - "Jean-Gabriel Pageau" -> "j pageau"
-    - "J.T. Miller" -> "j miller"
-    """
-    value = normalize_text(text)
-    if not value:
-        return ""
-    parts = [p for p in value.split() if p]
-    if not parts:
-        return ""
-    if len(parts) == 1:
-        return parts[0]
-    return f"{parts[0][0]} {parts[-1]}"
-
-
-def is_numeric_like_name(text: Any) -> bool:
-    value = normalize_text(text)
-    return bool(value) and value.isdigit()
-
-
-def canonical_team_primary(team_code: Any) -> Optional[str]:
-    key = str(team_code or "").strip().upper()
-    aliases = TEAM_CODE_TO_NAMES.get(key)
-    if not aliases:
-        return None
-    return aliases[0]
-
-
-def canonical_team_aliases(team_code: Any) -> List[str]:
-    key = str(team_code or "").strip().upper()
-    aliases = TEAM_CODE_TO_NAMES.get(key, [])
-    return [normalize_text(x) for x in aliases if normalize_text(x)]
-
-
-def matchup_key_from_team_names(team_a: Any, team_b: Any) -> Tuple[str, str]:
-    ordered = sorted([normalize_text(team_a), normalize_text(team_b)])
-    return ordered[0], ordered[1]
-
-
-def matchup_key_from_codes(team_code: Any, opp_code: Any) -> Tuple[str, str]:
-    return matchup_key_from_team_names(
-        canonical_team_primary(team_code),
-        canonical_team_primary(opp_code),
-    )
 
 
 def find_odds_json_path(explicit_path: Optional[str]) -> Path:
@@ -239,16 +145,6 @@ def load_model_predictions(path: Path) -> pd.DataFrame:
     for col in ["proba_point_1p_calibree", "proba_point_1p_raw", "is_home_player"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["player_name_normalized_raw"] = df["nom"].apply(normalize_text)
-    df["player_name_normalized"] = df["nom"].apply(normalize_player_join_name)
-    df["model_name_is_numeric"] = df["nom"].apply(is_numeric_like_name)
-    df["team_aliases"] = df["team_player_match"].apply(canonical_team_aliases)
-    df["team_primary_name"] = df["team_player_match"].apply(canonical_team_primary)
-    df["opponent_primary_name"] = df["adversaire_match"].apply(canonical_team_primary)
-    df["matchup_key"] = df.apply(
-        lambda r: matchup_key_from_codes(r["team_player_match"], r["adversaire_match"]),
-        axis=1,
-    )
     return df
 
 
@@ -275,13 +171,6 @@ def load_odds_json(path: Path) -> Tuple[Dict[str, Any], pd.DataFrame]:
     for col in ["home_team", "away_team", "team", "player_name"]:
         df[col] = df[col].astype(str)
 
-    df["player_name_normalized_raw"] = df["player_name"].apply(normalize_text)
-    df["player_name_normalized_join"] = df["player_name"].apply(normalize_player_join_name)
-    df["team_name_normalized_join"] = df["team"].apply(normalize_text)
-    df["matchup_key"] = df.apply(
-        lambda r: matchup_key_from_team_names(r["home_team"], r["away_team"]),
-        axis=1,
-    )
     return payload, df
 
 
@@ -301,13 +190,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--odds-json", type=str, default=None)
     parser.add_argument("--output-dir", type=str, default=str(DEFAULT_OUTPUTS_DIR))
     parser.add_argument("--run-date", type=str, default=date.today().isoformat())
-    parser.add_argument("--disable-fuzzy", action="store_true")
+    parser.add_argument("--disable-fuzzy", action="store_true", help="Compatibility flag; approximate fuzzy matching is always disabled")
     return parser.parse_args()
 
 
 def main() -> None:
-    global FUZZY_MIN_SCORE
-
     args = parse_args()
     output_dir = Path(args.output_dir)
     history_dir = output_dir / "history"
@@ -336,9 +223,6 @@ def main() -> None:
 
     model_df = load_model_predictions(model_csv_path)
     odds_payload, odds_df = load_odds_json(odds_path)
-
-    if args.disable_fuzzy:
-        FUZZY_MIN_SCORE = 1.1
 
     matched_df, unmatched_model_df, unmatched_bookmaker_df, match_summary = match_rows(model_df, odds_df, args.run_date)
 

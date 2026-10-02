@@ -116,7 +116,6 @@ RETURN_ABSENCE_FEATURES = [
     "matchs_depuis_retour_avant_match",
     "ratio_toi_retour_vs_pre_absence",
     "ratio_pp_retour_vs_pre_absence",
-    "eligible_post_retour",
 ]
 
 TARGET_COL = "a_marque_un_point"
@@ -319,7 +318,6 @@ def default_fill_map() -> Dict[str, float]:
         "matchs_depuis_retour_avant_match": 0,
         "ratio_toi_retour_vs_pre_absence": 0.0,
         "ratio_pp_retour_vs_pre_absence": 0.0,
-        "eligible_post_retour": 0,
     }
 
 
