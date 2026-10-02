@@ -258,19 +258,17 @@ jobs:
             -o _state/state.zip
           unzip -q _state/state.zip -d _state/unpacked
 
-          STATE_ROOT=$(find _state/unpacked -type d -path '*/data/raw' -print -quit | sed 's#/data/raw$##')
-          if [ -z "$STATE_ROOT" ]; then
-            STATE_ROOT=$(find _state/unpacked -type d -path '*/raw' -print -quit | sed 's#/raw$##')
-          fi
-          if [ -z "$STATE_ROOT" ]; then
+          RAW_DIR=$(find _state/unpacked -type d -path '*/raw' -print -quit)
+          FINAL_DIR=$(find _state/unpacked -type d -path '*/final' -print -quit)
+          if [ -z "$RAW_DIR" ] || [ -z "$FINAL_DIR" ]; then
             echo "Impossible de trouver la base historique dans l'artefact."
             find _state/unpacked -maxdepth 5 -type d | sort
             exit 1
           fi
 
           mkdir -p data/raw data/final
-          cp -R "$STATE_ROOT/data/raw/." data/raw/
-          cp -R "$STATE_ROOT/data/final/." data/final/
+          cp -R "$RAW_DIR/." data/raw/
+          cp -R "$FINAL_DIR/." data/final/
           echo "State restored from artifact $STATE_ID"
           ls -lh data/raw data/final
 
