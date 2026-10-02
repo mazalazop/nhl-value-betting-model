@@ -82,3 +82,23 @@ def test_prefix_equivalence():
     cols = ['id_match', 'id_joueur'] + future.FEATURE_WHITELIST
     pd.testing.assert_frame_equal(full[full.date_match <= cutoff][cols].reset_index(drop=True),
                                   prefix[cols].reset_index(drop=True))
+
+def test_current_missing_toi_pp_cannot_change_pregame_season_statistics():
+    raw=games_fixture();before=build(raw)
+    changed=raw.copy();i=10;changed.loc[i,['temps_de_glace','temps_pp']]=np.nan
+    after=build(changed)
+    key=raw.loc[i,['id_match','id_joueur']]
+    mask=(before.id_match==key.id_match)&(before.id_joueur==key.id_joueur)
+    cols=['season_toi_before_match','season_pp_before_match','toi_moy_season_pre','pp_moy_season_pre']
+    pd.testing.assert_frame_equal(before.loc[mask,cols],after.loc[mask,cols])
+
+def test_unknown_pp_stays_unknown_but_observed_zero_is_zero():
+    raw=games_fixture();raw['temps_pp']=np.nan
+    unknown=build(raw)
+    assert unknown.pp_moy_5.isna().all()
+    assert unknown.pp_moy_season_pre.isna().all()
+    assert unknown.loc[unknown.season_games_before_match.gt(0),'season_pp_before_match'].isna().all()
+    raw['temps_pp']=0.
+    known=build(raw);past=known.season_games_before_match.gt(0)
+    assert known.loc[past,'pp_moy_5'].eq(0).all()
+    assert known.loc[past,'pp_moy_season_pre'].eq(0).all()

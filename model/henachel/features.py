@@ -263,26 +263,16 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
     running_point_streak = 0
     running_no_point_streak = 0
 
-    def scan_streaks(values: list[int]) -> tuple[int, int, int]:
-        max_hit = 0
-        max_no = 0
-        count_5plus = 0
-        hit_run = 0
-        no_run = 0
-        for value in values:
-            if value == 1:
-                hit_run += 1
-                no_run = 0
-            else:
-                no_run += 1
-                hit_run = 0
-            if hit_run > max_hit:
-                max_hit = hit_run
-            if no_run > max_no:
-                max_no = no_run
-            if hit_run == 5:
-                count_5plus += 1
-        return max_hit, max_no, count_5plus
+    max_hit = max_no = count_5plus = hit_run = no_run = 0
+    start_idx = 0
+
+    def advance(value):
+        nonlocal max_hit, max_no, count_5plus, hit_run, no_run
+        hit_run = hit_run + 1 if value == 1 else 0
+        no_run = no_run + 1 if value != 1 else 0
+        max_hit = max(max_hit, hit_run)
+        max_no = max(max_no, no_run)
+        count_5plus += int(hit_run == 5)
 
     for i in range(n):
         current_season = seasons[i]
@@ -293,24 +283,20 @@ def compute_streak_window_features(player_df: pd.DataFrame) -> pd.DataFrame:
         current_point_streak_pre[i] = running_point_streak
         current_no_point_streak_pre[i] = running_no_point_streak
 
-        if pd.isna(current_season):
+        # Rebuild only when the season boundary changes the two-season window.
+        # Between boundaries, append one observed game after emitting its pregame values.
+        if prev_season is None or current_season != prev_season:
             start_idx = 0
-        else:
-            min_season = int(current_season) - 1
-            start_idx = 0
-            while start_idx < i:
-                season_val = seasons[start_idx]
-                if pd.isna(season_val) or int(season_val) >= min_season:
-                    break
-                start_idx += 1
-
-        previous_values = hits[start_idx:i]
-        count_matches_last2_pre[i] = len(previous_values)
-        if previous_values:
-            max_hit, max_no, count_5plus = scan_streaks(previous_values)
-            max_point_streak_last2_pre[i] = max_hit
-            max_no_point_streak_last2_pre[i] = max_no
-            count_5plus_point_streaks_last2_pre[i] = count_5plus
+            if not pd.isna(current_season):
+                while start_idx < i and not pd.isna(seasons[start_idx]) and int(seasons[start_idx]) < int(current_season) - 1:
+                    start_idx += 1
+            max_hit = max_no = count_5plus = hit_run = no_run = 0
+            for value in hits[start_idx:i]: advance(value)
+        count_matches_last2_pre[i] = i - start_idx
+        max_point_streak_last2_pre[i] = max_hit
+        max_no_point_streak_last2_pre[i] = max_no
+        count_5plus_point_streaks_last2_pre[i] = count_5plus
+        advance(hits[i])
 
         if hits[i] == 1:
             running_point_streak += 1
@@ -739,8 +725,12 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
     df["season_point_hits_before_match"] = player_season_group["a_marque_un_point"].cumsum() - df["a_marque_un_point"]
     df["season_goal_hits_before_match"] = player_season_group["a_marque_un_but"].cumsum() - df["a_marque_un_but"]
     df["season_points_before_match"] = player_season_group["points"].cumsum() - df["points"]
-    df["season_toi_before_match"] = player_season_group["temps_de_glace"].cumsum() - df["temps_de_glace"]
-    df["season_pp_before_match"] = player_season_group["temps_pp"].cumsum() - df["temps_pp"]
+    for source, total in [("temps_de_glace", "season_toi_before_match"), ("temps_pp", "season_pp_before_match")]:
+        # Shift before accumulation: even the availability of the current result is unknown pregame.
+        # A season total remains unknown if any prior game lacks this statistic.
+        observed = player_season_group[source].transform(lambda x: x.notna().cumsum().shift(1, fill_value=0))
+        prior_sum = player_season_group[source].transform(lambda x: x.fillna(0).cumsum().shift(1, fill_value=0))
+        df[total] = prior_sum.where(observed.eq(df["season_games_before_match"]))
 
     df["point_hit_rate_season_pre"] = safe_ratio(
         df["season_point_hits_before_match"],
@@ -754,14 +744,9 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         df["season_points_before_match"],
         df["season_games_before_match"],
     )
-    df["toi_moy_season_pre"] = safe_ratio(
-        df["season_toi_before_match"],
-        df["season_games_before_match"],
-    )
-    df["pp_moy_season_pre"] = safe_ratio(
-        df["season_pp_before_match"],
-        df["season_games_before_match"],
-    )
+    # Means use only observed prior games; unknown PP is never included as zero.
+    df["toi_moy_season_pre"] = player_season_group["temps_de_glace"].transform(lambda x: x.shift(1).expanding(min_periods=1).mean())
+    df["pp_moy_season_pre"] = player_season_group["temps_pp"].transform(lambda x: x.shift(1).expanding(min_periods=1).mean())
 
     # Features saison précédente complète
     season_summary = (
@@ -875,7 +860,7 @@ def creer_features_temporelles_v2(df: pd.DataFrame) -> pd.DataFrame:
         "count_matches_last_2_seasons_pre",
         "prev_season_games",
     ]
-    fill_zero_cols = [c for c in fill_zero_cols if c not in {"pp_moy_5", "season_pp_before_match"}]
+    fill_zero_cols = [c for c in fill_zero_cols if c not in {"pp_moy_5", "season_pp_before_match", "season_toi_before_match"}]
     for c in fill_zero_cols:
         if c in df.columns:
             df[c] = df[c].fillna(0.0)
