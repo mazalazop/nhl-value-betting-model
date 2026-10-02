@@ -114,7 +114,7 @@ PLAYER_NAME_OVERRIDES = {
     "sebastian aho (fin)": "sebastian aho",
 }
 
-BOOKMAKER_TEAM_CODE_ALIASES = {"FLO": "FLA", "MON": "MTL", "VEG": "VGK"}
+BOOKMAKER_TEAM_CODE_ALIASES = {"FLO": "FLA", "MON": "MTL", "VEG": "VGK", "WIN": "WPG", "WAS": "WSH", "NY": "NYR", "TB": "TBL", "NJ": "NJD", "LA": "LAK", "CAL": "CGY"}
 
 FUZZY_MIN_SCORE = 0.965
 
@@ -201,8 +201,9 @@ def bookmaker_team_code(label: Any) -> Optional[str]:
         return None
     # Unibet POINTS exposes labels such as "BOS Bruins" / "TOR MapleLeafs".
     first = value.split()[0] if value.split() else ""
-    if len(first) == 3 and first.upper() in TEAM_CODE_TO_NAMES:
-        return first.upper()
+    code = BOOKMAKER_TEAM_CODE_ALIASES.get(first.upper(), first.upper())
+    if code in TEAM_CODE_TO_NAMES:
+        return code
     for code, aliases in TEAM_CODE_TO_NAMES.items():
         if value in aliases:
             return code
