@@ -1,0 +1,71 @@
+name: henachel-predictions-no-odds-oct03
+
+on:
+  push:
+    branches: [goal-model-live-2026-09-29]
+    paths: ['.github/workflows/henachel-predictions-no-odds-oct03.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      TZ: Europe/Paris
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: goal-model-live-2026-09-29
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install pandas numpy scikit-learn requests urllib3
+      - name: Restore latest validated historical state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _state
+          STATE_ID=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts?name=henachel-state&per_page=30" | python -c 'import json,sys; a=json.load(sys.stdin)["artifacts"]; print(next((x["id"] for x in a if not x["expired"] and x.get("workflow_run",{}).get("head_branch")=="goal-model-live-2026-09-29"), ""))')
+          test -n "$STATE_ID"
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/$STATE_ID/zip" -o _state/state.zip
+          unzip -q _state/state.zip -d _state/unpacked
+          RAW_DIR=$(find _state/unpacked -type d -path '*/raw' -print -quit)
+          FINAL_DIR=$(find _state/unpacked -type d -path '*/final' -print -quit)
+          test -n "$RAW_DIR" && test -n "$FINAL_DIR"
+          mkdir -p data/raw data/final outputs
+          cp -R "$RAW_DIR/." data/raw/
+          cp -R "$FINAL_DIR/." data/final/
+      - name: Refresh current NHL data
+        run: |
+          python model/00d_refresh_current_season_incremental.py
+          python model/00a_refresh_pp_stats.py
+          python model/00c_refresh_team_standings.py --extra-date 2026-10-03
+          python model/01_build_base_features.py
+      - name: Train and predict POINTS without odds
+        run: |
+          python model/02_train_point_model.py
+          python model/03_calibrate_point_model.py
+          python model/05_predict_upcoming_games.py --target-date 2026-10-03
+      - name: Train and predict BUTEURS without odds
+        run: |
+          python model/04_train_goal_model.py
+          python model/05_predict_upcoming_goals.py --target-date 2026-10-03
+      - name: Upload raw model predictions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-predictions-no-odds-2026-10-03
+          path: |
+            outputs/predictions_upcoming_point_enrichi_calibre_v2.csv
+            outputs/predictions_upcoming_goal_enrichi_calibre_v1.csv
+            outputs/05_predict_upcoming_games_summary.json
+            outputs/05_predict_upcoming_goals_summary.json
+          retention-days: 7
