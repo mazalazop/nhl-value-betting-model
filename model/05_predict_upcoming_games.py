@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 from henachel.features import build_future_features
 from henachel.calibration import select_calibrator
+from henachel.data import final_mask
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -551,6 +552,8 @@ def load_joueurs() -> pd.DataFrame:
 
 def load_history() -> Tuple[pd.DataFrame, str, str]:
     df = pd.read_csv(FEATURES_HISTORY_PATH, low_memory=False)
+    if not final_mask(df).all():
+        raise ValueError("Non-final or unknown games in feature history")
     df = normalize_boolean_like_columns(df)
     df, target_col = find_target_column(df)
     df, date_col = find_date_column(df)

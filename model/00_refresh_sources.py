@@ -297,6 +297,9 @@ def build_match_row(game: Dict[str, Any], season: int) -> Optional[Dict[str, Any
         "buts_domicile": extract_score(game.get("homeTeam")),
         "buts_exterieur": extract_score(game.get("awayTeam")),
         "status": status,
+        "schedule_state": game.get("gameScheduleState"),
+        "game_type": game.get("gameType"),
+        "start_time_utc": game.get("startTimeUTC"),
     }
 
     if row["id_equipe_domicile"] is None or row["id_equipe_exterieur"] is None:
@@ -357,7 +360,7 @@ def collect_matches(
         "id_equipe_exterieur",
         "buts_domicile",
         "buts_exterieur",
-        "status",
+        "status", "schedule_state", "game_type", "start_time_utc",
     ]
     df = df[required_cols].sort_values(["date_match", "id_match"]).reset_index(drop=True)
 

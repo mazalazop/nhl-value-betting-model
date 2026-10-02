@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from henachel.data import validate_player_games, final_mask
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -488,6 +489,8 @@ def charger_source_avec_pp() -> tuple[pd.DataFrame, dict]:
 
     source = pd.read_csv(INPUT_BASE_MATCH_FUSIONNEE, low_memory=False)
     verifier_colonnes(source, ["id_joueur", "id_match"])
+    if not final_mask(source).all():
+        raise ValueError("Non-final games in historical source")
 
     source = source.copy()
     source["id_joueur"] = pd.to_numeric(source["id_joueur"], errors="coerce")
@@ -607,6 +610,8 @@ def build_base_canonique(df: pd.DataFrame) -> pd.DataFrame:
     if nb_team_bad > 0 or nb_opp_bad > 0:
         sample = base.loc[mask_team_bad | mask_opp_bad, ["id_match", "id_joueur", "check_team_ok", "check_opp_ok"]].head(10).to_dict("records")
         raise ValueError(f"Incohérence équipe/adversaire détectée (team_bad={nb_team_bad}, opp_bad={nb_opp_bad}). Exemples: {sample}")
+
+    validate_player_games(base)
 
     base["a_marque_un_point"] = (base["points"] >= 1).astype(int)
     base["a_marque_un_but"] = (base["buts"] >= 1).astype(int)
