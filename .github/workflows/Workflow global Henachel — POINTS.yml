@@ -248,9 +248,14 @@ jobs:
           rm -rf _state
           mkdir -p _state
 
-          # The repository currently has a known-good state artifact from run 181.
-          # Download it directly, then locate its actual extracted data root.
-          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/11152515162/zip"             -o _state/state.zip
+          # Restore the newest non-expired historical state from prior successful runs.
+          STATE_ID=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts?name=henachel-state&per_page=30" \
+            | python -c 'import json,sys; d=json.load(sys.stdin); a=[x for x in d.get("artifacts",[]) if not x.get("expired") and x.get("workflow_run",{}).get("head_branch")=="goal-model-live-2026-09-29"]; print(next((x["id"] for x in a), ""))')
+          test -n "$STATE_ID" || { echo "No usable henachel-state artifact"; exit 1; }
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/$STATE_ID/zip" \
+            -o _state/state.zip
           unzip -q _state/state.zip -d _state/unpacked
 
           STATE_ROOT=$(find _state/unpacked -type d -path '*/data/raw' -print -quit | sed 's#/data/raw$##')
@@ -266,7 +271,7 @@ jobs:
           mkdir -p data/raw data/final
           cp -R "$STATE_ROOT/data/raw/." data/raw/
           cp -R "$STATE_ROOT/data/final/." data/final/
-          echo "State restored from validated artifact 11152515162"
+          echo "State restored from artifact $STATE_ID"
           ls -lh data/raw data/final
 
       - name: Refresh current season data
