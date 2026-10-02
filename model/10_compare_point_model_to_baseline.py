@@ -106,36 +106,38 @@ def load_current_metrics(path: Path) -> pd.DataFrame:
 
 def judge(metric: str, current: float, baseline: float, tol: float = 1e-12) -> str:
     if pd.isna(current) or pd.isna(baseline):
-        return "na"
+        return "unavailable"
     delta = current - baseline
     if metric in LOWER_IS_BETTER:
         if delta < -tol:
             return "better"
         if delta > tol:
             return "worse"
-        return "equal"
+        return "unchanged"
     if metric in HIGHER_IS_BETTER:
         if delta > tol:
             return "better"
         if delta < -tol:
             return "worse"
-        return "equal"
-    return "na"
+        return "unchanged"
+    return "unavailable"
 
 
 def summarize_split(rows: pd.DataFrame, split_name: str) -> Dict[str, str]:
     split_rows = rows[rows["split"] == split_name].copy()
     if split_rows.empty:
-        return {"split": split_name, "status": "missing"}
+        return {"split": split_name, "status": "unavailable"}
 
     judgments = split_rows["judgment"].tolist()
     better = judgments.count("better")
     worse = judgments.count("worse")
 
-    if worse == 0 and better > 0:
-        status = "improved"
+    if any(j not in {"better", "worse", "unchanged"} for j in judgments):
+        status = "insufficient_data"
+    elif worse == 0 and better > 0:
+        status = "better"
     elif better == 0 and worse > 0:
-        status = "degraded"
+        status = "worse"
     elif better == 0 and worse == 0:
         status = "unchanged"
     else:
@@ -146,7 +148,7 @@ def summarize_split(rows: pd.DataFrame, split_name: str) -> Dict[str, str]:
         "status": status,
         "better_metrics": better,
         "worse_metrics": worse,
-        "equal_metrics": judgments.count("equal"),
+        "equal_metrics": judgments.count("unchanged"),
     }
 
 
@@ -214,11 +216,8 @@ def main() -> None:
         "split_summaries": split_summaries,
         "overall_focus_split": "test_calibrated",
         "overall_focus_status": overall_status,
-        "recommendation": (
-            "keep_new_version" if overall_status == "improved" else
-            "review_new_version" if overall_status == "mixed" else
-            "rollback_or_debug"
-        ),
+        "recommendation": "human_review_only_never_select_on_final_test",
+        "comparability": "unverified_documentary_reference_dataset_and_artifacts_unavailable",
     }
 
     JSON_OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -374,34 +374,14 @@ def safe_ratio(num: float, den: float) -> float:
     return float(num / den)
 
 
-def find_target_column(df: pd.DataFrame) -> Tuple[pd.DataFrame, str]:
-    for col in TARGET_CANDIDATES:
-        if col in df.columns:
-            out = df.copy()
-            out[col] = pd.to_numeric(out[col], errors="coerce")
-            out = out[out[col].notna()].copy()
-            out[col] = out[col].astype(int)
-            return out, col
-
-    if "points" in df.columns:
-        out = df.copy()
-        out["points"] = pd.to_numeric(out["points"], errors="coerce")
-        out = out[out["points"].notna()].copy()
-        out["target_point_1p"] = (out["points"] >= 1).astype(int)
-        return out, "target_point_1p"
-
-    raise ValueError("Impossible de trouver une cible POINT exploitable dans la base historique.")
+def find_target_column(df):
+    from henachel.point import find_target
+    return find_target(df, TARGET_CANDIDATES)
 
 
-def find_date_column(df: pd.DataFrame) -> Tuple[pd.DataFrame, str]:
-    for col in DATE_CANDIDATES:
-        if col in df.columns:
-            out = df.copy()
-            out[col] = pd.to_datetime(out[col], errors="coerce")
-            out = out[out[col].notna()].copy()
-            out = out.sort_values([col, "id_match", "id_joueur"], na_position="last").reset_index(drop=True)
-            return out, col
-    raise ValueError("Impossible de trouver une colonne date exploitable.")
+def find_date_column(df):
+    from henachel.point import find_date
+    return find_date(df, DATE_CANDIDATES)
 
 
 def compute_sample_weights(y: pd.Series) -> np.ndarray:
@@ -698,16 +678,8 @@ def fit_point_model_and_calibrator(
     if y_fit.nunique() < 2:
         raise ValueError("Le jeu fit ne contient qu'une seule classe.")
 
-    model = HistGradientBoostingClassifier(
-        loss="log_loss",
-        learning_rate=0.05,
-        max_iter=300,
-        max_depth=6,
-        min_samples_leaf=50,
-        l2_regularization=1.0,
-        early_stopping=False,
-        random_state=RANDOM_STATE,
-    )
+    from henachel.point import point_model
+    model = point_model()
     model.fit(X_fit, y_fit, sample_weight=compute_sample_weights(y_fit))
 
     calib_raw_proba = model.predict_proba(X_calib)[:, 1]
@@ -917,6 +889,11 @@ def main() -> None:
             "Le contexte standings / playoffs est injecté si team_standings_daily.csv est disponible",
         ],
     }
+    from henachel.manifest import manifest
+    from henachel.point import POINT_PARAMS
+    summary["manifest"] = manifest([FEATURES_HISTORY_PATH, MATCHS_PATH, TEAM_STANDINGS_PATH, RAW_DIR / "roster_current.csv"], POINT_PARAMS)
+    import joblib
+    joblib.dump({"model": model, "calibrator": calibrator, "features": feature_cols_kept, "manifest": summary["manifest"], "fit": fit_summary}, OUTPUTS_DIR / "05_point_bundle.joblib")
     write_json(SUMMARY_PATH, summary)
 
     print("")

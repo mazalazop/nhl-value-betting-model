@@ -47,6 +47,9 @@ def main() -> None:
             "return_stabilized_rows": int(pd.to_numeric(base_features_context.get("return_stabilized_flag"), errors="coerce").fillna(0).sum()),
         },
     }
+    from henachel.manifest import manifest
+    from henachel.point import POINT_PARAMS
+    summary["manifest"] = manifest([INPUT_BASE_MATCH_FUSIONNEE, INPUT_PP_STATS_GAME, INPUT_TEAM_STANDINGS], POINT_PARAMS)
     write_summary(summary)
 
     print("01_build_base_features.py")

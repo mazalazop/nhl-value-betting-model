@@ -266,42 +266,14 @@ def write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def find_target_column(df: pd.DataFrame) -> Tuple[pd.DataFrame, str]:
-    for col in TARGET_CANDIDATES:
-        if col in df.columns:
-            out = df.copy()
-            out[col] = pd.to_numeric(out[col], errors="coerce")
-            out = out[out[col].notna()].copy()
-            out[col] = out[col].astype(int)
-            return out, col
-
-    if "points" in df.columns:
-        out = df.copy()
-        out["points"] = pd.to_numeric(out["points"], errors="coerce")
-        out = out[out["points"].notna()].copy()
-        out["target_point_1p"] = (out["points"] >= 1).astype(int)
-        return out, "target_point_1p"
-
-    raise ValueError(
-        "Impossible de trouver la cible POINT. "
-        "Aucune colonne target reconnue, et la colonne 'points' est absente."
-    )
+def find_target_column(df):
+    from henachel.point import find_target
+    return find_target(df, TARGET_CANDIDATES)
 
 
-def find_date_column(df: pd.DataFrame) -> Tuple[pd.DataFrame, str]:
-    for col in DATE_CANDIDATES:
-        if col in df.columns:
-            out = df.copy()
-            out[col] = pd.to_datetime(out[col], errors="coerce")
-            out = out[out[col].notna()].copy()
-            out = out.sort_values(col).reset_index(drop=True)
-            return out, col
-
-    raise ValueError(
-        "Impossible de trouver une colonne date exploitable. "
-        "Colonnes attendues possibles : "
-        + ", ".join(DATE_CANDIDATES)
-    )
+def find_date_column(df):
+    from henachel.point import find_date
+    return find_date(df, DATE_CANDIDATES)
 
 
 def normalize_boolean_like_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -573,16 +545,8 @@ def train_one_variant(
 
     sample_weight = compute_sample_weights(y_train)
 
-    model = HistGradientBoostingClassifier(
-        loss="log_loss",
-        learning_rate=0.05,
-        max_iter=300,
-        max_depth=6,
-        min_samples_leaf=50,
-        l2_regularization=1.0,
-        early_stopping=False,
-        random_state=RANDOM_STATE,
-    )
+    from henachel.point import point_model
+    model = point_model()
 
     model.fit(X_train, y_train, sample_weight=sample_weight)
 
@@ -611,6 +575,7 @@ def train_one_variant(
     )
 
     return {
+        "model": model,
         "feature_cols_kept": kept_cols,
         "feature_cols_dropped_train_only": dropped_cols,
         "metrics": metrics_all,
@@ -730,6 +695,10 @@ def main() -> None:
     enriched_result["pred_valid"].to_csv(pred_valid_enriched_path, index=False)
     enriched_result["pred_test"].to_csv(pred_test_enriched_path, index=False)
 
+    import joblib
+    for variant, result in [("baseline", baseline_result), ("enriched", enriched_result)]:
+        joblib.dump({"model": result["model"], "features": result["feature_cols_kept"], "split": split_meta}, OUTPUTS_DIR / f"02_point_{variant}.joblib")
+
     summary = {
         "status": "ok",
         "input_file": str(FEATURES_PATH),
@@ -770,6 +739,9 @@ def main() -> None:
         ],
     }
 
+    from henachel.manifest import manifest
+    from henachel.point import POINT_PARAMS
+    summary["manifest"] = manifest([FEATURES_PATH], POINT_PARAMS)
     write_json(summary_path, summary)
 
     print("")

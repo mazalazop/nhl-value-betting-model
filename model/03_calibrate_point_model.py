@@ -164,7 +164,7 @@ def split_calibration_temporel(
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
     temp = df.copy()
     temp[date_col] = pd.to_datetime(temp[date_col], errors="coerce")
-    temp = temp.dropna(subset=[date_col]).copy()
+    if temp[date_col].isna().any(): raise ValueError("Missing calibration date")
 
     if temp.empty:
         raise ValueError("Aucune date exploitable pour la calibration.")
@@ -213,18 +213,18 @@ def standardize_prediction_frame(df: pd.DataFrame) -> Tuple[pd.DataFrame, str, s
     date_col = first_existing_column(temp, DATE_CANDIDATES, "date")
 
     temp[date_col] = pd.to_datetime(temp[date_col], errors="coerce")
-    temp = temp.dropna(subset=[date_col]).copy()
+    if temp[date_col].isna().any(): raise ValueError("Missing calibration date")
 
     temp[target_col] = pd.to_numeric(temp[target_col], errors="coerce")
-    temp = temp.dropna(subset=[target_col]).copy()
-    temp[target_col] = temp[target_col].astype(int)
+    from henachel.point import binary_labels
+    temp[target_col] = binary_labels(temp[target_col]).to_numpy()
 
     target_values = set(temp[target_col].unique().tolist())
     if not target_values.issubset({0, 1}):
         raise ValueError(f"La colonne cible '{target_col}' n'est pas binaire 0/1 : {sorted(target_values)}")
 
     temp[proba_col] = pd.to_numeric(temp[proba_col], errors="coerce")
-    temp = temp.dropna(subset=[proba_col]).copy()
+    if temp[proba_col].isna().any(): raise ValueError("Missing calibration probability")
     temp[proba_col] = clip_proba(temp[proba_col].to_numpy())
 
     return temp.reset_index(drop=True), target_col, proba_col, date_col
@@ -393,6 +393,11 @@ def main() -> None:
             "Compatibilité maintenue avec les noms de colonnes du notebook historique et du script GitHub actuel",
         ],
     }
+    from henachel.manifest import manifest
+    from henachel.point import POINT_PARAMS
+    summary["manifest"] = manifest([VALIDATION_INPUT_PATH, TEST_INPUT_PATH], POINT_PARAMS)
+    import joblib
+    joblib.dump({"calibrator": calibrator_final, "diagnostics": calibration_info}, OUTPUTS_DIR / "03_point_calibrator.joblib")
     write_json(SUMMARY_OUTPUT_PATH, summary)
 
     print("")
