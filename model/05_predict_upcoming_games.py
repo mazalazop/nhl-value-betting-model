@@ -40,6 +40,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from henachel.features import build_future_features
+from henachel.calibration import select_calibrator
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -862,13 +863,7 @@ def fit_point_model_and_calibrator(
     model.fit(X_fit, y_fit, sample_weight=compute_sample_weights(y_fit))
 
     calib_raw_proba = model.predict_proba(X_calib)[:, 1]
-    calibrator = LogisticRegression(
-        solver="lbfgs",
-        max_iter=1000,
-        C=1e6,
-        random_state=RANDOM_STATE,
-    )
-    calibrator.fit(calib_raw_proba.reshape(-1, 1), y_calib)
+    calibrator, calibration_info = select_calibrator(calib_raw_proba, y_calib, calib_df[date_col])
 
     summary = {
         "fit_rows": int(len(fit_df)),
@@ -878,7 +873,8 @@ def fit_point_model_and_calibrator(
         "fit_calibration_split": split_meta,
         "feature_cols_kept": kept_cols,
         "feature_cols_dropped_train_only": dropped_cols,
-        "calibration_method": "sigmoid",
+        "calibration_method": calibrator.method,
+        "calibration_diagnostics": calibration_info,
     }
     return model, calibrator, summary
 
@@ -887,12 +883,13 @@ def build_prediction_outputs(
     upcoming_df: pd.DataFrame,
     raw_proba: np.ndarray,
     cal_proba: np.ndarray,
+    calibration_method: str = "unknown",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     base = upcoming_df.copy()
     base["proba_point_1p_raw"] = raw_proba
     base["proba_point_1p_calibree"] = cal_proba
     base["model_variant"] = "enrichi"
-    base["calibration_method"] = "sigmoid"
+    base["calibration_method"] = calibration_method
 
     base["rank_proba_sur_date"] = (
         base.groupby("date_match")["proba_point_1p_calibree"]
@@ -1013,12 +1010,13 @@ def main() -> None:
     X_future = X_future[feature_cols_kept].copy()
 
     raw_proba = model.predict_proba(X_future)[:, 1]
-    cal_proba = calibrator.predict_proba(raw_proba.reshape(-1, 1))[:, 1]
+    cal_proba = calibrator.predict(raw_proba)
 
     pred_raw, pred_cal = build_prediction_outputs(
         upcoming_df=upcoming_universe,
         raw_proba=raw_proba,
         cal_proba=cal_proba,
+        calibration_method=calibrator.method,
     )
 
     pred_raw.to_csv(PRED_UPCOMING_RAW_PATH, index=False)
