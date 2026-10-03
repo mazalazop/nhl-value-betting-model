@@ -1297,9 +1297,10 @@ def enrichir_contexte_v2(
     df["games_played_team_pre"] = pd.to_numeric(df.get("games_played_pre"), errors="coerce")
     df["games_played_team_pre"] = df["games_played_team_pre"].fillna(df["team_games_played_pre_approx"])
 
-    df["games_remaining_team_pre"] = pd.to_numeric(df.get("games_remaining_pre"), errors="coerce")
-    df["games_remaining_team_pre"] = df["games_remaining_team_pre"].fillna(82 - df["games_played_team_pre"])
-    df["games_remaining_team_pre"] = df["games_remaining_team_pre"].clip(lower=0, upper=82)
+    from henachel.data import regular_season_games
+    season_limit = df["season_source"].map(regular_season_games)
+    # Recompute from verified game counts, including legacy snapshots that stored 82.
+    df["games_remaining_team_pre"] = (season_limit - df["games_played_team_pre"]).clip(lower=0, upper=season_limit)
 
     df["team_points_pre"] = pd.to_numeric(df.get("points_pre"), errors="coerce")
     df["conference_rank_pre"] = pd.to_numeric(df.get("conference_sequence_pre"), errors="coerce")

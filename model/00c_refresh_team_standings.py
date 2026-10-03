@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
+from henachel.data import regular_season_games
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -230,7 +231,7 @@ def flatten_team_record(record: dict, requested_date: str) -> dict:
         "division_abbrev": record.get("divisionAbbrev"),
         "division_name": record.get("divisionName"),
         "games_played": games_played,
-        "games_remaining": 82 - games_played if pd.notna(games_played) else pd.NA,
+        "games_remaining": regular_season_games(record.get("seasonId")) - games_played if pd.notna(games_played) else pd.NA,
         "points": points,
         "point_pctg": pd.to_numeric(record.get("pointPctg"), errors="coerce"),
         "wins": pd.to_numeric(record.get("wins"), errors="coerce"),

@@ -54,3 +54,15 @@ def validate_player_games(frame, require_outcomes=True):
             if x.isna().any() or not np.isfinite(x).all() or (x<0).any() or (x%1!=0).any(): raise ValueError(f'Invalid outcome: {col}')
         if not (frame.points == frame.buts+frame.passes).all(): raise ValueError('points != goals + assists')
     return frame
+
+
+def regular_season_games(season):
+    """Season length verified against NHL schedules; do not assume future schedules.
+
+    Live 2026-10-03 collection: all 32 clubs have 84 regular games in 20262027,
+    versus 82 in 20242025 and 20252026. Earlier project seasons retain 82.
+    """
+    key=int(float(season))
+    if key>20262027:
+        raise ValueError(f'Regular season length not verified for {key}')
+    return 84 if key==20262027 else 82
