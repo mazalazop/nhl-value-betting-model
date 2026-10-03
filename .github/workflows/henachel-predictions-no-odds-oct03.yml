@@ -1,4 +1,5 @@
 name: henachel-predictions-no-odds-oct03
+# Refresh requested Oct 3: 13 scheduled games, latest available data
 
 on:
   push:
