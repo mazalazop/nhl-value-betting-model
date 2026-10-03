@@ -20,7 +20,7 @@ def main() -> None:
     ap.add_argument("--input-csv", default=str(OUT / "06b_matched_goal_edges.csv"))
     ap.add_argument("--max-picks", type=int, default=5)
     ap.add_argument("--one-pick-per-player", action=argparse.BooleanOptionalAction, default=True)
-    ap.add_argument("--min-odds", type=float, default=1.01)
+    ap.add_argument("--min-odds", type=float, default=1.40)
     args = ap.parse_args()
 
     path = Path(args.input_csv)
