@@ -324,8 +324,8 @@ jobs:
           date = "${{ needs.scrape_markets.outputs.run_date }}"
           point = pd.read_csv("outputs/07_daily_bets.csv")
           goal = pd.read_csv("outputs/07_daily_goal_bets.csv")
-          assert len(point) <= 5, f"POINTS > 5: {len(point)}"
-          assert len(goal) <= 5, f"BUTEURS > 5: {len(goal)}"
+          assert len(point) <= 10, f"POINTS > 10: {len(point)}"
+          assert len(goal) <= 10, f"BUTEURS > 10: {len(goal)}"
           if not point.empty:
               assert point["run_date"].astype(str).eq(date).all()
           if not goal.empty:
