@@ -32,9 +32,9 @@ Les artefacts historiques correspondant à Brier ≈ 0.205518, log-loss ≈ 0.59
 
 ## Publication et exploitation
 
-Aucun test local ne publie dans Google Sheets. Le workflow sécurise ses inputs, sérialise les runs, restaure un historique propre à la branche et nettoie les credentials temporaires. Une absence d'historique restaurable bloque explicitement : ne jamais utiliser `bootstrap_history` pour remplacer un historique existant. Les artifacts GitHub (90 jours) nécessitent une sauvegarde durable indépendante.
+Aucun test local ne publie dans Google Sheets. Le workflow sécurise ses inputs, sérialise les runs, restaure un historique propre à la branche et authentifie Google uniquement en mémoire. Une absence d'historique restaurable bloque explicitement : ne jamais utiliser `bootstrap_history` pour remplacer un historique existant. Les artifacts GitHub (90 jours) nécessitent une sauvegarde durable indépendante.
 
-Le scraper reste dans un autre repository et nécessite son runner macOS dédié. Son contrat doit fournir les timestamps décrits dans le rapport ; les lignes incomplètes sont refusées. Un essai distant et un contrôle des données réelles restent nécessaires avant toute mise en production. Rien n'a été poussé ni déclenché à distance dans cette remédiation.
+Le workflow utilise `scripts/collect_unibet_structured.py` : JSON public Unibet, concordance unique calendrier NHL (équipes + heure exacte), roster récent et timestamp réel de collecte. Le matching strict reste inchangé. Voir `docs/UNIBET_STRUCTURED_CONTRACT.md`. Sur `astra/audit-remediation`, les pushes déclenchent une validation isolée ; toute publication métier Sheets est interdite, seul le contrôle en lecture seule est exécuté.
 
 ## Règle projet — ajout de features
 

@@ -40,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-csv", type=str, default=str(DEFAULT_INPUT_CSV))
     parser.add_argument("--sheet-id", type=str, required=True)
     parser.add_argument("--credentials-json", type=str, default=str(DEFAULT_CREDS_JSON))
+    parser.add_argument("--credentials-env", action="store_true", help="Authenticate in memory from GOOGLE_CREDENTIALS")
     parser.add_argument("--daily-worksheet", type=str, default=DEFAULT_DAILY_WS)
     parser.add_argument("--history-worksheet", type=str, default=DEFAULT_HISTORY_WS)
     return parser.parse_args()
@@ -508,7 +509,11 @@ def main() -> None:
     daily_display_df = build_daily_display_df(daily_bets_df)
     merged_history_df = build_history_display_df(canonical)
 
-    gc = authorize_gspread(credentials_json)
+    if args.credentials_env:
+        from henachel.sheets_auth import authorize_environment
+        gc = authorize_environment()
+    else:
+        gc = authorize_gspread(credentials_json)
     sh = gc.open_by_key(args.sheet_id)
 
     daily_ws = get_or_create_worksheet(sh, args.daily_worksheet)
