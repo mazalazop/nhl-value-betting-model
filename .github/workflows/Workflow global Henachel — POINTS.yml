@@ -303,13 +303,13 @@ jobs:
         run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_markets.outputs.run_date }}"
 
       - name: Build POINTS picks
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 5 --min-odds 1.01
+        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 10 --min-odds 1.40
 
       - name: Match BUTEURS odds
         run: python model/06b_match_model_to_unibet_goal_odds.py --run-date "${{ needs.scrape_markets.outputs.run_date }}"
 
       - name: Build BUTEURS picks
-        run: python model/07_build_daily_goal_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 5 --min-odds 1.01
+        run: python model/07_build_daily_goal_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 10 --min-odds 1.40
 
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_markets.outputs.publish_to_sheet == 'true' }}
