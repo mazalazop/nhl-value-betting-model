@@ -105,7 +105,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-odds",
         type=float,
-        default=1.01,
+        default=1.40,
         help="Cote minimale mécanique : > 1.00, sans bloquer sur l'edge.",
     )
     parser.add_argument(
@@ -247,7 +247,7 @@ def build_daily_bets(
     # Eligibility: odds >= min_odds OR model_probability >= override threshold
     odds_ok = df["odds_decimal"] >= min_odds
     proba_override_ok = df["model_probability"] >= override_min_model_proba
-    keep_mask = odds_ok | proba_override_ok
+    keep_mask = odds_ok
     stats["rows_removed_low_odds"] = int((~keep_mask).sum())
     df = df[keep_mask].copy()
 
