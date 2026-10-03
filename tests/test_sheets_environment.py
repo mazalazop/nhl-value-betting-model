@@ -26,13 +26,24 @@ def test_sheet_probe_is_readonly():
     path=Path(__file__).resolve().parents[1]/'scripts/validate_sheets_readonly.py'
     spec=importlib.util.spec_from_file_location('readonly_probe',path);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     client=Mock();sheet=client.open_by_key.return_value;sheet.title='Henachel'
-    ws=Mock();ws.title='history_raw';ws.row_values.return_value=['bet_id','id_match','id_joueur','result','bet_status']
+    ws=Mock();ws.title='history_raw';ws.row_values.return_value=module.EXPECTED['history_raw']
     sheet.worksheets.return_value=[ws]
     report=module.inspect(client,'synthetic-id')
     assert report['status']=='read_access_ok'
     assert report['worksheets']['history_raw']['missing_canonical_columns']==[]
+    assert report['schema_status']=='missing_or_incompatible'  # daily tab absent
     assert [c[0] for c in sheet.method_calls]==['worksheets']
     ws.row_values.assert_called_once_with(1)
+
+
+def test_probe_columns_match_actual_published_views():
+    from conftest import load_script
+    from test_history import candidate
+    path=Path(__file__).resolve().parents[1]/'scripts/validate_sheets_readonly.py'
+    spec=importlib.util.spec_from_file_location('readonly_schema',path);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    publisher=load_script('08_publish_to_google_sheet')
+    assert set(module.EXPECTED['daily_picks'])==set(publisher.build_daily_display_df(candidate()).columns)
+    assert set(module.EXPECTED['history_raw'])==set(publisher.build_history_display_df(candidate()).columns)
 
 
 def test_operational_workflow_never_writes_production_or_credentials():
