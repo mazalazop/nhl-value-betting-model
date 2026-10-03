@@ -8,6 +8,21 @@ picks=load_script('07_build_daily_bets')
 def candidate():
     m,o=rows();return run(m,o)[0]
 
+def test_rerun_empty_addition_preserves_nullable_ledger(tmp_path):
+    from henachel.history import append_ledger,read_ledger
+    from henachel.matching import COLUMNS
+    path=tmp_path/'history.csv'
+    row=dict.fromkeys(COLUMNS)
+    row.update(bet_id='TEST_ONLY:1:42',id_match=1,id_joueur=42,bookmaker='TEST_ONLY',market='player_points',stat='points',threshold=1,outcome_key='1_plus',bet_status='pending',result='pending',run_date='2026-10-03')
+    data=pd.DataFrame([row])
+    append_ledger(path,data)
+    settled=read_ledger(path);settled['actual_stat_value']=1
+    settled.to_csv(path,index=False)
+    before=read_ledger(path)
+    result=append_ledger(path,data)
+    assert result['rows_added']==0
+    pd.testing.assert_frame_equal(before,read_ledger(path))
+
 def test_rerun_preserves_settled_history(tmp_path):
     path=tmp_path/'history.csv';data=candidate()
     picks.append_history(path,data)

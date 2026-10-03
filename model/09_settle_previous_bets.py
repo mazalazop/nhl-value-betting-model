@@ -19,7 +19,7 @@ def main():
     args=parser.parse_args();args.output_dir.mkdir(parents=True,exist_ok=True)
     with ledger_lock(args.history_csv):
         history=read_ledger(args.history_csv)
-        stats=pd.read_csv(args.stats_csv);matches=pd.read_csv(args.matches_csv)
+        stats=pd.read_csv(args.stats_csv,low_memory=False);matches=pd.read_csv(args.matches_csv,low_memory=False)
         updated,changes,unresolved=settle(history,stats,matches,pd.Timestamp.now(tz='UTC').isoformat())
         # Persist a stable transition ID before the ledger; retries reuse that revision.
         audit=args.history_csv.with_name('settlement_revisions.csv')

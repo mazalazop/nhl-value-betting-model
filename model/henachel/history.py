@@ -56,7 +56,9 @@ def append_ledger(path,daily):
             if not a.eq(b).all(): raise ValueError(f'Conflicting bet identity: {col}')
         # Freeze original odds, probabilities and settlement; reruns only append new identities.
         additional=daily[~daily.bet_id.isin(old.bet_id)]
-        combined=pd.concat([old,additional],ignore_index=True) if len(old) else additional.copy()
+        combined = old.copy() if additional.empty else (
+            pd.concat([old,additional],ignore_index=True) if len(old) else additional.copy()
+        )
         for col in COLUMNS:
             if col not in combined: combined[col]=pd.Series(index=combined.index,dtype=object)
         validate_ledger(combined);atomic_csv(combined,path)
