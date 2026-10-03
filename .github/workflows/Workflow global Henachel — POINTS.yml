@@ -311,6 +311,9 @@ jobs:
       - name: Build BUTEURS picks
         run: python model/07_build_daily_goal_bets.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 10 --min-odds 1.40
 
+      - name: Audit pregame context (non-blocking missing sources)
+        run: python model/11_pregame_context_overlay.py --run-date "${{ needs.scrape_markets.outputs.run_date }}" --max-picks 10 --min-odds 1.40
+
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_markets.outputs.publish_to_sheet == 'true' }}
         run: |
