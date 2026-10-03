@@ -27,7 +27,9 @@ def inspect(client,sheet_id):
             continue
         headers=worksheets[title].row_values(1)
         required=EXPECTED[title]
-        report['worksheets'][title]={'status':'inspected','column_count':len(headers),'missing_canonical_columns':[c for c in required if c not in headers]}
+        report['worksheets'][title]={'status':'inspected','column_count':len(headers),
+            'headers':headers,'legacy_extra_columns':[c for c in headers if c not in required],
+            'missing_canonical_columns':[c for c in required if c not in headers]}
     report['schema_status']='ok' if all(v['status']=='inspected' and not v['missing_canonical_columns'] for v in report['worksheets'].values()) else 'missing_or_incompatible'
     return report
 
