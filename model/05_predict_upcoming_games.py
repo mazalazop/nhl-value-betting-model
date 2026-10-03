@@ -838,8 +838,8 @@ def main() -> None:
             "predictions_upcoming_point_enrichi_calibre_v2.csv": str(PRED_UPCOMING_CAL_PATH),
         },
         "notes": [
-            "Universe future construit depuis la dernière apparition historique connue avant la date cible",
-            "joueurs.csv utilisé comme lookup complémentaire, pas comme roster large principal",
+            "Univers futur issu du roster NHL récent ; fallback historique explicite si indisponible",
+            "joueurs.csv utilisé comme lookup complémentaire ; aucune réaffectation sans preuve roster",
             "Aucune colonne de résultat futur utilisée",
             "Réentraînement local nécessaire car le repo ne sauvegarde pas encore d'artefact modèle POINT",
             "Calibration choisie sur une séparation temporelle interne puis ajustée avant la date cible",
