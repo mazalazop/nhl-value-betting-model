@@ -1,4 +1,5 @@
 name: henachel-points-global
+# Oct 4 goal refresh
 
 on:
   push:
