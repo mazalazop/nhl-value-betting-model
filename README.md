@@ -38,4 +38,8 @@ Le workflow utilise `scripts/collect_unibet_structured.py` : JSON public Unibet,
 
 ## Règle projet — ajout de features
 
-Avant tout nouvel ajout métier : présenter les critères existants et les exclusions, demander l'accord de l'utilisateur, puis traiter un seul bloc à la fois avec validation temporelle. Aucune information postérieure au début du match ne peut devenir une feature pré-match. Le modèle BUT (`04`) reste hors de cette remédiation.
+Avant tout nouvel ajout métier : présenter les critères existants et les exclusions, demander l'accord de l'utilisateur, puis traiter un seul bloc à la fois avec validation temporelle. Aucune information postérieure au début du match ne peut devenir une feature pré-match.
+
+POINT utilise désormais la profondeur 4, validée en walk-forward et sur holdout ([étude POINT](docs/POINT_SCIENCE_20261003.md)). Le workflow #220 valide ce changement sur `astra/audit-remediation`.
+
+`BUT = research only / not production approved`. `04` est un véritable entraînement BUT de recherche, distinct de POINT. Son premier holdout ne démontre pas de supériorité sur une fréquence joueur lissée : aucune intégration bookmaker/publication BUT n'est activée ([étude BUT et reproduction](docs/GOAL_SCIENCE_20261004.md)).

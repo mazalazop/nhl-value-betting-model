@@ -35,7 +35,7 @@ python model/11_evaluate_point_walk_forward.py
 - `11` évalue précisément cette procédure de fit/calibration en fenêtres croissantes. Les derniers 15 % des dates restent réservés et inutilisés. Sorties : Brier, log-loss, AUC, AP, précision/lift top 10 %, bins de calibration, top 5/10 quotidiens et baseline constante calculée sur le passé.
 - `10` distingue les métriques absentes, inchangées, meilleures et moins bonnes. Il ne décide jamais d'un déploiement sur le test final. Sans identité du dataset historique de référence, la comparabilité reste non vérifiée.
 - `02b` est une ablation exploratoire distincte avec sa propre population et ses paramètres historiques ; elle ne doit pas être comparée au benchmark principal comme un changement isolé. Son early stopping aléatoire et les labels manquants convertis en zéro ont été supprimés.
-- `04` (BUT) est inchangé et hors chaîne POINT.
+- `04` (BUT) est hors chaîne POINT. Il entraîne un modèle de recherche avec `--features`, `--output` et `--phase prepare|baseline|families|pk|models|final`. La phase PK exige `--pk`. Respecter cet ordre; aucun réglage après ouverture du final. Le premier candidat n'a pas franchi le critère de promotion opérationnelle : voir [l'étude BUT](GOAL_SCIENCE_20261004.md).
 
 ## Cache et limites
 
