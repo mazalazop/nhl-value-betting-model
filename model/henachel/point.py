@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-POINT_PARAMS=dict(loss='log_loss',learning_rate=.05,max_iter=300,max_depth=6,
+POINT_PARAMS=dict(loss='log_loss',learning_rate=.05,max_iter=300,max_depth=4,
                   min_samples_leaf=50,l2_regularization=1.,early_stopping=False,random_state=42)
 
 
