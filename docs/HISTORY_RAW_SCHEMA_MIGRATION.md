@@ -36,8 +36,9 @@ La simulation compare chaque cellule historique, pas seulement les lignes régl�
 
 ## Garde-fous et relance
 
-L'écriture exige l'empreinte exacte du snapshot simulé et revu :
-`20fe57c86389392af71c0d01cdcd459c2d699e6103648794ee0eea14317bae64`.
+L'écriture exige l'empreinte exacte du snapshot simulé et revu. L'empreinte initiale
+`20fe57c86389392af71c0d01cdcd459c2d699e6103648794ee0eea14317bae64`
+concerne uniquement les 46 lignes de la première opération, pas les états futurs.
 Une seconde lecture immédiate détecte un changement concurrent avant le batch.
 Après écriture, toutes les cellules sont relues et comparées au résultat prévu.
 Un second passage vérifie l'idempotence : zéro requête d'écriture supplémentaire.
@@ -49,8 +50,12 @@ les runs GitHub sont sérialisés et une double lecture réduit le risque d'édi
 manuelle concurrente ; la vérification après écriture reste obligatoire.
 Un échec de vérification bloque, sans tentative de réécriture aveugle.
 
-Le workflow de remédiation conserve les rapports de l'application, du rerun et du
-contrôle readonly dans l'artifact `henachel-sheets-readonly-<run_id>`. Aucun contenu
+Le workflow ordinaire exécute seulement le contrôle readonly. Une migration revue
+peut être demandée manuellement avec `migrate_history_schema=true` et
+`migration_expected_snapshot`; elle est désactivée par défaut. Son rapport est
+conservé dans `henachel-history-migration-<run_id>`, le contrôle readonly dans
+`henachel-sheets-readonly-<run_id>`. Voir le diagnostic à 56 lignes du run #224
+et la procédure dans [RUN_ORDER](RUN_ORDER.md#contrôle-sheets-et-migration-exceptionnelle). Aucun contenu
 de credentials ni aucune ligne de paris n'est imprimé ou exporté par ces rapports.
 La publication métier de 08 reste désactivée sur cette branche.
 

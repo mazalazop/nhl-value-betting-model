@@ -20,6 +20,14 @@ La date passée à `05 --target-date`, `06 --run-date` et `07 --run-date` désig
 
 La publication est désactivée par défaut et interdite sur `astra/audit-remediation`. Sur cette branche seulement, le premier historique vide peut être initialisé automatiquement en l’absence totale d’artifact antérieur ; les reruns restaurent toujours l’historique. `scripts/validate_sheets_readonly.py` vérifie les métadonnées et en-têtes sans aucune écriture. L’authentification utilise `GOOGLE_CREDENTIALS` uniquement en mémoire. Aucun pari n'est déclenché par ces scripts.
 
+## Contrôle Sheets et migration exceptionnelle
+
+Les pushes et les runs ordinaires ne migrent jamais `history_raw` : tests offline, authentification avec scope readonly et validation des headers seulement. Un schéma canonique reste accepté après ajout de lignes ou modification légitime de résultats ; aucun fingerprint de données historique ne conditionne ce contrôle. Des colonnes manquantes provoquent un refus explicite.
+
+La migration est une opération manuelle exceptionnelle. Simuler d'abord `python scripts/migrate_history_sheet.py` avec authentification en mémoire ; vérifier les headers, le nombre de lignes, les empreintes des cellules projetées et les résultats conservés. Après revue seulement, déclencher le workflow sur la branche de remédiation avec `migrate_history_schema=true` et `migration_expected_snapshot` égal au SHA256 exact du rapport. L'application atomique refuse un snapshot changé et vérifie immédiatement les cellules après écriture. Laisser `publish_to_sheet=false`. Les runs suivants gardent la migration désactivée et vérifient seulement le schéma. Ne jamais remplacer un fingerprint pour contourner une divergence non revue.
+
+Diagnostic du 4 octobre 2026, run #224 : 56 lignes, 18 headers legacy, aucun doublon, trois colonnes manquantes (`id_match`, `id_joueur`, `outcome_key`). Simulation : 56 lignes conservées, toutes les cellules et résultats inchangés, six requêtes d'insertion/headers seulement. Le snapshot `2694bdea9fae83097cc296b113daea9aa1eda73f5345abbcb67c988139ed547f` diffère de celui de la migration initiale : l'application automatique refusait donc correctement de poursuivre. Le diagnostic ne permet pas d'attribuer à lui seul le retour au schéma legacy à un auteur ou un run. Tout autre producteur de cette feuille doit conserver le schéma canonique, sinon le contrôle readonly refusera de nouveau la feuille.
+
 ## Évaluation scientifique séparée
 
 ```bash

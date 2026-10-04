@@ -138,3 +138,32 @@ def test_atomic_request_failure_does_not_clear_or_rewrite_history():
     sheet.batch_update=fail
     with pytest.raises(RuntimeError):migrate(sheet,CANONICAL,apply=True)
     assert sheet.rows==before
+
+
+def test_changed_canonical_rows_ignore_legacy_fingerprint_without_writing():
+    sheet=Sheet();review=migrate(sheet,CANONICAL)
+    migrate(sheet,CANONICAL,apply=True,expected_before=review['snapshot_sha256'])
+    sheet.calls.clear()
+    sheet.rows[1][CANONICAL.index('result')]=cell('void')
+    before=deepcopy(sheet.rows)
+    done=migrate(sheet,CANONICAL,apply=True,expected_before=review['snapshot_sha256'])
+    assert done['request_count']==0 and done['idempotent']
+    assert sheet.rows==before and not sheet.calls
+
+
+def test_observed_legacy_schema_with_56_rows_rejects_stale_snapshot_losslessly():
+    sheet=Sheet()
+    row=deepcopy(sheet.rows[1])
+    sheet.rows=sheet.rows[:1]+[deepcopy(row) for _ in range(56)]
+    for i,r in enumerate(sheet.rows[1:]):r[LEGACY.index('bet_id')]=cell(f'bet-{i}')
+    before=deepcopy(sheet.rows)
+    review=migrate(sheet,CANONICAL)
+    assert review['rows_before']==review['rows_after']==56
+    assert review['columns_added']==['id_match','id_joueur','outcome_key']
+    with pytest.raises(ValueError,match='changed since approved simulation'):
+        migrate(sheet,CANONICAL,apply=True,expected_before='obsolete-snapshot')
+    assert sheet.rows==before and not sheet.calls
+    done=migrate(sheet,CANONICAL,apply=True,expected_before=review['snapshot_sha256'])
+    assert done['all_original_cells_preserved'] and done['result_preserved']
+    assert done['bet_status_preserved'] and done['settled_at_preserved']
+    assert done['duplicate_bet_ids_after']==0
