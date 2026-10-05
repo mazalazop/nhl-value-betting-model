@@ -1,0 +1,81 @@
+{
+  "target": "GOAL_1_PLUS",
+  "status": "research_only",
+  "seasons": [
+    20222023,
+    20232024
+  ],
+  "development_end": "2024-02-01",
+  "folds": [
+    [
+      "2023-01-01",
+      "2023-03-01"
+    ],
+    [
+      "2023-03-01",
+      "2023-04-20"
+    ],
+    [
+      "2023-10-01",
+      "2023-12-01"
+    ],
+    [
+      "2023-12-01",
+      "2024-02-01"
+    ]
+  ],
+  "baseline": [
+    "is_home_player",
+    "nb_matchs_avant_match",
+    "jours_repos",
+    "tirs_moy_5",
+    "tirs_moy_10",
+    "tirs_par_60_5",
+    "toi_moy_5",
+    "toi_moy_10",
+    "pp_moy_5",
+    "buts_moy_5",
+    "buts_moy_10",
+    "buts_par_60_5",
+    "goal_hit_rate_last_10",
+    "goal_hit_rate_season_pre",
+    "goal_hit_rate_prev_season",
+    "goal_drought_pre",
+    "goal_relative_drought_pre"
+  ],
+  "families": {
+    "short_volume": [
+      "shots_mean3_pre",
+      "shots_cv10_pre"
+    ],
+    "interactions": [
+      "shots_pp_interaction_pre",
+      "drought_shots_interaction_pre"
+    ],
+    "congestion": [
+      "team_games_previous4days_pre",
+      "player_team_changed_pre"
+    ]
+  },
+  "parameters": {
+    "loss": "log_loss",
+    "learning_rate": 0.05,
+    "max_iter": 300,
+    "max_depth": 4,
+    "min_samples_leaf": 50,
+    "l2_regularization": 1.0,
+    "early_stopping": false,
+    "random_state": 42
+  },
+  "calibration": "unchanged temporal auto selection",
+  "retrospective_holdout": [
+    "2024-02-01",
+    "2024-04-20"
+  ],
+  "holdout_access": false,
+  "prospective_confirmation": "2026-27 still required; older holdout is retrospective",
+  "selection": "all folds negative logloss/Brier deltas, Bonferroni 3 CI upper < 0, ECE delta <= 0.005",
+  "smoothing_prior": 10,
+  "seed": 42,
+  "no_complexity_search": true
+}
