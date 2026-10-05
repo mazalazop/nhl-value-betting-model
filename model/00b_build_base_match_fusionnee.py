@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
+from henachel.data import final_mask, validate_player_games
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -246,7 +247,7 @@ def is_goalie_bucket(bucket_name: str) -> bool:
     return bucket_name.lower() in {"goalies", "goalie"}
 
 
-def get_stat_int(player_obj: Dict[str, Any], *keys: str, default: int = 0) -> int:
+def get_stat_int(player_obj: Dict[str, Any], *keys: str, default: int = None) -> int:
     for key in keys:
         value = to_int_or_none(player_obj.get(key))
         if value is not None:
@@ -254,7 +255,7 @@ def get_stat_int(player_obj: Dict[str, Any], *keys: str, default: int = 0) -> in
     return default
 
 
-def get_stat_str(player_obj: Dict[str, Any], *keys: str, default: str = "00:00") -> str:
+def get_stat_str(player_obj: Dict[str, Any], *keys: str, default: str = None) -> str:
     for key in keys:
         value = normalize_str(player_obj.get(key))
         if value is not None:
@@ -284,7 +285,8 @@ def played_matches_only(df_matchs: pd.DataFrame) -> pd.DataFrame:
     df["buts_exterieur"] = pd.to_numeric(df["buts_exterieur"], errors="coerce")
 
     played = df[
-        df["id_match"].notna()
+        final_mask(df)
+        & df["id_match"].notna()
         & df["date_match"].notna()
         & df["buts_domicile"].notna()
         & df["buts_exterieur"].notna()
@@ -350,8 +352,8 @@ def parse_player_rows_for_side(
                 "passes": get_stat_int(player_obj, "assists"),
                 "points": get_stat_int(player_obj, "points"),
                 "tirs": get_stat_int(player_obj, "sog", "shots"),
-                "temps_de_glace": get_stat_str(player_obj, "toi", "timeOnIce", default="00:00"),
-                "temps_pp": get_stat_str(player_obj, "powerPlayToi", "ppToi", default="00:00"),
+                "temps_de_glace": get_stat_str(player_obj, "toi", "timeOnIce", default=None),
+                "temps_pp": get_stat_str(player_obj, "powerPlayToi", "ppToi", default=None),
                 "plus_moins": get_stat_int(player_obj, "plusMinus"),
                 "penalty_minutes": get_stat_int(player_obj, "pim", "penaltyMinutes"),
             }
@@ -419,6 +421,8 @@ def build_stats_dataframe(
     df_matchs_played: pd.DataFrame,
     sleep_seconds: float,
 ) -> pd.DataFrame:
+    from henachel.nhl_cache import BoxscoreCache
+    cache = BoxscoreCache(get_raw_dir() / "boxscores", full_refresh=getattr(session, "henachel_full_refresh", False))
     all_rows: List[Dict[str, Any]] = []
     total_games = len(df_matchs_played)
 
@@ -429,7 +433,7 @@ def build_stats_dataframe(
         date_match = str(match_row["date_match"])
         season_source = str(match_row["saison"])
 
-        payload = fetch_game_payload(session, game_id)
+        payload = cache.get(game_id, date_match, lambda gid: fetch_game_payload(session, gid))
         game_rows = parse_game_to_stats_rows(
             payload=payload,
             game_id=game_id,
@@ -447,19 +451,23 @@ def build_stats_dataframe(
 
         time.sleep(sleep_seconds)
 
+    print(f"[boxscore cache] HTTP fetches={cache.fetches} hits={cache.hits}")
     if not all_rows:
         raise ValueError("stats.csv vide : aucune stat joueur collectée.")
 
     df = pd.DataFrame(all_rows)
 
-    # Dédoublonnage de sécurité
+    if df.duplicated(["id_match", "id_joueur"]).any():
+        raise ValueError("Duplicate player/game statistics")
+
+    # Normalize identifiers
     df["id_joueur"] = pd.to_numeric(df["id_joueur"], errors="coerce").astype("Int64")
     df["id_match"] = pd.to_numeric(df["id_match"], errors="coerce").astype("Int64")
     df["is_home_player"] = pd.to_numeric(df["is_home_player"], errors="coerce").astype("Int64")
 
     numeric_cols = ["buts", "passes", "points", "tirs", "plus_moins", "penalty_minutes"]
     for col in numeric_cols:
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
+        df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
     df["date_match"] = pd.to_datetime(df["date_match"], errors="coerce").dt.strftime("%Y-%m-%d")
     df["season_source"] = df["season_source"].astype(str)
@@ -572,6 +580,7 @@ def build_base_match_fusionnee(df_stats: pd.DataFrame, df_matchs: pd.DataFrame) 
         "check_team_ok",
         "check_opp_ok",
     ]
+    ordered_cols += [c for c in ["game_type", "start_time_utc", "schedule_state"] if c in base and c not in ordered_cols]
     base = base[ordered_cols].copy()
 
     nb_match_non_trouve = int((base["match_trouve"] != 1).sum())
@@ -588,6 +597,7 @@ def build_base_match_fusionnee(df_stats: pd.DataFrame, df_matchs: pd.DataFrame) 
     if nb_team_bad > 0 or nb_opp_bad > 0:
         raise ValueError("❌ Incohérence équipe/adversaire détectée")
 
+    validate_player_games(base)
     return base
 
 
@@ -606,6 +616,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_SLEEP_SECONDS,
         help="Pause entre appels API.",
     )
+    parser.add_argument("--full-refresh", action="store_true", help="Recharger tous les boxscores finaux sans cache")
     return parser.parse_args()
 
 
@@ -639,6 +650,7 @@ def main() -> None:
     print("")
 
     session = build_session()
+    session.henachel_full_refresh = args.full_refresh
 
     # 1) stats.csv
     df_stats = build_stats_dataframe(

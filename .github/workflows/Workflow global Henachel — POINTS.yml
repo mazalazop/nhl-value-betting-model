@@ -1,42 +1,41 @@
 name: henachel-points-global
 
 on:
+  push:
+    branches: [astra/audit-remediation]
   workflow_dispatch:
     inputs:
-      run_date:
-        description: "Date de run Europe/Paris (YYYY-MM-DD). Vide = aujourd'hui Paris"
-        required: false
-        type: string
-      hub_url:
-        description: "URL hub Unibet NHL"
-        required: false
-        type: string
-        default: "https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl"
-      headless:
-        description: "Lancer Playwright en headless"
-        required: false
+      migrate_history_schema:
+        description: "Migration exceptionnelle history_raw, uniquement après simulation revue"
         type: boolean
-        default: true
-      discovery_max_matches:
-        description: "Nombre max de matchs à cliquer côté hub"
+        default: false
+      migration_expected_snapshot:
+        description: "SHA256 exact du snapshot revu (requis uniquement pour la migration)"
+        type: string
+        required: false
+      run_date:
+        description: "Date NHL gameDate (YYYY-MM-DD). Vide = aujourd'hui New York"
         required: false
         type: string
-        default: "12"
-      min_rows_per_event:
-        description: "Seuil minimal de lignes 1+ par match pour l'acceptance report"
-        required: false
-        type: string
-        default: "8"
+      bootstrap_history:
+        description: "Initialiser un nouvel historique vide (jamais pour remplacer un historique existant)"
+        type: boolean
+        default: false
       publish_to_sheet:
         description: "Publier vers Google Sheet"
         required: false
         type: boolean
-        default: true
+        default: false
   schedule:
     - cron: "0 9 * * *"
 
+concurrency:
+  group: henachel-points-history
+  cancel-in-progress: false
+
 permissions:
   contents: read
+  actions: read
 
 env:
   TZ: Europe/Paris
@@ -44,225 +43,133 @@ env:
 
 jobs:
   scrape_points:
-    name: Scraper Unibet POINTS
-    runs-on: [self-hosted, macOS, X64, morgan-runner]
-    timeout-minutes: 120
+    name: Resolve operational runtime
+    runs-on: ubuntu-latest
     outputs:
       run_date: ${{ steps.resolve.outputs.run_date }}
       publish_to_sheet: ${{ steps.resolve.outputs.publish_to_sheet }}
-
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Resolve runtime config
         id: resolve
-        shell: bash
-        run: |
-          INPUT_RUN_DATE="${{ github.event.inputs.run_date }}"
-          INPUT_HUB_URL="${{ github.event.inputs.hub_url }}"
-          INPUT_HEADLESS="${{ github.event.inputs.headless }}"
-          INPUT_DISCOVERY_MAX_MATCHES="${{ github.event.inputs.discovery_max_matches }}"
-          INPUT_MIN_ROWS_PER_EVENT="${{ github.event.inputs.min_rows_per_event }}"
-          INPUT_PUBLISH_TO_SHEET="${{ github.event.inputs.publish_to_sheet }}"
-
-          if [ -z "$INPUT_RUN_DATE" ]; then
-            RUN_DATE="$(TZ=Europe/Paris date +%F)"
-          else
-            RUN_DATE="$INPUT_RUN_DATE"
-          fi
-
-          if [ -z "$INPUT_HUB_URL" ]; then
-            HUB_URL="https://www.unibet.fr/sport/hockey-sur-glace/etats-unis/nhl?filter=R%C3%A9sultat&subFilter=R%C3%A9sultat+du+match"
-          else
-            HUB_URL="$INPUT_HUB_URL"
-          fi
-
-          if [ -z "$INPUT_HEADLESS" ]; then
-            HEADLESS="true"
-          else
-            HEADLESS="$INPUT_HEADLESS"
-          fi
-
-          if [ -z "$INPUT_DISCOVERY_MAX_MATCHES" ]; then
-            DISCOVERY_MAX_MATCHES="12"
-          else
-            DISCOVERY_MAX_MATCHES="$INPUT_DISCOVERY_MAX_MATCHES"
-          fi
-
-          if [ -z "$INPUT_MIN_ROWS_PER_EVENT" ]; then
-            MIN_ROWS_PER_EVENT="8"
-          else
-            MIN_ROWS_PER_EVENT="$INPUT_MIN_ROWS_PER_EVENT"
-          fi
-
-          if [ -z "$INPUT_PUBLISH_TO_SHEET" ]; then
-            PUBLISH_TO_SHEET="true"
-          else
-            PUBLISH_TO_SHEET="$INPUT_PUBLISH_TO_SHEET"
-          fi
-
-          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
-          echo "publish_to_sheet=$PUBLISH_TO_SHEET" >> "$GITHUB_OUTPUT"
-
-          {
-            echo "RUN_DATE=$RUN_DATE"
-            echo "HUB_URL=$HUB_URL"
-            echo "HEADLESS=$HEADLESS"
-            echo "DISCOVERY_MAX_MATCHES=$DISCOVERY_MAX_MATCHES"
-            echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
-            echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
-          } >> "$GITHUB_ENV"
-
-          echo "RUN_DATE=$RUN_DATE"
-          echo "HEADLESS=$HEADLESS"
-          echo "DISCOVERY_MAX_MATCHES=$DISCOVERY_MAX_MATCHES"
-          echo "MIN_ROWS_PER_EVENT=$MIN_ROWS_PER_EVENT"
-          echo "PUBLISH_TO_SHEET=$PUBLISH_TO_SHEET"
-
-      - name: Checkout scraper repo
-        uses: actions/checkout@v4
-        with:
-          repository: mazalazop/nhl-unibet-odds-scraper
-          path: scraper_repo
-          token: ${{ secrets.SCRAPER_REPO_TOKEN }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install scraper dependencies
-        working-directory: scraper_repo
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          python -m playwright install chromium
-
-      - name: Discover event URLs from hub
-        working-directory: scraper_repo
         env:
-          UNIBET_HUB_URL: ${{ env.HUB_URL }}
-          PW_HEADLESS: ${{ env.HEADLESS }}
-          DISCOVERY_MAX_MATCHES: ${{ env.DISCOVERY_MAX_MATCHES }}
-        run: |
-          python scrapers/unibet_points_discover_event_urls.py
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
+          INPUT_PUBLISH_TO_SHEET: ${{ inputs.publish_to_sheet }}
+        run: python3 scripts/resolve_runtime.py
 
-      - name: Export discovered event URLs
-        working-directory: scraper_repo
-        shell: bash
-        run: |
-          LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
-          export DISCOVERY_JSON_PATH="$LATEST_DISCOVERY_DIR/discovered_event_urls.json"
-
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path(os.environ["DISCOVERY_JSON_PATH"])
-          payload = json.loads(path.read_text(encoding="utf-8"))
-          urls = payload.get("event_urls", [])
-          if not urls:
-              raise SystemExit("Aucune event URL découverte depuis le hub Unibet.")
-
-          github_env = Path(os.environ["GITHUB_ENV"])
-          with github_env.open("a", encoding="utf-8") as handle:
-              handle.write(f"DISCOVERY_JSON_PATH={path}\n")
-              handle.write(f"UNIBET_EVENT_URLS={','.join(urls)}\n")
-
-          print(f"URLs découvertes : {len(urls)}")
-          PY
-
-      - name: Run points batch
-        working-directory: scraper_repo
-        env:
-          UNIBET_EVENT_URLS: ${{ env.UNIBET_EVENT_URLS }}
-          PW_HEADLESS: ${{ env.HEADLESS }}
-        run: |
-          python scrapers/unibet_event_points_batch_runner.py
-
-      - name: Build acceptance report
-        working-directory: scraper_repo
-        env:
-          MIN_ROWS_PER_EVENT: ${{ env.MIN_ROWS_PER_EVENT }}
-        shell: bash
-        run: |
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-          export BATCH_SUMMARY_PATH="$LATEST_BATCH_DIR/batch_summary.json"
-          python scrapers/unibet_event_points_acceptance_report.py
-
-      - name: Build normalized points json
-        working-directory: scraper_repo
-        shell: bash
-        run: |
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-          export ACCEPTANCE_REPORT_PATH="$LATEST_BATCH_DIR/acceptance_report.json"
-          python scrapers/unibet_event_points_normalize_accepted.py
-
-      - name: Prepare artifact bundle for model job
-        working-directory: scraper_repo
-        shell: bash
-        run: |
-          mkdir -p export_bundle
-          LATEST_DISCOVERY_DIR=$(ls -td artifacts/unibet_points_discover_event_urls/* | head -n 1)
-          LATEST_BATCH_DIR=$(ls -td artifacts/unibet_event_points_batch_runner/* | head -n 1)
-
-          cp "$LATEST_BATCH_DIR/normalized_points_odds.json" export_bundle/normalized_points_odds.json
-          cp "$LATEST_BATCH_DIR/acceptance_report.json" export_bundle/acceptance_report.json
-          cp "$LATEST_BATCH_DIR/batch_summary.json" export_bundle/batch_summary.json
-          cp "$LATEST_DISCOVERY_DIR/discovered_event_urls.json" export_bundle/discovered_event_urls.json
-
-      - name: Upload scraper outputs for model job
-        uses: actions/upload-artifact@v4
+  history_schema_migration:
+    name: Apply explicitly reviewed history schema migration
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.migrate_history_schema && github.ref == 'refs/heads/astra/audit-remediation' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: henachel-points-odds-${{ env.RUN_DATE }}
-          path: scraper_repo/export_bundle/
-          retention-days: 7
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+      - run: python -m pip install -r requirements.lock
+      - name: Test migration offline
+        run: python -m pytest tests/test_sheets_migration.py tests/test_sheets_environment.py tests/test_publication.py -q -W error
+      - name: Apply only the reviewed snapshot
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
+          SHEET_ID: ${{ secrets.HENACHEL_SHEET_ID }}
+          MIGRATION_EXPECTED_SNAPSHOT: ${{ inputs.migration_expected_snapshot }}
+        run: python scripts/migrate_history_sheet.py --apply --expected-snapshot "$MIGRATION_EXPECTED_SNAPSHOT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: henachel-history-migration-${{ github.run_id }}
+          path: outputs/history_schema_migration.json
+
+  sheets_readonly:
+    name: Validate Henachel read-only access
+    needs: [history_schema_migration]
+    if: ${{ always() && !cancelled() && github.ref == 'refs/heads/astra/audit-remediation' && (needs.history_schema_migration.result == 'success' || needs.history_schema_migration.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+      - run: python -m pip install -r requirements.lock
+      - name: Test history schema migration offline
+        run: python -m pytest tests/test_sheets_migration.py tests/test_sheets_environment.py tests/test_publication.py -q -W error
+      - name: Read metadata and headers only
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
+          SHEET_ID: ${{ secrets.HENACHEL_SHEET_ID }}
+        run: python scripts/validate_sheets_readonly.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: henachel-sheets-readonly-${{ github.run_id }}
+          path: |
+            outputs/sheets_readonly_validation.json
 
   model_points:
     name: Pipeline modèle POINTS
     needs: scrape_points
+    if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    env:
+      RUN_DATE: ${{ needs.scrape_points.outputs.run_date }}
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
 
     steps:
       - name: Checkout model repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.9"
 
       - name: Install model dependencies
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy scikit-learn requests urllib3 gspread google-auth google-auth-oauthlib google-auth-httplib2
+          pip install -r requirements.lock
+          python -m pytest -q -W error
 
-      - name: Download scraper artifact
-        uses: actions/download-artifact@v4
+      - name: Resolve model NHL date independently of scraper availability
+        env:
+          INPUT_RUN_DATE: ${{ inputs.run_date }}
+        run: python scripts/resolve_runtime.py
+
+      - name: Restore final boxscore cache
+        uses: actions/cache@v4
         with:
-          name: henachel-points-odds-${{ needs.scrape_points.outputs.run_date }}
-          path: _scraper_artifact
+          path: data/raw/boxscores
+          key: nhl-boxscores-v1-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: nhl-boxscores-v1-${{ runner.os }}-${{ github.ref_name }}-
 
-      - name: Place normalized_points_odds.json where script 06 expects it
-        shell: bash
+      - name: Restore canonical history
+        id: history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOOTSTRAP_HISTORY: ${{ inputs.bootstrap_history || github.ref == 'refs/heads/astra/audit-remediation' }}
         run: |
-          mkdir -p outputs
-          cp _scraper_artifact/normalized_points_odds.json outputs/normalized_points_odds.json
-          ls -la outputs
-
-      - name: Write Google credentials file
-        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
-        shell: bash
-        run: |
-          mkdir -p secrets
-          cat > secrets/henachel-service-account.json <<'JSON'
-          ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
-          JSON
+          ARGS=()
+          if [ "$BOOTSTRAP_HISTORY" = "true" ]; then ARGS+=(--bootstrap); fi
+          python scripts/restore_history.py "${ARGS[@]}"
 
       - name: Refresh upstream sources
-        run: python model/00_refresh_sources.py
+        env:
+          OPERATIONAL_BRANCH: ${{ github.ref == 'refs/heads/astra/audit-remediation' }}
+        run: |
+          ARGS=()
+          if [ "$OPERATIONAL_BRANCH" = "true" ]; then ARGS+=(--min-season 20242025 --skip-boxscore-supplement); fi
+          python model/00_refresh_sources.py "${ARGS[@]}"
 
       - name: Refresh PP stats
         run: python model/00a_refresh_pp_stats.py
@@ -270,24 +177,49 @@ jobs:
       - name: Build base match fusionnee
         run: python model/00b_build_base_match_fusionnee.py
 
+      - name: Settle canonical bets after result refresh
+        run: python model/09_settle_previous_bets.py --run-date "$RUN_DATE"
+
+      - name: Refresh pregame standings
+        run: python model/00c_refresh_team_standings.py
+
       - name: Build features
         run: python model/01_build_base_features.py
 
       - name: Predict upcoming games
-        run: python model/05_predict_upcoming_games.py --target-date "${{ needs.scrape_points.outputs.run_date }}"
+        run: python model/05_predict_upcoming_games.py --target-date "$RUN_DATE"
+
+      - name: Collect verified public Unibet POINT markets
+        run: |
+          python scripts/collect_unibet_structured.py
+          cp outputs/structured_bookmaker/normalized_points_odds.json outputs/normalized_points_odds.json
+          python scripts/validate_bookmaker_contract.py outputs/normalized_points_odds.json
 
       - name: Match model to Unibet odds
-        run: python model/06_match_model_to_unibet_odds.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+        run: python model/06_match_model_to_unibet_odds.py --run-date "$RUN_DATE"
 
       - name: Build daily bets
-        run: python model/07_build_daily_bets.py --run-date "${{ needs.scrape_points.outputs.run_date }}"
+        run: python model/07_build_daily_bets.py --run-date "$RUN_DATE"
 
       - name: Publish to Google Sheet
-        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' }}
+        if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' && github.ref != 'refs/heads/astra/audit-remediation' }}
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.HENACHEL_GOOGLE_CREDENTIALS_JSON }}
+          SHEET_ID: ${{ secrets.HENACHEL_SHEET_ID }}
+        shell: bash
         run: |
-          python model/08_publish_to_google_sheet.py \
-            --sheet-id "${{ secrets.HENACHEL_SHEET_ID }}" \
-            --credentials-json "secrets/henachel-service-account.json"
+          python model/08_publish_to_google_sheet.py --sheet-id "$SHEET_ID" --credentials-env
+
+      - name: Preserve canonical history even after publication failure
+        if: ${{ always() && steps.history.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.history.outputs.artifact_name }}
+          path: |
+            outputs/history/master_daily_bets_history.csv
+            outputs/history/settlement_revisions.csv
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Upload model outputs
         if: always()
@@ -296,6 +228,6 @@ jobs:
           name: henachel-model-outputs-${{ needs.scrape_points.outputs.run_date }}
           path: |
             outputs/
-            data/raw/
+            data/raw/*.csv
             data/final/
           retention-days: 7

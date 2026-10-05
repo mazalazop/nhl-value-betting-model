@@ -18,7 +18,6 @@ DEFAULT_HISTORY_WS = "history_raw"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
 ]
 
 REQUIRED_INPUT_COLUMNS = [
@@ -37,9 +36,11 @@ REQUIRED_INPUT_COLUMNS = [
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Publier 07_daily_bets.csv dans Google Sheets.")
+    parser.add_argument("--history-csv", type=Path, default=DEFAULT_OUTPUTS_DIR / "history/master_daily_bets_history.csv")
     parser.add_argument("--input-csv", type=str, default=str(DEFAULT_INPUT_CSV))
     parser.add_argument("--sheet-id", type=str, required=True)
     parser.add_argument("--credentials-json", type=str, default=str(DEFAULT_CREDS_JSON))
+    parser.add_argument("--credentials-env", action="store_true", help="Authenticate in memory from GOOGLE_CREDENTIALS")
     parser.add_argument("--daily-worksheet", type=str, default=DEFAULT_DAILY_WS)
     parser.add_argument("--history-worksheet", type=str, default=DEFAULT_HISTORY_WS)
     return parser.parse_args()
@@ -174,6 +175,7 @@ def build_daily_display_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 HISTORY_OUTPUT_COLUMNS = [
+    "id_match", "id_joueur", "outcome_key",
     "bet_id",
     "run_date",
     "date_match",
@@ -205,6 +207,9 @@ def build_history_display_df(df: pd.DataFrame) -> pd.DataFrame:
     ).reset_index(drop=True)
 
     out = pd.DataFrame({
+        "id_match": hist["id_match"],
+        "id_joueur": hist["id_joueur"],
+        "outcome_key": hist["outcome_key"],
         "bet_id": hist["bet_id"],
         "run_date": hist["run_date"],
         "date_match": hist["date_match"],
@@ -251,7 +256,10 @@ def merge_history(existing_history_df: pd.DataFrame, daily_history_df: pd.DataFr
     existing = existing.set_index(existing["bet_id"].astype(str), drop=False)
     daily = daily.set_index(daily["bet_id"].astype(str), drop=False)
 
-    existing.update(daily)
+    # A pending republication must never downgrade settled outcomes.
+    protected = existing.index[existing["result"].isin(["win", "loss", "void"])]
+    refresh = daily.loc[~daily.index.isin(protected)]
+    existing.update(refresh)
     new_ids = [idx for idx in daily.index if idx not in existing.index]
     if new_ids:
         combined = pd.concat([existing, daily.loc[new_ids]], ignore_index=False)
@@ -270,10 +278,9 @@ def df_to_sheet_values(df: pd.DataFrame) -> List[List[str]]:
     return [list(clean.columns)] + clean.values.tolist()
 
 
-def write_replace(ws, df: pd.DataFrame) -> None:
-    ws.clear()
-    values = df_to_sheet_values(df)
-    ws.update(values=values, range_name="A1", value_input_option="USER_ENTERED")
+def write_replace(ws, df):
+    from henachel.sheets import replace_view
+    replace_view(ws, df)
 
 
 def apply_basic_sheet_style(sh: gspread.Spreadsheet, ws, n_rows: int, n_cols: int) -> None:
@@ -490,19 +497,39 @@ def main() -> None:
 
     daily_bets_df = load_daily_bets(input_csv)
     daily_display_df = build_daily_display_df(daily_bets_df)
-    daily_history_df = build_history_display_df(daily_bets_df)
+    from henachel.history import read_ledger
+    from henachel.sheets import replacement_requests
+    if not args.history_csv.exists():
+        raise FileNotFoundError("Restore canonical history before publication")
+    canonical = read_ledger(args.history_csv)
+    if not set(daily_bets_df.bet_id).issubset(set(canonical.bet_id)):
+        raise ValueError("Daily picks missing from canonical history")
+    # Use canonical outcomes even if the daily export predates settlement.
+    daily_bets_df = canonical[canonical.bet_id.isin(daily_bets_df.bet_id)].copy()
+    daily_display_df = build_daily_display_df(daily_bets_df)
+    merged_history_df = build_history_display_df(canonical)
 
-    gc = authorize_gspread(credentials_json)
+    if args.credentials_env:
+        from henachel.sheets_auth import authorize_environment
+        gc = authorize_environment()
+    else:
+        gc = authorize_gspread(credentials_json)
     sh = gc.open_by_key(args.sheet_id)
 
     daily_ws = get_or_create_worksheet(sh, args.daily_worksheet)
     history_ws = get_or_create_worksheet(sh, args.history_worksheet)
 
     existing_history_df = read_ws_as_df(history_ws)
-    merged_history_df = merge_history(existing_history_df, daily_history_df)
+    if len(existing_history_df):
+        if "bet_id" not in existing_history_df or not set(existing_history_df.bet_id.astype(str)).issubset(set(canonical.bet_id.astype(str))):
+            raise ValueError("Sheet contains history absent from canonical ledger; reconcile before publication")
+        # Do not silently downgrade a legacy settled Sheet entry during migration.
+        known = canonical.set_index('bet_id')
+        for _, old in existing_history_df.iterrows():
+            if old.get('result') in {'win','loss','void'} and known.loc[old.bet_id,'bet_status'] != 'settled':
+                raise ValueError("Legacy settled outcome needs canonical migration")
 
-    write_replace(daily_ws, daily_display_df)
-    write_replace(history_ws, merged_history_df)
+    sh.batch_update({"requests": replacement_requests(daily_ws, daily_display_df) + replacement_requests(history_ws, merged_history_df)})
 
     apply_basic_sheet_style(sh, daily_ws, len(daily_display_df) + 1, len(daily_display_df.columns))
     apply_basic_sheet_style(sh, history_ws, len(merged_history_df) + 1, len(merged_history_df.columns))

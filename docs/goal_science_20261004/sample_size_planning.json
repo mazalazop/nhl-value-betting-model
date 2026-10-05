@@ -1,0 +1,27 @@
+{
+  "purpose": "planning only; no new fit, no consumed holdout labels",
+  "source": "development drought OOF vs fixed smoothed player baseline",
+  "development_dates": 167,
+  "development_rows": 46866,
+  "paired_standard_error_7_date_bootstrap": 0.0014559828259617556,
+  "two_sided_alpha": 0.05,
+  "power": 0.8,
+  "grid": [
+    {
+      "minimum_effect_logloss": 0.001,
+      "estimated_dates": 2779,
+      "estimated_player_games": 779884
+    },
+    {
+      "minimum_effect_logloss": 0.002,
+      "estimated_dates": 695,
+      "estimated_player_games": 195042
+    },
+    {
+      "minimum_effect_logloss": 0.003,
+      "estimated_dates": 309,
+      "estimated_player_games": 86717
+    }
+  ],
+  "limitations": "Approximate inverse-square scaling; assumes stable future variance, row density and temporal dependence. Cannot guarantee power across seasons or subgroups."
+}

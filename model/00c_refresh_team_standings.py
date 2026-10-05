@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
+from henachel.data import regular_season_games
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -94,7 +95,7 @@ def parse_args() -> RefreshConfig:
     parser.add_argument(
         "--no-include-today",
         action="store_true",
-        help="N'ajoute pas automatiquement la date du jour Europe/Paris aux dates à récupérer.",
+        help="N'ajoute pas automatiquement hier Europe/Paris (snapshot pré-match) aux dates à récupérer.",
     )
     parser.add_argument(
         "--sleep-seconds",
@@ -182,7 +183,7 @@ def load_target_dates_from_base_match(
     if end_date is not None:
         base = base[base["date_match"] <= pd.to_datetime(end_date)]
 
-    return normalize_date_strings(base["date_match"].dropna().unique())
+    return normalize_date_strings((base["date_match"] - pd.Timedelta(days=1)).dropna().unique())
 
 
 def load_existing_output(output_path: Path) -> pd.DataFrame:
@@ -230,7 +231,7 @@ def flatten_team_record(record: dict, requested_date: str) -> dict:
         "division_abbrev": record.get("divisionAbbrev"),
         "division_name": record.get("divisionName"),
         "games_played": games_played,
-        "games_remaining": 82 - games_played if pd.notna(games_played) else pd.NA,
+        "games_remaining": regular_season_games(record.get("seasonId")) - games_played if pd.notna(games_played) else pd.NA,
         "points": points,
         "point_pctg": pd.to_numeric(record.get("pointPctg"), errors="coerce"),
         "wins": pd.to_numeric(record.get("wins"), errors="coerce"),
@@ -273,7 +274,8 @@ def fetch_standings_for_date(session: requests.Session, date_str: str) -> tuple[
     if not isinstance(raw_rows, list):
         raise ValueError(f"Payload inattendu pour {date_str} : clé standings absente ou invalide")
 
-    rows = [flatten_team_record(record, requested_date=date_str) for record in raw_rows]
+    rows = [flatten_team_record(record, requested_date=date_str) for record in raw_rows
+            if pd.to_datetime(record.get('date'), errors='coerce') == pd.Timestamp(date_str)]
     df = pd.DataFrame(rows)
     if not df.empty:
         df["team_abbrev"] = df["team_abbrev"].astype(str).str.upper().str.strip()
@@ -294,7 +296,14 @@ def compute_missing_dates(target_dates: list[str], existing: pd.DataFrame) -> tu
     if existing.empty:
         return target_dates, []
 
-    counts = existing.groupby("date_snapshot")["team_abbrev"].nunique().to_dict()
+    valid = existing.copy()
+    if not {'api_date', 'season_id'}.issubset(valid):
+        return target_dates, sorted(existing.date_snapshot.unique())
+    snapshot = pd.to_datetime(valid.date_snapshot, errors='coerce')
+    api = pd.to_datetime(valid.api_date, errors='coerce')
+    season = pd.to_numeric(valid.season_id, errors='coerce')
+    valid = valid[snapshot.notna() & api.eq(snapshot) & season.notna() & (season % 10000 == season // 10000 + 1)]
+    counts = valid.groupby("date_snapshot")["team_abbrev"].nunique().reindex(existing.date_snapshot.unique(), fill_value=0).to_dict()
     complete_dates = {date for date, count in counts.items() if int(count) == EXPECTED_TEAMS_PER_DAY}
     incomplete_dates = sorted(date for date, count in counts.items() if int(count) != EXPECTED_TEAMS_PER_DAY)
 
@@ -305,7 +314,9 @@ def compute_missing_dates(target_dates: list[str], existing: pd.DataFrame) -> tu
 def merge_and_save(existing: pd.DataFrame, fresh: pd.DataFrame, output_path: Path) -> pd.DataFrame:
     combined = pd.concat([existing, fresh], ignore_index=True)
     if combined.empty:
-        combined.to_csv(output_path, index=False)
+        combined = pd.DataFrame(columns=["date_snapshot","api_date","season_id","team_abbrev","conference_abbrev","division_abbrev","games_played","games_remaining","points","conference_sequence","division_sequence","wildcard_sequence","point_pctg","goal_differential","l10_points"])
+        from henachel.history import atomic_csv
+        atomic_csv(combined, output_path)
         return combined
 
     combined["date_snapshot"] = pd.to_datetime(combined["date_snapshot"], errors="coerce")
@@ -353,7 +364,8 @@ def merge_and_save(existing: pd.DataFrame, fresh: pd.DataFrame, output_path: Pat
             combined[col] = pd.to_numeric(combined[col], errors="coerce")
 
     combined = combined.sort_values(["date_snapshot", "conference_abbrev", "division_abbrev", "team_abbrev"])
-    combined.to_csv(output_path, index=False)
+    from henachel.history import atomic_csv
+    atomic_csv(combined, output_path)
     return combined
 
 
@@ -372,7 +384,7 @@ def main() -> None:
     )
 
     if config.include_today:
-        target_dates = sorted(set(target_dates + [today_paris_str()]))
+        target_dates = sorted(set(target_dates + [(pd.Timestamp(today_paris_str()) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]))
     if config.extra_dates:
         target_dates = sorted(set(target_dates + normalize_date_strings(config.extra_dates)))
 
@@ -396,8 +408,7 @@ def main() -> None:
 
     fresh = pd.concat(fetched_frames, ignore_index=True) if fetched_frames else pd.DataFrame()
 
-    if not existing.empty and incomplete_existing_dates:
-        existing = existing[~existing["date_snapshot"].isin(incomplete_existing_dates)].copy()
+    # Preserve older partial snapshots if refresh fails; consumers validate each join.
 
     combined = merge_and_save(existing, fresh, config.output_path)
 
@@ -409,7 +420,7 @@ def main() -> None:
     incomplete_after = sorted(date for date, count in counts_by_date.items() if int(count) != EXPECTED_TEAMS_PER_DAY)
 
     summary = {
-        "status": "ok",
+        "status": "partial" if incomplete_after or len(counts_by_date) < len(target_dates) else "ok",
         "api_template": NHL_STANDINGS_URL,
         "base_match_path": str(config.base_match_path),
         "output_path": str(config.output_path),

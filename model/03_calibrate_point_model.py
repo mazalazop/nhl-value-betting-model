@@ -43,6 +43,8 @@ from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 import pandas as pd
+from henachel.calibration import (select_calibrator, clip_proba, logit_clip, fit_sigmoid_calibrator,
+    predict_sigmoid_calibrator, fit_isotonic_calibrator, predict_isotonic_calibrator)
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -129,14 +131,8 @@ def first_existing_column_or_none(df: pd.DataFrame, candidates: Iterable[str]) -
     return None
 
 
-def clip_proba(values: np.ndarray) -> np.ndarray:
-    arr = np.asarray(values, dtype=float)
-    return np.clip(arr, EPSILON, 1.0 - EPSILON)
 
 
-def logit_clip(p: np.ndarray) -> np.ndarray:
-    p = clip_proba(p)
-    return np.log(p / (1.0 - p))
 
 
 def calculer_metrics(y_true: np.ndarray, proba: np.ndarray) -> Dict[str, float]:
@@ -161,75 +157,14 @@ def calculer_metrics(y_true: np.ndarray, proba: np.ndarray) -> Dict[str, float]:
     return out
 
 
-def split_calibration_temporel(
-    df: pd.DataFrame,
-    date_col: str,
-    fit_ratio: float = 0.50,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
-    temp = df.copy()
-    temp[date_col] = pd.to_datetime(temp[date_col], errors="coerce")
-    temp = temp.dropna(subset=[date_col]).copy()
-
-    if temp.empty:
-        raise ValueError("Aucune date exploitable pour la calibration.")
-
-    sort_cols: List[str] = [date_col]
-    match_id_col = first_existing_column_or_none(temp, MATCH_ID_CANDIDATES)
-    player_id_col = first_existing_column_or_none(temp, PLAYER_ID_CANDIDATES)
-
-    if match_id_col is not None:
-        sort_cols.append(match_id_col)
-    if player_id_col is not None:
-        sort_cols.append(player_id_col)
-
-    temp = temp.sort_values(sort_cols).reset_index(drop=True)
-
-    dates_uniques = sorted(pd.Series(temp[date_col].dt.normalize().unique()).tolist())
-    if len(dates_uniques) < 3:
-        raise ValueError("Pas assez de dates uniques pour réaliser une calibration temporelle propre.")
-
-    idx_cut = int(np.floor(len(dates_uniques) * fit_ratio))
-    idx_cut = max(1, min(idx_cut, len(dates_uniques) - 1))
-    date_cut = pd.Timestamp(dates_uniques[idx_cut])
-
-    calib_fit = temp[temp[date_col] < date_cut].copy()
-    calib_eval = temp[temp[date_col] >= date_cut].copy()
-
-    if calib_fit.empty or calib_eval.empty:
-        raise ValueError("Split de calibration invalide : calib_fit ou calib_eval est vide.")
-
-    return calib_fit, calib_eval, date_cut
 
 
-def fit_sigmoid_calibrator(proba_fit: np.ndarray, y_fit: np.ndarray) -> LogisticRegression:
-    x_fit = logit_clip(proba_fit).reshape(-1, 1)
-    y_fit = pd.Series(y_fit).astype(int).to_numpy()
-
-    clf = LogisticRegression(
-        C=1e6,
-        solver="lbfgs",
-        max_iter=2000,
-        random_state=RANDOM_STATE,
-    )
-    clf.fit(x_fit, y_fit)
-    return clf
 
 
-def predict_sigmoid_calibrator(calibrator: LogisticRegression, proba: np.ndarray) -> np.ndarray:
-    x = logit_clip(proba).reshape(-1, 1)
-    pred = calibrator.predict_proba(x)[:, 1]
-    return clip_proba(pred)
 
 
-def fit_isotonic_calibrator(proba_fit: np.ndarray, y_fit: np.ndarray) -> IsotonicRegression:
-    iso = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip")
-    iso.fit(np.asarray(proba_fit, dtype=float), pd.Series(y_fit).astype(int).to_numpy())
-    return iso
 
 
-def predict_isotonic_calibrator(calibrator: IsotonicRegression, proba: np.ndarray) -> np.ndarray:
-    pred = calibrator.predict(np.asarray(proba, dtype=float))
-    return clip_proba(pred)
 
 
 def standardize_prediction_frame(df: pd.DataFrame) -> Tuple[pd.DataFrame, str, str, str]:
@@ -240,36 +175,23 @@ def standardize_prediction_frame(df: pd.DataFrame) -> Tuple[pd.DataFrame, str, s
     date_col = first_existing_column(temp, DATE_CANDIDATES, "date")
 
     temp[date_col] = pd.to_datetime(temp[date_col], errors="coerce")
-    temp = temp.dropna(subset=[date_col]).copy()
+    if temp[date_col].isna().any(): raise ValueError("Missing calibration date")
 
     temp[target_col] = pd.to_numeric(temp[target_col], errors="coerce")
-    temp = temp.dropna(subset=[target_col]).copy()
-    temp[target_col] = temp[target_col].astype(int)
+    from henachel.point import binary_labels
+    temp[target_col] = binary_labels(temp[target_col]).to_numpy()
 
     target_values = set(temp[target_col].unique().tolist())
     if not target_values.issubset({0, 1}):
         raise ValueError(f"La colonne cible '{target_col}' n'est pas binaire 0/1 : {sorted(target_values)}")
 
     temp[proba_col] = pd.to_numeric(temp[proba_col], errors="coerce")
-    temp = temp.dropna(subset=[proba_col]).copy()
+    if temp[proba_col].isna().any(): raise ValueError("Missing calibration probability")
     temp[proba_col] = clip_proba(temp[proba_col].to_numpy())
 
     return temp.reset_index(drop=True), target_col, proba_col, date_col
 
 
-def build_selection_df(
-    y_eval: np.ndarray,
-    p_eval_raw: np.ndarray,
-    p_eval_sigmoid: np.ndarray,
-    p_eval_isotonic: np.ndarray,
-) -> pd.DataFrame:
-    selection_df = pd.DataFrame([
-        {"method": "raw", **calculer_metrics(y_eval, p_eval_raw)},
-        {"method": "sigmoid", **calculer_metrics(y_eval, p_eval_sigmoid)},
-        {"method": "isotonic", **calculer_metrics(y_eval, p_eval_isotonic)},
-    ])
-    selection_df = selection_df.sort_values(["logloss", "brier"], ascending=[True, True]).reset_index(drop=True)
-    return selection_df
 
 
 def add_calibrated_columns(
@@ -322,6 +244,8 @@ def main() -> None:
 
     validation_df, target_col_val, proba_col_val, date_col_val = standardize_prediction_frame(validation_df_raw)
     test_df, target_col_test, proba_col_test, date_col_test = standardize_prediction_frame(test_df_raw)
+    from henachel.calibration import validate_evaluation_window
+    validate_evaluation_window(validation_df[date_col_val], test_df[date_col_test])
 
     print("")
     print("=== COLONNES DETECTEES ===")
@@ -332,62 +256,16 @@ def main() -> None:
     print(f"Test proba       : {proba_col_test}")
     print(f"Test date        : {date_col_test}")
 
-    calib_fit, calib_eval, date_cut = split_calibration_temporel(
-        validation_df,
-        date_col=date_col_val,
-        fit_ratio=0.50,
-    )
-
-    print("")
-    print("=== SPLIT CALIBRATION INTERNE ===")
-    print(f"calib_fit  : {calib_fit.shape}")
-    print(f"calib_eval : {calib_eval.shape}")
-    print(f"date_cut   : {date_cut.date()}")
-
-    y_fit = calib_fit[target_col_val].to_numpy()
-    p_fit = clip_proba(calib_fit[proba_col_val].to_numpy())
-
-    y_eval = calib_eval[target_col_val].to_numpy()
-    p_eval_raw = clip_proba(calib_eval[proba_col_val].to_numpy())
-
     y_val_full = validation_df[target_col_val].to_numpy()
     p_val_full = clip_proba(validation_df[proba_col_val].to_numpy())
-
     y_test = test_df[target_col_test].to_numpy()
     p_test_raw = clip_proba(test_df[proba_col_test].to_numpy())
-
-    sigmoid_cal = fit_sigmoid_calibrator(p_fit, y_fit)
-    isotonic_cal = fit_isotonic_calibrator(p_fit, y_fit)
-
-    p_eval_sigmoid = predict_sigmoid_calibrator(sigmoid_cal, p_eval_raw)
-    p_eval_isotonic = predict_isotonic_calibrator(isotonic_cal, p_eval_raw)
-
-    selection_df = build_selection_df(
-        y_eval=y_eval,
-        p_eval_raw=p_eval_raw,
-        p_eval_sigmoid=p_eval_sigmoid,
-        p_eval_isotonic=p_eval_isotonic,
-    )
-
-    chosen_method = str(selection_df.iloc[0]["method"])
-
-    print("")
-    print("=== SELECTION CALIBRATEUR SUR CALIB_EVAL ===")
-    print(selection_df)
-    print("")
-    print(f"Méthode choisie : {chosen_method}")
-
-    if chosen_method == "sigmoid":
-        calibrator_final = fit_sigmoid_calibrator(p_val_full, y_val_full)
-        p_val_cal = predict_sigmoid_calibrator(calibrator_final, p_val_full)
-        p_test_cal = predict_sigmoid_calibrator(calibrator_final, p_test_raw)
-    elif chosen_method == "isotonic":
-        calibrator_final = fit_isotonic_calibrator(p_val_full, y_val_full)
-        p_val_cal = predict_isotonic_calibrator(calibrator_final, p_val_full)
-        p_test_cal = predict_isotonic_calibrator(calibrator_final, p_test_raw)
-    else:
-        p_val_cal = p_val_full.copy()
-        p_test_cal = p_test_raw.copy()
+    calibrator_final, calibration_info = select_calibrator(
+        p_val_full, y_val_full, validation_df[date_col_val])
+    chosen_method = calibrator_final.method
+    selection_df = pd.DataFrame(calibration_info['selection'], columns=['method','logloss','brier'])
+    p_val_cal = calibrator_final.predict(p_val_full)
+    p_test_cal = calibrator_final.predict(p_test_raw)
 
     metrics_val_raw = calculer_metrics(y_val_full, p_val_full)
     metrics_val_cal = calculer_metrics(y_val_full, p_val_cal)
@@ -416,6 +294,7 @@ def main() -> None:
         chosen_method=chosen_method,
     )
 
+    comparaison_df["evaluation_role"] = ["out_of_sample", "in_sample_calibrator_refit", "held_out_test", "held_out_test"]
     comparaison_df.to_csv(COMPARAISON_OUTPUT_PATH, index=False)
     selection_df.to_csv(SELECTION_OUTPUT_PATH, index=False)
     validation_out.to_csv(VALIDATION_OUTPUT_PATH, index=False)
@@ -439,9 +318,10 @@ def main() -> None:
                 "date": date_col_test,
             },
         },
+        "calibration_diagnostics": calibration_info,
         "calibration": {
             "fit_ratio": 0.50,
-            "date_cut": str(date_cut.date()),
+            "date_cut": calibration_info.get("eval_start"),
             "method_selected_on_calib_eval": chosen_method,
         },
         "row_counts": {
@@ -449,8 +329,8 @@ def main() -> None:
             "validation_used_after_cleaning": int(len(validation_df)),
             "test_loaded": int(len(test_df_raw)),
             "test_used_after_cleaning": int(len(test_df)),
-            "calib_fit": int(len(calib_fit)),
-            "calib_eval": int(len(calib_eval)),
+            "calib_fit": int((validation_df[date_col_val] < pd.to_datetime(calibration_info.get("eval_start"))).sum()) if calibration_info.get("eval_start") else 0,
+            "calib_eval": int((validation_df[date_col_val] >= pd.to_datetime(calibration_info.get("eval_start"))).sum()) if calibration_info.get("eval_start") else 0,
         },
         "outputs": {
             "comparaison": str(COMPARAISON_OUTPUT_PATH),
@@ -464,6 +344,11 @@ def main() -> None:
             "Compatibilité maintenue avec les noms de colonnes du notebook historique et du script GitHub actuel",
         ],
     }
+    from henachel.manifest import manifest
+    from henachel.point import POINT_PARAMS
+    summary["manifest"] = manifest([VALIDATION_INPUT_PATH, TEST_INPUT_PATH], POINT_PARAMS)
+    import joblib
+    joblib.dump({"calibrator": calibrator_final, "diagnostics": calibration_info}, OUTPUTS_DIR / "03_point_calibrator.joblib")
     write_json(SUMMARY_OUTPUT_PATH, summary)
 
     print("")

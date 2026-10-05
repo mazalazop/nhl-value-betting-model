@@ -37,6 +37,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from henachel.point import binary_labels
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -115,7 +116,6 @@ RETURN_ABSENCE_FEATURES = [
     "matchs_depuis_retour_avant_match",
     "ratio_toi_retour_vs_pre_absence",
     "ratio_pp_retour_vs_pre_absence",
-    "eligible_post_retour",
 ]
 
 TARGET_COL = "a_marque_un_point"
@@ -318,7 +318,6 @@ def default_fill_map() -> Dict[str, float]:
         "matchs_depuis_retour_avant_match": 0,
         "ratio_toi_retour_vs_pre_absence": 0.0,
         "ratio_pp_retour_vs_pre_absence": 0.0,
-        "eligible_post_retour": 0,
     }
 
 
@@ -339,9 +338,9 @@ def prepare_xy(
     x_val = val_df[features].copy()
     x_test = test_df[features].copy()
 
-    y_train = pd.to_numeric(train_df[target_col], errors="coerce").fillna(0).astype(int).to_numpy()
-    y_val = pd.to_numeric(val_df[target_col], errors="coerce").fillna(0).astype(int).to_numpy()
-    y_test = pd.to_numeric(test_df[target_col], errors="coerce").fillna(0).astype(int).to_numpy()
+    y_train = binary_labels(train_df[target_col]).to_numpy()
+    y_val = binary_labels(val_df[target_col]).to_numpy()
+    y_test = binary_labels(test_df[target_col]).to_numpy()
 
     for col in features:
         x_train[col] = pd.to_numeric(x_train[col], errors="coerce")
@@ -369,6 +368,7 @@ def build_model() -> HistGradientBoostingClassifier:
         max_depth=4,
         min_samples_leaf=50,
         l2_regularization=1.0,
+        early_stopping=False,
         random_state=RANDOM_STATE,
     )
 

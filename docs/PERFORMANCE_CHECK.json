@@ -1,0 +1,16 @@
+{
+  "fixture_rows": 1000,
+  "reference": {
+    "seconds": 1.8770733990022563,
+    "peak_python_bytes": 246735
+  },
+  "scope": "synthetic streak computation only; no live NHL timing",
+  "incremental": {
+    "seconds": 0.046915395996620646,
+    "peak_python_bytes": 243461
+  },
+  "cache_mock_http_calls": {
+    "two_consumers_without_cache": 2,
+    "with_shared_cache": 1
+  }
+}

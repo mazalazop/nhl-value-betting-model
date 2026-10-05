@@ -1,0 +1,640 @@
+{
+  "url": "https://www.unibet.fr/paris-hockey-sur-glace/etats-unis/nhl/3382967/buf-sabres-vs-chi-blackhawks",
+  "captured_at": "2026-10-03T10:14:36.200439+00:00",
+  "event": {
+    "id": 3382967,
+    "opponentA": {
+      "id": 39758,
+      "label": "BUF Sabres"
+    },
+    "opponentB": {
+      "id": 39614,
+      "label": "CHI Blackhawks"
+    },
+    "description": "BUF Sabres vs CHI Blackhawks",
+    "parent": "p58558162",
+    "count": 171,
+    "path": {
+      "sport": {
+        "label": "Hockey Sur Glace"
+      },
+      "category": {
+        "label": "Etats-Unis"
+      },
+      "league": {
+        "label": "NHL"
+      }
+    },
+    "sportCode": "ICEH",
+    "eType": "G",
+    "conditionalBetEnabled": false,
+    "cashout": true,
+    "combiBoost": true,
+    "streamRef": "BET:72886438",
+    "tvChannel": null,
+    "descDisplay": "BUF Sabres - CHI Blackhawks",
+    "groupedMarkets": [
+      {
+        "id": 4267,
+        "cashout": false,
+        "description": "Nombre de Points - Joueur - Match (Hors TAB)",
+        "markets": [
+          {
+            "id": 194037384,
+            "description": "Nombre de Points - Tyler Bertuzzi",
+            "marketStyleTemplateId": 4267,
+            "marketTypeDisplayGroupIds": [
+              1141
+            ],
+            "cashout": false,
+            "conditionalBetEnabled": false,
+            "parent": "e3382967",
+            "period": "Match",
+            "pos": 999,
+            "style": "PROPOSITION",
+            "outcomes": [
+              {
+                "id": 723186090,
+                "description": "Tyler Bertuzzi 2+",
+                "parent": "m194037384",
+                "pos": 1,
+                "price": "3,90",
+                "conditionalBetEnabled": false,
+                "spread": 0,
+                "up": false,
+                "down": false,
+                "hidden": false,
+                "suspended": false,
+                "selected": false,
+                "eventId": 3382967,
+                "eventDesc": "BUF Sabres vs CHI Blackhawks",
+                "groupId": 4267,
+                "marketDesc": "Nombre de Points - Tyler Bertuzzi - Match",
+                "isMarketCashout": false,
+                "marketId": 194037384,
+                "isMulti": false
+              },
+              {
+                "id": 723186095,
+                "description": "Tyler Bertuzzi 3+",
+                "parent": "m194037384",
+                "pos": 2,
+                "price": "9,30",
+                "conditionalBetEnabled": false,
+                "spread": 0,
+                "up": false,
+                "down": false,
+                "hidden": false,
+                "suspended": false,
+                "selected": false,
+                "eventId": 3382967,
+                "eventDesc": "BUF Sabres vs CHI Blackhawks",
+                "groupId": 4267,
+                "marketDesc": "Nombre de Points - Tyler Bertuzzi - Match",
+                "isMarketCashout": false,
+                "marketId": 194037384,
+                "isMulti": false
+              },
+              {
+                "id": 723186093,
+                "description": "Tyler Bertuzzi 4+",
+                "parent": "m194037384",
+                "pos": 3,
+                "price": "24,00",
+                "conditionalBetEnabled": false,
+                "spread": 0,
+                "up": false,
+                "down": false,
+                "hidden": false,
+                "suspended": false,
+                "selected": false,
+                "eventId": 3382967,
+                "eventDesc": "BUF Sabres vs CHI Blackhawks",
+                "groupId": 4267,
+                "marketDesc": "Nombre de Points - Tyler Bertuzzi - Match",
+                "isMarketCashout": false,
+                "marketId": 194037384,
+                "isMulti": false
+              },
+              {
+                "id": 723186092,
+                "description": "Tyler Bertuzzi 1+",
+                "parent": "m194037384",
+                "pos": 4,
+                "price": "2,00",
+                "conditionalBetEnabled": false,
+                "spread": 0,
+                "up": false,
+                "down": false,
+                "hidden": false,
+                "suspended": false,
+                "selected": false,
+                "eventId": 3382967,
+                "eventDesc": "BUF Sabres vs CHI Blackhawks",
+                "groupId": 4267,
+                "marketDesc": "Nombre de Points - Tyler Bertuzzi - Match",
+                "isMarketCashout": false,
+                "marketId": 194037384,
+                "isMulti": false
+              }
+            ],
+            "suspended": false,
+            "eType": "G",
+            "marketTypeId": 994033135,
+            "periodId": 1191
+          }
+        ],
+        "template": "TEMPLATE_7",
+        "properties": {
+          "kind": "TEMPLATE_7",
+          "encaps": true,
+          "showColTitle": true,
+          "maxLines": 7,
+          "lines": {
+            "sort": {
+              "dir": "ASC",
+              "field": "price"
+            }
+          },
+          "columns": {
+            "sort": {
+              "dir": "ASC",
+              "field": "price"
+            }
+          },
+          "showName": "full"
+        },
+        "conditionalBetEnabled": false
+      }
+    ],
+    "start": "2610032300",
+    "lmt": {
+      "provider": "BR",
+      "id": "72886438"
+    },
+    "stats": {
+      "provider": "BR",
+      "id": "72886438"
+    },
+    "parsedStart": "2026-10-03T23:00:00.000Z",
+    "eventKind": "MAIN"
+  },
+  "matches": [
+    {
+      "id_match": 2026020022,
+      "date_match": "2026-10-03",
+      "saison": 20262027,
+      "id_equipe_domicile": "BUF",
+      "id_equipe_exterieur": "CHI",
+      "buts_domicile": "",
+      "buts_exterieur": "",
+      "status": "FUT",
+      "schedule_state": "OK",
+      "game_type": 2,
+      "start_time_utc": "2026-10-03T23:00:00Z"
+    }
+  ],
+  "roster": [
+    {
+      "id_joueur": 8484145,
+      "nom": "Zach Benson",
+      "position": "L",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8475842,
+      "nom": "Sam Carrick",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8479941,
+      "nom": "Justin Danforth",
+      "position": "R",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482659,
+      "nom": "Josh Doan",
+      "position": "R",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484797,
+      "nom": "Konsta Helenius",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482896,
+      "nom": "Tyson Kozak",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481522,
+      "nom": "Peyton Krebs",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483468,
+      "nom": "Jiri Kulich",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8479359,
+      "nom": "Beck Malenstyn",
+      "position": "L",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8480802,
+      "nom": "Ryan McLeod",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8480064,
+      "nom": "Josh Norris",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483500,
+      "nom": "Noah Ostlund",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482097,
+      "nom": "Jack Quinn",
+      "position": "R",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8479420,
+      "nom": "Tage Thompson",
+      "position": "C",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481806,
+      "nom": "Louis Crevier",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8480839,
+      "nom": "Rasmus Dahlin",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8476891,
+      "nom": "Matt Grzelcyk",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484305,
+      "nom": "Zach Metsa",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482671,
+      "nom": "Owen Power",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8480807,
+      "nom": "Mattias Samuelsson",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8479982,
+      "nom": "Conor Timmins",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482803,
+      "nom": "Olen Zellweger",
+      "position": "D",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481551,
+      "nom": "Colten Ellis",
+      "position": "G",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8480045,
+      "nom": "Ukko-Pekka Luukkonen",
+      "position": "G",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8479312,
+      "nom": "Alex Lyon",
+      "position": "G",
+      "id_equipe": "BUF",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484144,
+      "nom": "Connor Bedard",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8477479,
+      "nom": "Tyler Bertuzzi",
+      "position": "L",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8477987,
+      "nom": "Ryan Donato",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8485391,
+      "nom": "Anton Frondell",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483450,
+      "nom": "Ryan Greene",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8478413,
+      "nom": "Jordan Greenway",
+      "position": "L",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8474141,
+      "nom": "Patrick Kane",
+      "position": "R",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484390,
+      "nom": "Roman Kantserov",
+      "position": "R",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484185,
+      "nom": "Nick Lardis",
+      "position": "L",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8478233,
+      "nom": "Andrew Mangiapane",
+      "position": "L",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484197,
+      "nom": "Oliver Moore",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483493,
+      "nom": "Frank Nazar",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482062,
+      "nom": "Cole Smith",
+      "position": "R",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8476882,
+      "nom": "Teuvo Teravainen",
+      "position": "C",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481524,
+      "nom": "Bowen Byram",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8474013,
+      "nom": "Ian Cole",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482807,
+      "nom": "Ethan Del Mastro",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482176,
+      "nom": "Wyatt Kaiser",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483466,
+      "nom": "Kevin Korchinski",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8484783,
+      "nom": "Artyom Levshunov",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8483506,
+      "nom": "Sam Rinzel",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481568,
+      "nom": "Alex Vlasic",
+      "position": "D",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8481519,
+      "nom": "Spencer Knight",
+      "position": "G",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    },
+    {
+      "id_joueur": 8482821,
+      "nom": "Arvid Soderblom",
+      "position": "G",
+      "id_equipe": "CHI",
+      "saison": 20262027,
+      "source_priority": 1,
+      "observed_at": "2026-10-03T07:56:54.714816+00:00"
+    }
+  ]
+}

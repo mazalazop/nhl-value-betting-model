@@ -297,6 +297,9 @@ def build_match_row(game: Dict[str, Any], season: int) -> Optional[Dict[str, Any
         "buts_domicile": extract_score(game.get("homeTeam")),
         "buts_exterieur": extract_score(game.get("awayTeam")),
         "status": status,
+        "schedule_state": game.get("gameScheduleState"),
+        "game_type": game.get("gameType"),
+        "start_time_utc": game.get("startTimeUTC"),
     }
 
     if row["id_equipe_domicile"] is None or row["id_equipe_exterieur"] is None:
@@ -332,7 +335,7 @@ def collect_matches(
 
             for game in games:
                 row = build_match_row(game, season)
-                if row is not None:
+                if row is not None and row["game_type"] in {2, 3}:
                     all_rows.append(row)
 
             time.sleep(sleep_seconds)
@@ -357,7 +360,7 @@ def collect_matches(
         "id_equipe_exterieur",
         "buts_domicile",
         "buts_exterieur",
-        "status",
+        "status", "schedule_state", "game_type", "start_time_utc",
     ]
     df = df[required_cols].sort_values(["date_match", "id_match"]).reset_index(drop=True)
 
@@ -580,7 +583,10 @@ def collect_players_from_boxscores(
     sleep_seconds: float,
 ) -> pd.DataFrame:
     rows: List[Dict[str, Any]] = []
-    unique_games = matches_df[["id_match", "saison"]].drop_duplicates().reset_index(drop=True)
+    from henachel.data import final_mask
+    from henachel.nhl_cache import BoxscoreCache
+    cache = BoxscoreCache(get_raw_dir() / "boxscores", full_refresh=getattr(session, "henachel_full_refresh", False))
+    unique_games = matches_df.loc[final_mask(matches_df), ["id_match", "saison", "date_match"]].drop_duplicates().reset_index(drop=True)
 
     total_games = len(unique_games)
     print(f"[joueurs/boxscores] matchs à parcourir : {total_games}")
@@ -589,7 +595,7 @@ def collect_players_from_boxscores(
         game_id = int(row["id_match"])
         season = int(row["saison"])
 
-        payload = fetch_boxscore_with_fallback(session, game_id)
+        payload = cache.get(game_id, row["date_match"], lambda gid: fetch_boxscore_with_fallback(session, gid))
         rows.extend(parse_boxscore_players(payload, season=season))
 
         if (idx + 1) % 200 == 0 or (idx + 1) == total_games:
@@ -597,6 +603,7 @@ def collect_players_from_boxscores(
 
         time.sleep(sleep_seconds)
 
+    print(f"[boxscore cache] HTTP fetches={cache.fetches} hits={cache.hits}")
     if not rows:
         raise ValueError("Aucun joueur collecté via boxscores.")
 
@@ -677,13 +684,32 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Ne pas compléter joueurs.csv avec les boxscores.",
     )
+    parser.add_argument("--full-refresh", action="store_true", help="Recharger tous les boxscores finaux sans cache")
     return parser.parse_args()
+
+
+def refresh_current_rosters(session, matches_df, raw_dir):
+    from henachel.history import atomic_csv
+    now = pd.Timestamp.now(tz='UTC')
+    teams = sorted(set(matches_df.id_equipe_domicile) | set(matches_df.id_equipe_exterieur))
+    rows = []
+    for team in teams:
+        if team in {'ARI', 'PHX', 'PHO'}: continue
+        try:
+            payload = safe_json_get(session, f'{BASE_URL}/roster/{team}/current')
+            parsed = parse_roster_payload(payload, team, int(matches_df.saison.max()))
+            for row in parsed: row['observed_at'] = now.isoformat()
+            rows.extend(parsed)
+        except (requests.RequestException, ValueError) as exc:
+            print(f'[roster] unavailable {team}: {type(exc).__name__}')
+    atomic_csv(pd.DataFrame(rows, columns=['id_joueur','nom','position','id_equipe','saison','source_priority','observed_at']), raw_dir / 'roster_current.csv')
 
 
 def main() -> None:
     args = parse_args()
     raw_dir = get_raw_dir()
     session = build_session()
+    session.henachel_full_refresh = args.full_refresh
 
     print("=== 00_refresh_sources.py ===")
     print(f"Repo root : {get_repo_root()}")
@@ -708,6 +734,7 @@ def main() -> None:
 
     matches_path = raw_dir / "matchs.csv"
     save_csv(matches_df, matches_path)
+    refresh_current_rosters(session, matches_df, raw_dir)
 
     print("")
     print(f"[matchs] nb lignes : {len(matches_df)}")

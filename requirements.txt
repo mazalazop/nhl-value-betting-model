@@ -1,0 +1,8 @@
+# Tested on Python 3.11.9; complete resolved environment: requirements.lock
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+scikit-learn==1.5.2
+requests==2.32.3
+gspread==6.1.4
+google-auth==2.35.0
