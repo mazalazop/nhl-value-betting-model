@@ -36,3 +36,46 @@ def test_successful_http_is_cached_and_failed_http_is_not(tmp_path,monkeypatch):
     response.raise_for_status.side_effect=m.requests.HTTPError('failed')
     with pytest.raises(m.requests.HTTPError):cache.get('https://example.test/failure')
     assert len(list(cache.root.glob('*.gz')))==1
+
+
+def schedule_game(**overrides):
+    game=dict(id=2022020001,season=20222023,gameType=2,gameDate='2022-10-07',
+              gameState='OFF',
+              homeTeam={'abbrev':'NSH','score':4},
+              awayTeam={'abbrev':'SJS','score':1},
+              venue={'default':'O2 Arena'},
+              tvBroadcasts=[{'network':'A'}])
+    game.update(overrides)
+    return game
+
+def test_schedule_duplicates_ignore_noncanonical_metadata_and_final_alias():
+    games={}
+    first=schedule_game()
+    second=schedule_game(gameState='FINAL',venue={'default':'Different label'},
+                         tvBroadcasts=[{'network':'B'}],gameCenterLink='/different')
+    m.merge_schedule_game(games,first,20222023)
+    m.merge_schedule_game(games,second,20222023)
+    assert list(games)==[2022020001]
+    assert games[2022020001]=={
+        'id':2022020001,'season':20222023,'gameType':2,'gameDate':'2022-10-07',
+        'gameState':'FINAL',
+        'homeTeam':{'abbrev':'NSH','score':4},
+        'awayTeam':{'abbrev':'SJS','score':1},
+    }
+
+def test_schedule_duplicates_reject_real_game_contract_conflicts():
+    for conflicting in [
+        schedule_game(gameDate='2022-10-08'),
+        schedule_game(homeTeam={'abbrev':'NSH','score':5}),
+        schedule_game(awayTeam={'abbrev':'SEA','score':1}),
+    ]:
+        games={}
+        m.merge_schedule_game(games,schedule_game(),20222023)
+        with pytest.raises(ValueError,match='Conflicting canonical schedule game'):
+            m.merge_schedule_game(games,conflicting,20222023)
+
+def test_schedule_contract_rejects_nonfinal_or_missing_score():
+    with pytest.raises(ValueError,match='Non-final'):
+        m.canonical_schedule_game(schedule_game(gameState='FUT'),20222023)
+    with pytest.raises(ValueError,match='final score'):
+        m.canonical_schedule_game(schedule_game(homeTeam={'abbrev':'NSH'}),20222023)
