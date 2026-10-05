@@ -63,6 +63,41 @@ def validate_stats(rows,name,season):
             if r[c] is not None and (not pd.notna(r[c]) or r[c]<0):raise ValueError('Invalid ice time')
     return keys
 
+def canonical_schedule_game(game, season):
+    """Keep only schedule fields required by research and normalize final-state aliases.
+
+    Club schedule endpoints may expose harmless team-relative metadata differences for
+    the same game. Equality must therefore be checked on the canonical game contract,
+    not on the complete JSON object.
+    """
+    required={'id','season','gameType','gameDate','gameState','homeTeam','awayTeam'}
+    missing=required-set(game)
+    if missing:raise ValueError(f'Schedule game missing fields {sorted(missing)}')
+    if game['season']!=season or game['gameType']!=2:raise ValueError('Wrong-season schedule game')
+    if game['gameState'] not in ['OFF','FINAL']:raise ValueError('Non-final schedule game')
+    pd.Timestamp(game['gameDate'])
+    try:
+        home=game['homeTeam']['abbrev'];away=game['awayTeam']['abbrev']
+        home_score=game['homeTeam']['score'];away_score=game['awayTeam']['score']
+    except (KeyError,TypeError):
+        raise ValueError('Schedule game missing team identity or final score')
+    if not home or not away or home==away:raise ValueError('Invalid schedule teams')
+    for score in [home_score,away_score]:
+        if score is None or isinstance(score,bool) or not isinstance(score,(int,float)) or score<0 or int(score)!=score:
+            raise ValueError('Invalid final schedule score')
+    return dict(id=int(game['id']),season=int(game['season']),gameType=2,
+                gameDate=str(game['gameDate']),gameState='FINAL',
+                homeTeam={'abbrev':str(home),'score':int(home_score)},
+                awayTeam={'abbrev':str(away),'score':int(away_score)})
+
+def merge_schedule_game(games, game, season):
+    canonical=canonical_schedule_game(game,season)
+    existing=games.get(canonical['id'])
+    if existing is not None and existing!=canonical:
+        raise ValueError(f"Conflicting canonical schedule game {canonical['id']}: {existing} != {canonical}")
+    games[canonical['id']]=canonical
+    return canonical
+
 def probe(cache):
     results=[]
     for season in SEASONS:
@@ -94,9 +129,7 @@ def collect(cache,out):
             p=cache.get(f'{WEB}/club-schedule-season/{team}/{season}')
             for g in p['games']:
                 if g['gameType']!=2:continue
-                if g['season']!=season or g['gameState'] not in ['OFF','FINAL']:raise ValueError('Non-final or wrong-season schedule')
-                if g['id'] in games and games[g['id']]!=g:raise ValueError('Inconsistent schedule copies')
-                games[g['id']]=g
+                merge_schedule_game(games,g,season)
         if len(games)!=1312:raise ValueError(f'Incomplete regular season schedule: {season}, {len(games)}')
         dates=sorted(g['gameDate'] for g in games.values());start=date.fromisoformat(dates[0]);last=date.fromisoformat(dates[-1]);stats=[];pp=[]
         while start<=last:
