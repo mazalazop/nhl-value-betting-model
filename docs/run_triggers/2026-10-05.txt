@@ -1,0 +1,2 @@
+Operational trigger for validated Henachel POINT run on NHL gameDate 2026-10-05.
+No model or pipeline logic changed.
