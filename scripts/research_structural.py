@@ -20,7 +20,7 @@ from henachel.evaluation import metrics, reliability_bins
 from henachel.goal_experiment import paired_comparison
 from henachel.manifest import manifest
 from research_goal_temporal import augment_research_features
-from structural_features import structural_features
+from structural_features import structural_features, season_ids
 
 PROTOCOL=ROOT/'docs/structural_20261012/protocol.json'
 # The preregistration is immutable, independent of subsequent runner commits.
@@ -47,19 +47,38 @@ def labels(frame,target):
     return values.ge(1).astype(int)
 
 
+def source_season_alias(raw):
+    raw=raw.copy();season=season_ids(raw.season_source)
+    if 'saison' in raw and not season_ids(raw.saison).eq(season).all():raise ValueError('Conflicting source season aliases')
+    raw['saison']=season
+    return raw
+
+
 def prepare(history,context,standings_path,output):
     p=protocol()
     for path in [history,context]:
         if digest(path)!=p['inputs'].get(str(path)):raise ValueError('Preregistered input mismatch')
     if output.exists():raise FileExistsError(output)
-    raw=pd.read_csv(history,low_memory=False);ctx=pd.read_csv(context)
+    raw=source_season_alias(pd.read_csv(history,low_memory=False));ctx=pd.read_csv(context)
     validate_player_games(raw)
     if not final_mask(raw).all() or not raw.game_type.eq(2).all():raise ValueError('Invalid research universe')
     standings,info=charger_standings(standings_path)
     if standings is None:raise ValueError('POINT standings required')
-    print('Building production historical features',flush=True)
-    base=build_feature_frame(raw,standings)
-    base=base.merge(raw[['id_match','id_joueur','game_type']],on=['id_match','id_joueur'],validate='one_to_one')
+    output.parent.mkdir(parents=True,exist_ok=True)
+    base_cache=output.with_name('production_features_cache.csv.gz')
+    cache_meta=base_cache.with_suffix('.json')
+    inputs={str(f):digest(f) for f in [history,standings_path,ROOT/'model/henachel/features.py']}
+    if base_cache.exists() and cache_meta.exists():
+        saved=json.loads(cache_meta.read_text())
+        if saved['inputs']!=inputs or saved['sha256']!=digest(base_cache):raise ValueError('Production feature cache mismatch')
+        base=pd.read_csv(base_cache,parse_dates=['date_match'],dtype={'season_source':str},low_memory=False)
+        print('Reusing production historical features',flush=True)
+    else:
+        print('Building production historical features',flush=True)
+        base=build_feature_frame(raw,standings)
+        base=base.merge(raw[['id_match','id_joueur','game_type']],on=['id_match','id_joueur'],validate='one_to_one')
+        base.to_csv(base_cache,index=False)
+        write(cache_meta,dict(inputs=inputs,sha256=digest(base_cache)))
     if len(base)!=len(raw):raise ValueError('Silent row filtering')
     goal=augment_goal_features(base);derived=augment_research_features(goal)
     print('Building structural features',flush=True)

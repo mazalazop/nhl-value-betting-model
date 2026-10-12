@@ -47,3 +47,12 @@ def test_future_labels_cannot_change_fit_or_calibration(target):
 def test_invalid_target_rejected_without_filtering():
     frame=fixture('POINT');frame.loc[0,'points']=-1
     with pytest.raises(ValueError,match='Invalid POINT'):r.fit(frame,'2023-03-01',r.protocol()['baselines']['POINT'],'POINT')
+
+
+def test_official_source_season_alias_required_by_point_baseline():
+    raw=pd.DataFrame({'season_source':['20222023','20232024']})
+    result=r.source_season_alias(raw)
+    assert result.saison.tolist()==[20222023,20232024]
+    assert 'saison' not in raw
+    result.loc[0,'saison']=20232024
+    with pytest.raises(ValueError,match='Conflicting'):r.source_season_alias(result)
