@@ -19,6 +19,11 @@ from henachel.goal_experiment import paired_comparison
 from henachel.manifest import manifest
 
 
+CLOSURE_REPORT=Path(__file__).resolve().parents[1]/'docs/research_20261005/final_result.json'
+
+def ensure_not_closed():
+    if CLOSURE_REPORT.exists():raise ValueError('Study 201e6ff closed; reserved block permanently consumed')
+
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def save(path,data):
     with Path(path).open('x') as f:json.dump(data,f,indent=2,default=str,allow_nan=False)
@@ -30,6 +35,7 @@ def choose(report):
     return min(eligible,key=lambda n:(report['reports'][n]['metrics']['logloss'],n)) if eligible else 'baseline'
 
 def lock(features,development,output):
+    ensure_not_closed()
     if output.exists():raise FileExistsError('Candidate lock directory exists')
     report=json.loads((development/'summary.json').read_text());name=choose(report)
     source_report=json.loads(features.with_suffix('.report.json').read_text())
@@ -61,6 +67,7 @@ def reserve_once(output):
     save(output/'HOLDOUT_OPENED.json',{'opened_at':datetime.now(timezone.utc).isoformat(),'retry_policy':'No new tuning or automatic rerun; preserve any partial outputs.'})
 
 def evaluate(source,output):
+    ensure_not_closed()
     locked=json.loads((output/'candidate_locked.json').read_text())
     if locked['protocol']!=r.frozen_protocol() or locked['protocol_sha256']!=sha(r.PROTOCOL_PATH):raise ValueError('Changed protocol')
     if sha(output/'locked_models.joblib')!=locked['model_sha256']:raise ValueError('Changed locked model')

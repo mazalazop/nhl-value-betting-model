@@ -20,3 +20,12 @@ def test_holdout_marker_created_exclusively(tmp_path):
     before=(tmp_path/'HOLDOUT_OPENED.json').read_bytes()
     with pytest.raises(FileExistsError):h.reserve_once(tmp_path)
     assert (tmp_path/'HOLDOUT_OPENED.json').read_bytes()==before
+
+
+def test_versioned_closure_blocks_other_output_directories(tmp_path,monkeypatch):
+    closure=tmp_path/'closed.json';closure.write_text('{}')
+    monkeypatch.setattr(h,'CLOSURE_REPORT',closure)
+    with pytest.raises(ValueError,match='permanently consumed'):
+        h.evaluate(tmp_path/'unread-source.csv',tmp_path/'different-output')
+    with pytest.raises(ValueError,match='permanently consumed'):
+        h.lock(tmp_path/'unread-features.csv',tmp_path/'dev',tmp_path/'different-lock')

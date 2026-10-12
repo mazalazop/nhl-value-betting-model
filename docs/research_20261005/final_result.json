@@ -1,0 +1,347 @@
+{
+  "status": "closed",
+  "candidate": "congestion",
+  "production_approved": false,
+  "holdout_consumed": true,
+  "rows": 19147,
+  "games": 532,
+  "players": 821,
+  "dates": 74,
+  "start": "2024-02-05 00:00:00",
+  "end": "2024-04-18 00:00:00",
+  "metrics": {
+    "baseline": {
+      "metrics": {
+        "rows": 19147,
+        "brier": 0.1197124732816187,
+        "logloss": 0.39248274159974705,
+        "auc": 0.6996639899136671,
+        "avg_precision": 0.2782702770528613,
+        "precision_top_10pct": 0.3383812010443864,
+        "lift_top_10pct": 2.244970497712012,
+        "positive_rate": 0.150728573666893
+      },
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 6768,
+          "mean_probability": 0.06501250506210185,
+          "observed_rate": 0.0625
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 7319,
+          "mean_probability": 0.14663841699160876,
+          "observed_rate": 0.13949993168465638
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 4063,
+          "mean_probability": 0.24365966275502288,
+          "observed_rate": 0.2670440561161703
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 961,
+          "mean_probability": 0.3267099299810844,
+          "observed_rate": 0.3558792924037461
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 36,
+          "mean_probability": 0.42603289245395465,
+          "observed_rate": 0.4166666666666667
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "ece": 0.010060632990272739
+    },
+    "congestion": {
+      "metrics": {
+        "rows": 19147,
+        "brier": 0.11961085395119404,
+        "logloss": 0.3920252372792226,
+        "auc": 0.7008324190846791,
+        "avg_precision": 0.28020334981568684,
+        "precision_top_10pct": 0.3373368146214099,
+        "lift_top_10pct": 2.2380415764227775,
+        "positive_rate": 0.150728573666893
+      },
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 6775,
+          "mean_probability": 0.06455004302093278,
+          "observed_rate": 0.06287822878228783
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 7278,
+          "mean_probability": 0.14706878065120346,
+          "observed_rate": 0.1386369881835669
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 4099,
+          "mean_probability": 0.24393132778750312,
+          "observed_rate": 0.2661624786533301
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 952,
+          "mean_probability": 0.3242040423387539,
+          "observed_rate": 0.3581932773109244
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 43,
+          "mean_probability": 0.42346937230243514,
+          "observed_rate": 0.4418604651162791
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "ece": 0.010287104148420372
+    },
+    "player_smoothed_baseline": {
+      "metrics": {
+        "rows": 19147,
+        "brier": 0.11947894102635065,
+        "logloss": 0.39275428691595754,
+        "auc": 0.697023429696697,
+        "avg_precision": 0.2849373053822985,
+        "precision_top_10pct": 0.3467362924281984,
+        "lift_top_10pct": 2.300401868025889,
+        "positive_rate": 0.150728573666893
+      },
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 6207,
+          "mean_probability": 0.06647360698272232,
+          "observed_rate": 0.06363782825841792
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 7684,
+          "mean_probability": 0.1444546740546394,
+          "observed_rate": 0.13222280062467465
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 3724,
+          "mean_probability": 0.24443622788046268,
+          "observed_rate": 0.25
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 1258,
+          "mean_probability": 0.33828275249699136,
+          "observed_rate": 0.3394276629570747
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 259,
+          "mean_probability": 0.4392478750770144,
+          "observed_rate": 0.42857142857142855
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 15,
+          "mean_probability": 0.5113693137430224,
+          "observed_rate": 0.4
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "ece": 0.007217157677998674
+    }
+  },
+  "comparisons": {
+    "baseline": {
+      "delta_logloss": -0.0004575043205244683,
+      "delta_brier": -0.00010161933042467507,
+      "ci_lower": -0.0007938550881252899,
+      "ci_upper": -0.00015506682110420265,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.0004575043205244683,
+          "delta_brier": -0.00010161933042467507
+        }
+      ],
+      "passes": true
+    },
+    "player_smoothed_baseline": {
+      "delta_logloss": -0.0007290496367350001,
+      "delta_brier": 0.00013191292484339794,
+      "ci_lower": -0.0024014082903905005,
+      "ci_upper": 0.0009091516837325195,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.0007290496367350001,
+          "delta_brier": 0.00013191292484339794
+        }
+      ],
+      "passes": false
+    }
+  },
+  "limitation": "Historical retrospective block; confirmation prospective still required. No post-holdout tuning.",
+  "manifest": {
+    "commit": "4ef1ec84d7ac7dcebd1c28c3e9c83f8f0bd43316",
+    "tracked_worktree_dirty": false,
+    "created_at_utc": "2026-10-12T06:07:54.297300+00:00",
+    "python": "3.11.9",
+    "platform": "macOS-12.7.6-x86_64-i386-64bit",
+    "dependencies": {
+      "numpy": "1.26.4",
+      "pandas": "2.2.3",
+      "scikit-learn": "1.5.2",
+      "scipy": "1.14.1",
+      "requests": "2.32.3",
+      "gspread": "6.1.4",
+      "google-auth": "2.35.0",
+      "joblib": "1.6.0"
+    },
+    "parameters": {
+      "loss": "log_loss",
+      "learning_rate": 0.05,
+      "max_iter": 300,
+      "max_depth": 4,
+      "min_samples_leaf": 50,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "sources": [
+      {
+        "path": "outputs/research_20261005/history/historical_source.csv.gz",
+        "available": true,
+        "sha256": "8ff6fb57939bc38fc9878bdedae876da591ed5b96882820845980b8491e1d7f0",
+        "bytes": 2239607
+      },
+      {
+        "path": "outputs/research_20261005/confirmation/candidate_locked.json",
+        "available": true,
+        "sha256": "a89fc75c808a031a99f292b7d8b283414222041fa094b88d272b44a1cae56ed3",
+        "bytes": 46591
+      },
+      {
+        "path": "/Users/captain.morgan/Documents/Henachel-Astra-Audit/scripts/close_research_goal_study.py",
+        "available": true,
+        "sha256": "695f9fd5c3da2b701e5a283ac97c2ff5aaaa9035da60efdc6e0e2d6a084c762c",
+        "bytes": 7689
+      }
+    ]
+  }
+}
