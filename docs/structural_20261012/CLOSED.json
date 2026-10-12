@@ -1,0 +1,40 @@
+{
+  "status": "development study closed; no eligible structural candidate",
+  "closed_at_utc": "2026-10-12T16:39:21.555620+00:00",
+  "protocol_sha256": "1b45f8b5e5b6b25b0bf953e9254d9b897de0f4dbfab4257f83692b56a8fe26fc",
+  "preregistration_commit": "4554df1",
+  "preparation_commit": "b49037e",
+  "experiments": {
+    "point": {
+      "hgb_fits_completed": 24,
+      "candidate": null,
+      "result_sha256": "dc01efd1024982a36d178d416a0fd1842ed88421865d34eee27dd9fd55ace6fe",
+      "oof_rows": 42186,
+      "dates": 161,
+      "players": 915
+    },
+    "goal": {
+      "hgb_fits_completed": 28,
+      "candidate": null,
+      "result_sha256": "fc4cc0afd3ca07e208d24f3cacb458d982073c44a26f89035c8452d305bcb5f4",
+      "oof_rows": 42186,
+      "dates": 161,
+      "players": 915
+    }
+  },
+  "total_hgb_fits": 52,
+  "tests": "293 passed; pytest -q -W error",
+  "production_point": "unchanged on main; depth 4",
+  "goal_status": "research only / not production approved",
+  "prospective_candidate_locked": false,
+  "independent_confirmation": false,
+  "selection_changed_after_results": false,
+  "pp1_used": false,
+  "limitations": [
+    "Two source seasons, one evaluation season; no N-2.",
+    "N-1 structural columns absent from first fold fit; excluded train-only.",
+    "Recent-form and role are blocks; no individual-feature causality or deletion supported.",
+    "No independent final confirmation and no historical-odds ROI.",
+    "Per-fold reliability bins retained; calibration-selection diagnostics for folds 0-2 were overwritten by those bins in metadata. Common auto-calibration code and predictions preserved; final-fold calibrators serialized. No fits repeated to reconstruct diagnostics."
+  ]
+}
