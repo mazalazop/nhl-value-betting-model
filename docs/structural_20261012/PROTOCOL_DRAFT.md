@@ -1,44 +1,35 @@
-# Étude structurelle POINT / BUT — cadrage distinct
+# Protocole structurel figé — POINT et BUT
 
-Statut : **préparation, pas encore préenregistrée pour exécution**. Aucun fit ni score structurel. Branche `research/structural-20261012`, après clôture de l'étude 201e6ff au commit `a99576f`. Ce document ne modifie pas le protocole de cette étude close.
+Le nom du fichier est conservé pour les liens ; **ce protocole est désormais préenregistré**, avant tout fit structurel. `protocol.json` est la spécification des listes exactes, inputs hashés, paramètres, folds et critères. Aucun changement de production.
 
-## Contraintes et sources vérifiées
+## Population et budget
 
-- POINT profondeur 4 / 81 features reste la référence de production. BUT GOAL17 est la référence de recherche ; C19 sert de comparaison secondaire, sans statut production.
-- Holdouts 2024-02-01–2024-04-19 et ancien bloc BUT à partir du 2026-03-29 consommés. Aucun résultat de ces blocs ne peut guider une nouvelle sélection, calibration ou réglage. Pas de réouverture pour expliquer l'échec face au benchmark.
-- Données 2022-23 et 2023-24 : 94 429 participations régulières. Le nouveau contexte officiel comprend 5 248 lignes équipe/match, couvrant PP, PK et pénalités sans valeurs manquantes. [Contrats](source_contracts.json), [couverture/hash](team_context_coverage.json). Six rapports saisonniers ont suffi ; cache compressé réutilisable.
-- Les rosters saisonniers sont rétrospectifs. **PP1 historique indisponible** : aucune assimilation PP TOI élevé = PP1. Un futur signal PP1 actuel doit avoir sa propre source, date d'observation, preuve d'identité et fraîcheur ; il reste exclu des fits historiques sans archive.
-- Aucun pari, aucun changement de sélection ou de publication. Pas de ROI sans cotes historiques fiables.
+2022-23 + 2023-24, saison régulière, toutes les participations sans filtrage selon disponibilité. 2022-23 fournit le premier historique ; N−1 manque sur cette saison d'entraînement, reste NaN. N−2 est indisponible, donc exclu. Quatre fenêtres de développement 2023-24, définies dans le JSON. Les anciens holdouts déjà consommés sont explicitement du développement, **jamais une confirmation indépendante**. Pas de saison supplémentaire ni de tuning.
 
-## Hypothèses à figer avant calcul
+52 fits HGB depth4 au maximum : V0–V5 × 4 folds × POINT/BUT, plus C19 × 4 folds. Pas d'arrêt anticipé ni de combinaison a posteriori. Baselines sauvegardées une seule fois. Modèle/calibration entraînés seulement avant le fold ; 85 % des dates passées pour fit, 15 % pour calibration temporelle commune. Features constantes sélectionnées sur fit seulement ; NaN laissés au HGB.
 
-H : niveau historique. Exposer séparément N−1 complet, N−2 si disponible, saison courante strictement antérieure : fréquence 1+, production/match, production/60, tirs/60, effectifs/expositions. Ne pas imposer un poids supérieur à N−1 parce que cela paraît logique. Estimer le shrinkage sur le train uniquement ; préciser formule, estimateur et profondeur minimale avant fit. Les saisons manquantes restent inconnues, jamais zéro. Ne pas présenter une saison partielle comme complète.
+## Définitions avant résultats
 
-R : rôle et contexte. TOI et PP TOI réellement observés avant match, part du PP équipe (temps individuels/temps PP équipe, pas somme des joueurs divisée arbitrairement par cinq), couverture, évolution d'usage, absence et changement d'équipe dont l'identité pré-match est établie. PP équipe : `ppOpportunities`, `powerPlayGoalsFor`, `ppTimeOnIcePerGame`. PK adverse : `timesShorthanded`, `ppGoalsAgainst`. Pénalités : `penalties`, `totalPenaltiesDrawn`, taux officiels/60. Les pénalités et PIM ne sont pas identiques au nombre d'opportunités PP.
+H : pour points, buts, tirs et indicateurs 1+, moyennes N−1 complet et saison courante strictement antérieure. Exposer les deux mélanges `(somme_courante + k*moyenne_N−1)/(n_courant+k)`, k=10 et k=30, sans sélectionner k après résultats. Ce sont deux hypothèses de pseudo-exposition, pas des poids estimés ni une vérité hockey. Si N−1 inconnu, mélange inconnu ; la moyenne courante reste séparément disponible. Compteurs de matchs, domicile, production/60 = 60 × somme production / somme minutes, uniquement sur observations appariées connues. Aucune imputation zéro.
 
-Estimer les opportunités PP attendues avec des données strictement antérieures, sur le train uniquement. Une valeur prédite doit être désignée comme estimation, jamais comme opportunités réelles futures. Une seule interaction supplémentaire : exposition PP joueur × opportunités attendues. Aucun produit combinatoire automatique.
+R : moyennes TOI et PP N−1/courantes, usage/tirs récents 5/10, écart 5–10 TOI/PP et écart-type PP10 (min5). Part PP = somme minutes PP joueur / somme minutes PP équipe sur participations appariées connues ; temps équipe officiel en secondes converti en minutes. Ce ratio n'est PAS PP1. Repos, back-to-back, calendrier/transfert observé identiques aux fonctions existantes. Présence future d'un joueur en équipe exige une preuve roster, jamais un roster rétrospectif présenté comme pré-match.
 
-F5 / F10 : production récente sur cinq ou dix matchs. Les dissocier de l'usage récent dans R. Drought relatif conservé comme hypothèse, sans loi de retour à la moyenne forcée, sans règle « une série doit s'arrêter ».
+F : résultats 5/10 et streaks/drought existants ; plus `(5*moyenne5+10*moyenne_N−1)/15` et `moyenne5−moyenne_N−1` pour points/buts. La pseudo-exposition 5 doit être remplacée par le nombre réel de résultats connus parmi les cinq derniers matchs lorsqu'il est inférieur à cinq. Les poids sont fixés avant test, inconnus préservés. Le contraste V3−V1 et V4−V2 mesure conjointement la forme 5/10 ; il ne permet PAS de conclure séparément sur chaque fenêtre ni chaque feature.
 
-Comparer séparément pour chaque cible : référence actuelle, H, H+R, H+F5, H+F10, H+R+F5, H+R+F10. Même univers, mêmes dates et même profondeur historique pour toutes les variantes. Le gain lié à l'ajout de saisons n'est pas un gain de feature. Pas de recherche d'architecture/hyperparamètres simultanée.
+S : moyennes cumulées saisonnières antérieures équipe PP opportunities/penalties drawn et adversaire penalties taken/times shorthanded ; efficacité PP = buts PP/opportunités, PK = 1−buts PP concédés/désavantages. Dénominateur nul = inconnu. Expected PP = moyenne arithmétique des taux PP équipe et désavantages adverses, deux taux obligatoires, minimum cinq matchs connus chacun. C'est une estimation non apprise, pas un événement futur réel. Une interaction : part PP courante joueur × expected PP. Aucun faux PP1, aucune assimilation pénalités/opportunités.
 
-## Conditions avant préenregistrement exécutable
+Toutes les statistiques sont strictement antérieures au jour du match ; aucune autre rencontre du même jour n'est utilisable. Les consommateurs futurs appellent les mêmes fonctions avec résultats masqués. Les données manquantes sont conservées ; nombre et taux de couverture sont rapportés.
 
-1. Fixer les inputs hashés et les saisons nécessaires pour N−1/N−2, sans utiliser les blocs consommés pour sélectionner. Les deux saisons supplémentaires seules ne donnent pas deux saisons antérieures complètes à chaque ligne de développement. Compléter le warm-up, ou déclarer les insuffisances explicitement avant définir les fenêtres.
-2. Vérifier la couverture du contexte utilisé par la référence POINT, notamment standings. Ne pas comparer un POINT artificiellement privé de contexte à une variante enrichie.
-3. Fixer listes exactes, formules, shrinkage train-only, folds, population, seuil de gain utile, correction des comparaisons multiples et méthode bootstrap avant toute métrique structurelle. Le document actuel est un cadrage, pas une autorisation de tuning.
-4. Réserver un nouveau bloc **prospectif** avec dates/échéance et règle d'arrêt fixes avant ses premières prédictions. Aucun ancien holdout ne redevient neuf. La taille doit tenir compte des dépendances par date/match ; une petite différence peut demander plusieurs saisons (voir planification précédente).
-5. Tester shift, invariance aux résultats courants/futurs, parité et missing vs zéro. Les données équipe de ce dossier sont des résultats bruts : elles ne sont jamais des features du match courant.
-6. Mesurer log loss/Brier, IC corrigés, calibration, AP/AUC/top décile, stabilité saison/fold. Promotion seulement après résultat indépendant favorable et référence forte battue ; production inchangée sinon.
+## Comparaisons et garde-fous
 
-## Ordre suivant
+V0 = POINT81 production ou GOAL17. V1 H, V2 H+R, V3 H+F, V4 H+R+F, V5 H+R+F+S. Les contrastes évaluent des blocs, pas une causalité ni une importance individuelle. V5 ne sépare pas le gain des pénalités de celui des autres special teams.
 
-Manifest/warm-up et protocole exécutable → tests temporels → POINT structurel → BUT structurel séparé → confirmation prospective. Value/PP1 opérationnel et défenseurs restent conditionnés à la validation probabiliste. Le top10/top5 est un plafond, jamais un quota de paris.
+**Condition bloquante POINT** : obtenir les snapshots standings officiels J−1 via la fonction de normalisation production, vérifier date API/saison/identités. Ne pas tester une baseline privée silencieusement de ses standings. Les dates historiquement sans snapshot restent inconnues selon le contrat production, avec couverture explicite ; des réponses réseau défaillantes ne sont pas des absences métier. Si la source est indisponible, suspendre POINT sans modifier le protocole.
 
-Reprise des sources (les outputs existants ne sont pas écrasés) :
+LL/Brier/AUC/AP/ECE, reliability bins, top décile, effectifs/dates/joueurs et diagnostics F/D. IC apparié bootstrap blocs de sept dates, 10 000 réplications seed20261004 ; correction dix comparaisons principales (5 par cible). Gain LL >=0,0005, Brier amélioré, les quatre folds favorables en LL/Brier, borne supérieure IC corrigé <0 et ECE ne se dégrade pas de plus de0,005. BUT doit également satisfaire les comparaisons face à C19 et joueur lissé (même correction conservatrice). Benchmark joueur : `(hits_saison_pre+10*prévalence_train)/(matchs_saison_pre+10)`. Aucun ROI sans cotes fiables.
 
-```bash
-.venv/bin/python -m pytest tests/test_structural_team_context.py -q -W error
-# Rapports déjà collectés : ne pas relancer sans nécessité.
-# scripts/collect_structural_team_context.py --history <source.csv.gz> --output <dossier neuf>
-```
+## Confirmation prospective et PP1
+
+Aucun résultat historique de cette étude n'autorise une promotion. Candidat éventuellement retenu verrouillé avant 2026-11-01 UTC ; validation fixe du 2026-11-01 au 2027-04-19 inclus. Au moins90dates/20000participations ; sinon non concluant, sans allonger après consultation. Prédictions archivées avant début réel, modèle/calibrateur/features/code hashés et immuables. Une seule ouverture finale ; mêmes observations pour benchmarks. Pas de retuning ni lecture intermédiaire pour sélection. La préparation du mécanisme ne prouve pas sa collecte effective.
+
+PP1 prospectif reste séparé : source identifiable, horodatage source et collecte UTC, match/date, équipe/joueur NHL, unité explicitement observée ; absence UNKNOWN jamais PP2. Faute de source vérifiée, seul le contrat est documenté. Aucun filtre de pari modifié, aucun modèle défenseur créé.
