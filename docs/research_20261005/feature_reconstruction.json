@@ -1,0 +1,38 @@
+{
+  "source_sha256": "8ff6fb57939bc38fc9878bdedae876da591ed5b96882820845980b8491e1d7f0",
+  "rows": 75282,
+  "players": 1049,
+  "dates": 287,
+  "start": "2022-10-07 00:00:00",
+  "end": "2024-01-31 00:00:00",
+  "parity": [
+    {
+      "date": "2022-10-07 00:00:00",
+      "rows": 36,
+      "features": 23,
+      "divergences": 0
+    },
+    {
+      "date": "2023-01-01 00:00:00",
+      "rows": 180,
+      "features": 23,
+      "divergences": 0
+    },
+    {
+      "date": "2023-10-10 00:00:00",
+      "rows": 108,
+      "features": 23,
+      "divergences": 0
+    },
+    {
+      "date": "2024-01-15 00:00:00",
+      "rows": 360,
+      "features": 23,
+      "divergences": 0
+    }
+  ],
+  "holdout_used": false,
+  "standings_used": false,
+  "standings_note": "No baseline GOAL17 or registered feature uses standings; no POINT evaluation claimed.",
+  "features_sha256": "10694a6ae8ea59b14997559088df6144c658f851d171805f3d230c02d429ff02"
+}
