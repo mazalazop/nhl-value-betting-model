@@ -42,10 +42,10 @@ def test_artifact_modification_detected(tmp_path):
 
 
 def test_snapshot_rerun_idempotent_and_no_overwrite(tmp_path):
-    path=locked(tmp_path);data=rows();dest=tmp_path/'snapshots';out=s.archive_predictions(path,data,dest)
-    assert s.archive_predictions(path,data,dest)==out and len(list(dest.iterdir()))==1
+    path=locked(tmp_path);data=rows();dest=tmp_path/'snapshots';out=s.archive_predictions(path,data,dest,now='2026-11-02T13:00:00Z')
+    assert s.archive_predictions(path,data,dest,now='2026-11-02T13:00:00Z')==out and len(list(dest.iterdir()))==1
     data.loc[0,'probability']=.9
-    with pytest.raises(ValueError,match='replace'):s.archive_predictions(path,data,dest)
+    with pytest.raises(ValueError,match='replace'):s.archive_predictions(path,data,dest,now='2026-11-02T13:00:00Z')
 
 
 @pytest.mark.parametrize('field,value',[('collected_at_utc','2026-11-03T00:00:00Z'),('collected_at_utc',None),('probability',float('nan')),('date_match','2024-02-01')])
@@ -59,3 +59,9 @@ def test_prospective_not_opened_early_or_reopened(tmp_path):
     with pytest.raises(ValueError,match='not closed'):s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-19T00:00:00Z')
     s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-20T00:00:00Z')
     with pytest.raises(FileExistsError):s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-20T00:00:00Z')
+
+
+def test_cannot_backdate_archive_after_game(tmp_path):
+    path=locked(tmp_path)
+    with pytest.raises(ValueError,match='actual puck drop'):
+        s.archive_predictions(path,rows(),tmp_path/'snapshots',now='2026-11-04T00:00:00Z')

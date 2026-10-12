@@ -28,11 +28,14 @@ def read_lock(path):
     return lock
 
 
-def archive_predictions(lock_path, rows, destination):
+def archive_predictions(lock_path, rows, destination, now=None):
     lock=read_lock(lock_path);rows=rows.copy()
     required=['id_match','id_joueur','date_match','event_start_utc','collected_at_utc','probability','baseline_probability','player_smoothed_probability']
     if set(required)-set(rows) or rows.empty:raise ValueError('Incomplete prediction snapshot')
     if rows.duplicated(['id_match','id_joueur']).any():raise ValueError('Duplicate predictions')
+    for key in ['id_match','id_joueur']:
+        ids=pd.to_numeric(rows[key],errors='raise')
+        if not np.isfinite(ids).all() or not ids.gt(0).all() or not ids.mod(1).eq(0).all():raise ValueError('Invalid NHL identity')
     for field in ['probability','baseline_probability','player_smoothed_probability']:
         values=pd.to_numeric(rows[field],errors='raise')
         if not np.isfinite(values).all() or not values.between(0,1).all():raise ValueError('Invalid probabilities')
@@ -48,6 +51,8 @@ def archive_predictions(lock_path, rows, destination):
     if path.exists():
         if json.loads(path.read_text())!=payload:raise ValueError('Cannot replace archived predictions')
     else:
+        observed=pd.Timestamp(now or datetime.now(timezone.utc))
+        if observed.tzinfo is None or not collected.le(observed).all() or not event.gt(observed).all():raise ValueError('Archive must be written before actual puck drop')
         with path.open('x') as f:json.dump(payload,f,indent=2)
     return path
 

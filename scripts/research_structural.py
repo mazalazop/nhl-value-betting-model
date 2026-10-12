@@ -79,7 +79,7 @@ def prepare(history,context,standings_path,output):
         a=result[result.date_match.eq(date)].set_index(['id_match','id_joueur']).sort_index()
         b=upcoming.set_index(['id_match','id_joueur']).sort_index()
         pd.testing.assert_index_equal(a.index,b.index)
-        np.testing.assert_allclose(a[all_columns],b[all_columns],rtol=0,atol=1e-10,equal_nan=True)
+        np.testing.assert_allclose(a[all_columns].to_numpy(dtype=float,na_value=np.nan),b[all_columns].to_numpy(dtype=float,na_value=np.nan),rtol=0,atol=1e-10,equal_nan=True)
         parity.append(dict(date=str(date),rows=len(a),features=len(all_columns),divergences=0))
     output.parent.mkdir(parents=True,exist_ok=True);result.to_csv(output,index=False)
     report=dict(rows=len(result),dates=result.date_match.nunique(),players=result.id_joueur.nunique(),sha256=digest(output),parity=parity,standings=info,
@@ -158,7 +158,7 @@ def run(source,output,target):
             parts.append(rows);fold_reports.append(meta)
             print(target,name,fold,meta['metrics']['logloss'],flush=True)
         rows=pd.concat(parts,ignore_index=True);results[name]=rows
-        reports[name]=dict(**summary(rows),folds=fold_reports,features=cols,rows=len(rows),dates=rows.date_match.nunique(),players=rows.id_joueur.nunique(),positions={label:summary(g) for label,g in rows.assign(segment=np.where(rows.position.eq('D'),'D','F')).groupby('segment')})
+        reports[name]=dict(**summary(rows),folds=fold_reports,features=cols,rows=len(rows),dates=rows.date_match.nunique(),players=rows.id_joueur.nunique(),positions={label:summary(g) for label,g in rows.assign(segment=np.where(rows.position.eq('D'),'D',np.where(rows.position.isin(['F','C','L','R','LW','RW']),'F','UNKNOWN'))).groupby('segment')})
     benchmark=results['V0'].copy();benchmark['probability']=benchmark.player_smoothed
     reports['player_smoothed']=summary(benchmark)
     comparisons={};passing=[]
