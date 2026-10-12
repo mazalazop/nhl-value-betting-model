@@ -1,0 +1,114 @@
+{
+  "scope": "regular team-game historical outcomes; must be shifted before any feature use",
+  "http_calls": 6,
+  "cache_hits": 0,
+  "reports": [
+    {
+      "season": 20222023,
+      "report": "powerplay",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "ppOpportunities": 0,
+        "powerPlayGoalsFor": 0,
+        "ppTimeOnIcePerGame": 0
+      }
+    },
+    {
+      "season": 20222023,
+      "report": "penaltykill",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "timesShorthanded": 0,
+        "ppGoalsAgainst": 0
+      }
+    },
+    {
+      "season": 20222023,
+      "report": "penalties",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "penalties": 0,
+        "totalPenaltiesDrawn": 0,
+        "penaltiesDrawnPer60": 0,
+        "penaltiesTakenPer60": 0
+      }
+    },
+    {
+      "season": 20232024,
+      "report": "powerplay",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "ppOpportunities": 0,
+        "powerPlayGoalsFor": 0,
+        "ppTimeOnIcePerGame": 0
+      }
+    },
+    {
+      "season": 20232024,
+      "report": "penaltykill",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "timesShorthanded": 0,
+        "ppGoalsAgainst": 0
+      }
+    },
+    {
+      "season": 20232024,
+      "report": "penalties",
+      "rows": 2624,
+      "games": 1312,
+      "missing": {
+        "id_match": 0,
+        "date_match": 0,
+        "season_source": 0,
+        "team": 0,
+        "opponent": 0,
+        "nhl_team_id": 0,
+        "penalties": 0,
+        "totalPenaltiesDrawn": 0,
+        "penaltiesDrawnPer60": 0,
+        "penaltiesTakenPer60": 0
+      }
+    }
+  ],
+  "rows": 5248,
+  "source_history_sha256": "8ff6fb57939bc38fc9878bdedae876da591ed5b96882820845980b8491e1d7f0",
+  "output_sha256": "baa7e34bbb637fb3f217cb7aa3df8814b248e17947225df8e7fac1c5194024cb",
+  "pp1_available": false,
+  "experiments_run": false
+}
