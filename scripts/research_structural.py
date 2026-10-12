@@ -9,6 +9,7 @@ import sys
 os.environ.setdefault('OMP_NUM_THREADS','1')
 os.environ.setdefault('OPENBLAS_NUM_THREADS','1')
 import numpy as np
+import joblib
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
 ROOT=Path(__file__).resolve().parents[1]
@@ -181,6 +182,7 @@ def run(source,output,target):
             if dest.exists() and meta_path.exists():
                 meta=json.loads(meta_path.read_text())
                 if digest(dest)!=meta['prediction_sha256']:raise ValueError('OOF cache changed')
+                if 'frozen_model' in meta and digest(meta['frozen_model']['path'])!=meta['frozen_model']['sha256']:raise ValueError('Frozen model cache changed')
                 rows=pd.read_csv(dest,parse_dates=['date_match'])
             else:
                 if dest.exists():raise ValueError('Incomplete OOF checkpoint; inspect before restart')
@@ -192,7 +194,14 @@ def run(source,output,target):
                 past=frame[frame.date_match.lt(start)];prevalence=float(labels(past,target).mean())
                 prefix='goal' if target=='GOAL' else 'point'
                 rows['player_smoothed']=(ev[f'season_{prefix}_hits_before_match']+10*prevalence)/(ev.season_games_before_match+10)
-                rows.to_csv(dest,index=False);meta.update(prediction_sha256=digest(dest),**summary(rows));write(meta_path,meta)
+                rows.to_csv(dest,index=False)
+                if fold==len(p['folds'])-1:
+                    # Retain already fitted objects; a prospective lock must not
+                    # require a 53rd fit or an unregistered training window.
+                    model_path=output/f'{name}_frozen_fold.joblib'
+                    joblib.dump(dict(model=model,calibrator=cal,features=meta['kept'],cutoff=start),model_path,compress=3)
+                    meta['frozen_model']=dict(path=str(model_path),sha256=digest(model_path))
+                meta.update(prediction_sha256=digest(dest),**summary(rows));write(meta_path,meta)
             parts.append(rows);fold_reports.append(meta)
             print(target,name,fold,meta['metrics']['logloss'],flush=True)
         rows=pd.concat(parts,ignore_index=True);results[name]=rows
