@@ -1,0 +1,5484 @@
+{
+  "target": "POINT",
+  "candidate": null,
+  "production_approved": false,
+  "independent_confirmation": false,
+  "comparisons": {
+    "V1": {
+      "delta_logloss": 0.0015472900460515864,
+      "delta_brier": 0.0006120372611478055,
+      "ci_lower": -0.0015764047451272962,
+      "ci_upper": 0.004103982891741146,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": 0.00462420109418783,
+          "delta_brier": 0.0019880878490721597
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.004621703635167037,
+          "delta_brier": 0.0018077450896056579
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.0036427513708439507,
+          "delta_brier": 0.0016551766122935433
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.0017702097263770972,
+          "delta_brier": -0.0008392693580905617
+        }
+      ],
+      "passes": false,
+      "development_eligible": false
+    },
+    "V2": {
+      "delta_logloss": -0.0008465585882728844,
+      "delta_brier": -0.00042356319412564233,
+      "ci_lower": -0.004200197271656543,
+      "ci_upper": 0.0020448079714749275,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": 0.00040844917532519037,
+          "delta_brier": 0.00031078503214353404
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.004305791769523066,
+          "delta_brier": 0.0016349938660513426
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.002678807669344366,
+          "delta_brier": 0.0011633585759711345
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.004849337993997419,
+          "delta_brier": -0.0021858644385882625
+        }
+      ],
+      "passes": false,
+      "development_eligible": false
+    },
+    "V3": {
+      "delta_logloss": 0.0009734142240456301,
+      "delta_brier": 0.00041313077277075916,
+      "ci_lower": -0.0018531849396684617,
+      "ci_upper": 0.0032660019706357147,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": 0.003989574353546225,
+          "delta_brier": 0.0017489546901307599
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.0035888105848345345,
+          "delta_brier": 0.0013120178634002239
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.0028230637607404604,
+          "delta_brier": 0.0013513516381433812
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.002034621517956338,
+          "delta_brier": -0.0008588170852138874
+        }
+      ],
+      "passes": false,
+      "development_eligible": false
+    },
+    "V4": {
+      "delta_logloss": -0.00038819177813323224,
+      "delta_brier": -0.00016324566644441223,
+      "ci_lower": -0.003528384711271846,
+      "ci_upper": 0.002329129315083894,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.0005365198156240799,
+          "delta_brier": -5.855030833262492e-05
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.004029925526677329,
+          "delta_brier": 0.0015792166409896097
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.0031826550575490397,
+          "delta_brier": 0.0014429113433633235
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.00354449338534444,
+          "delta_brier": -0.001550782921988008
+        }
+      ],
+      "passes": false,
+      "development_eligible": false
+    },
+    "V5": {
+      "delta_logloss": -0.00034447968996526105,
+      "delta_brier": -0.00022505041957017686,
+      "ci_lower": -0.0028454204653404523,
+      "ci_upper": 0.0018538989293242919,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": 0.0009704921943303872,
+          "delta_brier": 0.000519867274085307
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.002959022215253558,
+          "delta_brier": 0.0010887705447369422
+        },
+        {
+          "fold": 2,
+          "delta_logloss": -0.0005368860888248125,
+          "delta_brier": 3.851200421457436e-05
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.0021560407357154874,
+          "delta_brier": -0.001167391458331034
+        }
+      ],
+      "passes": false,
+      "development_eligible": false
+    }
+  },
+  "diagnostic_contrasts": {
+    "V2_vs_V1": {
+      "delta_logloss": -0.0023938486343244706,
+      "delta_brier": -0.0010356004552734479,
+      "ci_lower": -0.004541371284900067,
+      "ci_upper": -0.00027118776451448887,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.004215751918862639,
+          "delta_brier": -0.0016773028169286253
+        },
+        {
+          "fold": 1,
+          "delta_logloss": -0.0003159118656439718,
+          "delta_brier": -0.0001727512235543157
+        },
+        {
+          "fold": 2,
+          "delta_logloss": -0.0009639437014995843,
+          "delta_brier": -0.0004918180363224088
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.0030791282676203217,
+          "delta_brier": -0.0013465950804977006
+        }
+      ],
+      "passes": true
+    },
+    "V3_vs_V1": {
+      "delta_logloss": -0.0005738758220059567,
+      "delta_brier": -0.00019890648837704645,
+      "ci_lower": -0.0015341686491472642,
+      "ci_upper": 0.0002839988748479914,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.000634626740641605,
+          "delta_brier": -0.0002391331589413998
+        },
+        {
+          "fold": 1,
+          "delta_logloss": -0.0010328930503325023,
+          "delta_brier": -0.0004957272262054343
+        },
+        {
+          "fold": 2,
+          "delta_logloss": -0.0008196876101034898,
+          "delta_brier": -0.0003038249741501623
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.00026441179157924094,
+          "delta_brier": -1.9547727123325313e-05
+        }
+      ],
+      "passes": false
+    },
+    "V4_vs_V2": {
+      "delta_logloss": 0.00045836681013965174,
+      "delta_brier": 0.0002603175276812301,
+      "ci_lower": -0.0003878819348308383,
+      "ci_upper": 0.0013477649644980207,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.0009449689909492706,
+          "delta_brier": -0.00036933534047615924
+        },
+        {
+          "fold": 1,
+          "delta_logloss": -0.00027586624284573613,
+          "delta_brier": -5.5777225061732744e-05
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.0005038473882046741,
+          "delta_brier": 0.0002795527673921892
+        },
+        {
+          "fold": 3,
+          "delta_logloss": 0.001304844608652979,
+          "delta_brier": 0.0006350815166002547
+        }
+      ],
+      "passes": false
+    },
+    "V4_vs_V3": {
+      "delta_logloss": -0.0013616060021788621,
+      "delta_brier": -0.0005763764392151711,
+      "ci_lower": -0.0032651820958342044,
+      "ci_upper": 0.0005426127856030818,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": -0.004526094169170306,
+          "delta_brier": -0.0018075049984633846
+        },
+        {
+          "fold": 1,
+          "delta_logloss": 0.0004411149418427949,
+          "delta_brier": 0.00026719877758938596
+        },
+        {
+          "fold": 2,
+          "delta_logloss": 0.00035959129680857943,
+          "delta_brier": 9.15597052199427e-05
+        },
+        {
+          "fold": 3,
+          "delta_logloss": -0.0015098718673881015,
+          "delta_brier": -0.0006919658367741205
+        }
+      ],
+      "passes": false
+    },
+    "V5_vs_V4": {
+      "delta_logloss": 4.371208816797094e-05,
+      "delta_brier": -6.180475312576454e-05,
+      "ci_lower": -0.0017062753667272928,
+      "ci_upper": 0.001967849169892097,
+      "folds": [
+        {
+          "fold": 0,
+          "delta_logloss": 0.0015070120099544674,
+          "delta_brier": 0.0005784175824179317
+        },
+        {
+          "fold": 1,
+          "delta_logloss": -0.0010709033114237702,
+          "delta_brier": -0.0004904460962526676
+        },
+        {
+          "fold": 2,
+          "delta_logloss": -0.003719541146373852,
+          "delta_brier": -0.0014043993391487492
+        },
+        {
+          "fold": 3,
+          "delta_logloss": 0.0013884526496289514,
+          "delta_brier": 0.00038339146365697383
+        }
+      ],
+      "passes": false
+    }
+  },
+  "manifest": {
+    "commit": "b49037e4572683588ddd1d1d7171fdfb11e46d3f",
+    "tracked_worktree_dirty": false,
+    "created_at_utc": "2026-10-12T16:27:12.136856+00:00",
+    "python": "3.11.9",
+    "platform": "macOS-12.7.6-x86_64-i386-64bit",
+    "dependencies": {
+      "numpy": "1.26.4",
+      "pandas": "2.2.3",
+      "scikit-learn": "1.5.2",
+      "scipy": "1.14.1",
+      "requests": "2.32.3",
+      "gspread": "6.1.4",
+      "google-auth": "2.35.0",
+      "joblib": "1.6.0"
+    },
+    "parameters": {
+      "loss": "log_loss",
+      "learning_rate": 0.05,
+      "max_iter": 300,
+      "max_depth": 4,
+      "min_samples_leaf": 50,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "sources": [
+      {
+        "path": "outputs/structural_20261012/features.csv.gz",
+        "available": true,
+        "sha256": "e3d295e8e0310e348e742d33d0cc3086f75d633251d1644a10c0d685847362ff",
+        "bytes": 38523289
+      },
+      {
+        "path": "/Users/captain.morgan/Documents/Henachel-Astra-Audit/docs/structural_20261012/protocol.json",
+        "available": true,
+        "sha256": "1b45f8b5e5b6b25b0bf953e9254d9b897de0f4dbfab4257f83692b56a8fe26fc",
+        "bytes": 14847
+      },
+      {
+        "path": "/Users/captain.morgan/Documents/Henachel-Astra-Audit/scripts/research_structural.py",
+        "available": true,
+        "sha256": "2df0ad8e3507d8e14401e7f8df54261476a9fd5c60ad388d7c779f18f0bd3839",
+        "bytes": 15119
+      }
+    ]
+  },
+  "reports": {
+    "V0": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.20509242437455322,
+        "logloss": 0.5980177839746128,
+        "auc": 0.6797913421137857,
+        "avg_precision": 0.5268540146913101,
+        "precision_top_10pct": 0.6309552026546575,
+        "lift_top_10pct": 1.826492567020475,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.006303693257862384,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 131,
+          "mean_probability": 0.08922217949548936,
+          "observed_rate": 0.16793893129770993
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 6403,
+          "mean_probability": 0.16871677193976778,
+          "observed_rate": 0.17772918944244886
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12716,
+          "mean_probability": 0.24588090122437112,
+          "observed_rate": 0.23812519660270526
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 8634,
+          "mean_probability": 0.3489663775397494,
+          "observed_rate": 0.34375723882325687
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6665,
+          "mean_probability": 0.44735177472652066,
+          "observed_rate": 0.4435108777194299
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 4824,
+          "mean_probability": 0.546895266940173,
+          "observed_rate": 0.5439469320066335
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2313,
+          "mean_probability": 0.6394798782442379,
+          "observed_rate": 0.6333765672287073
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 458,
+          "mean_probability": 0.7353960293656168,
+          "observed_rate": 0.7358078602620087
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 42,
+          "mean_probability": 0.828951591142847,
+          "observed_rate": 0.8333333333333334
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.18951199720059886,
+            "logloss": 0.5645552007164455,
+            "auc": 0.6434352751266976,
+            "avg_precision": 0.4218605447794127,
+            "precision_top_10pct": 0.5287921348314607,
+            "lift_top_10pct": 1.8994085388155044,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.02266618516491021,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 30,
+              "mean_probability": 0.0923739694435191,
+              "observed_rate": 0.16666666666666666
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2952,
+              "mean_probability": 0.17191636414766462,
+              "observed_rate": 0.1802168021680217
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5775,
+              "mean_probability": 0.24324292757254526,
+              "observed_rate": 0.22285714285714286
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2671,
+              "mean_probability": 0.3454577311877888,
+              "observed_rate": 0.3058779483339573
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1603,
+              "mean_probability": 0.44557282224444883,
+              "observed_rate": 0.4185901434809732
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 926,
+              "mean_probability": 0.5442438618802228,
+              "observed_rate": 0.5280777537796977
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 268,
+              "mean_probability": 0.6303415544257631,
+              "observed_rate": 0.582089552238806
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 10,
+              "mean_probability": 0.7321378390633461,
+              "observed_rate": 0.6
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.21302728827284814,
+            "logloss": 0.6150597457176636,
+            "auc": 0.6816162151001035,
+            "avg_precision": 0.5576199738186151,
+            "precision_top_10pct": 0.6545064377682404,
+            "lift_top_10pct": 1.7242327466597631,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.0050951718608631385,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 101,
+              "mean_probability": 0.0882860042634013,
+              "observed_rate": 0.16831683168316833
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3451,
+              "mean_probability": 0.16597982722875318,
+              "observed_rate": 0.1756012749927557
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 6941,
+              "mean_probability": 0.24807572874768108,
+              "observed_rate": 0.25082841089180236
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 5963,
+              "mean_probability": 0.3505380016226081,
+              "observed_rate": 0.360724467549891
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 5062,
+              "mean_probability": 0.447915121393601,
+              "observed_rate": 0.45140260766495455
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 3898,
+              "mean_probability": 0.547525128686072,
+              "observed_rate": 0.5477167778347871
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 2045,
+              "mean_probability": 0.6406774678693486,
+              "observed_rate": 0.6400977995110024
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 448,
+              "mean_probability": 0.7354687568277211,
+              "observed_rate": 0.7388392857142857
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 42,
+              "mean_probability": 0.828951591142847,
+              "observed_rate": 0.8333333333333334
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        }
+      },
+      "feature_count": 81,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.2116718877886286,
+            "logloss": 0.6125229579782255,
+            "auc": 0.6671760995201474,
+            "avg_precision": 0.5143879154579503,
+            "precision_top_10pct": 0.6140808344198174,
+            "lift_top_10pct": 1.7183057509112192,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.01270335170168295,
+          "kept": [
+            "is_home_player",
+            "nb_matchs_avant_match",
+            "jours_repos_raw",
+            "is_premier_match_joueur",
+            "jours_repos",
+            "tirs_moy_5",
+            "toi_moy_5",
+            "pp_moy_5",
+            "points_moy_5",
+            "buts_moy_5",
+            "passes_moy_5",
+            "tirs_moy_10",
+            "toi_moy_10",
+            "points_moy_10",
+            "buts_moy_10",
+            "passes_moy_10",
+            "nb_matchs_joues_10",
+            "hist_ok_5",
+            "hist_ok_10",
+            "tirs_par_60_5",
+            "points_par_60_5",
+            "buts_par_60_5",
+            "nb_matchs_vs_adv_avant",
+            "points_vs_adv_5",
+            "buts_vs_adv_5",
+            "tirs_vs_adv_5",
+            "points_vs_adv_shrunk",
+            "buts_vs_adv_shrunk",
+            "tirs_vs_adv_shrunk",
+            "jours_absence_pre_match",
+            "games_missed_proxy",
+            "absence_longue_flag",
+            "retour_episode",
+            "return_from_absence_flag",
+            "matchs_depuis_retour_avant_match",
+            "toi_pre_absence_ref",
+            "pp_pre_absence_ref",
+            "toi_moy_retour_3_avant_match",
+            "pp_moy_retour_3_avant_match",
+            "ratio_toi_retour_vs_pre_absence",
+            "ratio_pp_retour_vs_pre_absence",
+            "return_stabilized_flag",
+            "historical_current_weight",
+            "historical_prev_weight",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "point_hit_rate_last_20",
+            "point_hit_rate_season_pre",
+            "point_hit_rate_weighted_pre",
+            "points_per_game_season_pre",
+            "points_per_game_weighted_pre",
+            "recent_vs_expected_gap",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "max_point_streak_last_2_seasons_pre",
+            "max_no_point_streak_last_2_seasons_pre",
+            "count_5plus_point_streaks_last_2_seasons_pre",
+            "is_home_team",
+            "jours_repos_team",
+            "team_back_to_back",
+            "team_back_to_back_away",
+            "consecutive_away_games",
+            "team_winrate_5",
+            "team_gf_moy_5",
+            "team_ga_moy_5",
+            "team_games_played_pre_approx",
+            "games_played_team_pre",
+            "games_remaining_team_pre",
+            "team_points_pre",
+            "conference_rank_pre",
+            "division_rank_pre",
+            "conference_cutoff_points_pre",
+            "wildcard_distance_pre",
+            "point_pctg_pre",
+            "goal_differential_pre",
+            "l10_points_pre",
+            "late_season_flag",
+            "playoff_pressure_simple"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 7,
+              "mean_probability": 0.0875579415056209,
+              "observed_rate": 0.2857142857142857
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 631,
+              "mean_probability": 0.17495643825832288,
+              "observed_rate": 0.18066561014263074
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2582,
+              "mean_probability": 0.24743994407896777,
+              "observed_rate": 0.23586367157242447
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1636,
+              "mean_probability": 0.3456165702728836,
+              "observed_rate": 0.3600244498777506
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1327,
+              "mean_probability": 0.44954360646828223,
+              "observed_rate": 0.45365486058779203
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 1041,
+              "mean_probability": 0.5434485823684128,
+              "observed_rate": 0.5273775216138329
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 356,
+              "mean_probability": 0.6365571942863809,
+              "observed_rate": 0.6039325842696629
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 81,
+              "mean_probability": 0.7436794648018142,
+              "observed_rate": 0.7037037037037037
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 6,
+              "mean_probability": 0.8179637843135539,
+              "observed_rate": 0.5
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "c82b58bc8267b459fbac110868b190822325ec0b70369942def2409b7d3ba362"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.20671498155068024,
+            "logloss": 0.6013448522950106,
+            "auc": 0.676952274753011,
+            "avg_precision": 0.5303067998730006,
+            "precision_top_10pct": 0.6527249683143219,
+            "lift_top_10pct": 1.8665519224483547,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.00926359615894304,
+          "kept": [
+            "is_home_player",
+            "saison",
+            "nb_matchs_avant_match",
+            "jours_repos_raw",
+            "is_premier_match_joueur",
+            "jours_repos",
+            "tirs_moy_5",
+            "toi_moy_5",
+            "pp_moy_5",
+            "points_moy_5",
+            "buts_moy_5",
+            "passes_moy_5",
+            "tirs_moy_10",
+            "toi_moy_10",
+            "points_moy_10",
+            "buts_moy_10",
+            "passes_moy_10",
+            "nb_matchs_joues_10",
+            "hist_ok_5",
+            "hist_ok_10",
+            "tirs_par_60_5",
+            "points_par_60_5",
+            "buts_par_60_5",
+            "nb_matchs_vs_adv_avant",
+            "points_vs_adv_5",
+            "buts_vs_adv_5",
+            "tirs_vs_adv_5",
+            "points_vs_adv_shrunk",
+            "buts_vs_adv_shrunk",
+            "tirs_vs_adv_shrunk",
+            "jours_absence_pre_match",
+            "games_missed_proxy",
+            "absence_longue_flag",
+            "retour_episode",
+            "return_from_absence_flag",
+            "matchs_depuis_retour_avant_match",
+            "toi_pre_absence_ref",
+            "pp_pre_absence_ref",
+            "toi_moy_retour_3_avant_match",
+            "pp_moy_retour_3_avant_match",
+            "ratio_toi_retour_vs_pre_absence",
+            "ratio_pp_retour_vs_pre_absence",
+            "return_stabilized_flag",
+            "historical_current_weight",
+            "historical_prev_weight",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "point_hit_rate_last_20",
+            "point_hit_rate_season_pre",
+            "point_hit_rate_prev_season",
+            "point_hit_rate_weighted_pre",
+            "points_per_game_season_pre",
+            "points_per_game_prev_season",
+            "points_per_game_weighted_pre",
+            "recent_vs_expected_gap",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "max_point_streak_last_2_seasons_pre",
+            "max_no_point_streak_last_2_seasons_pre",
+            "count_5plus_point_streaks_last_2_seasons_pre",
+            "is_home_team",
+            "jours_repos_team",
+            "team_back_to_back",
+            "team_back_to_back_away",
+            "consecutive_away_games",
+            "team_winrate_5",
+            "team_gf_moy_5",
+            "team_ga_moy_5",
+            "team_games_played_pre_approx",
+            "games_played_team_pre",
+            "games_remaining_team_pre",
+            "team_points_pre",
+            "conference_rank_pre",
+            "division_rank_pre",
+            "conference_cutoff_points_pre",
+            "wildcard_distance_pre",
+            "point_pctg_pre",
+            "goal_differential_pre",
+            "l10_points_pre",
+            "late_season_flag",
+            "playoff_pressure_simple"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 8,
+              "mean_probability": 0.09359944785362065,
+              "observed_rate": 0.125
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 964,
+              "mean_probability": 0.17603807069165883,
+              "observed_rate": 0.1690871369294606
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2558,
+              "mean_probability": 0.24552211981104366,
+              "observed_rate": 0.23924941360437843
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1754,
+              "mean_probability": 0.3494898435059048,
+              "observed_rate": 0.3620296465222349
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1252,
+              "mean_probability": 0.44709474864942605,
+              "observed_rate": 0.43450479233226835
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 822,
+              "mean_probability": 0.5466200249068236,
+              "observed_rate": 0.5523114355231143
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 486,
+              "mean_probability": 0.641106566141084,
+              "observed_rate": 0.6481481481481481
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 40,
+              "mean_probability": 0.7205320776305376,
+              "observed_rate": 0.825
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "392325a821317d8114c2a07759a1d2e126bffc14f76b9c63905489768a8fae14"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.1997531512129537,
+            "logloss": 0.586508810462189,
+            "auc": 0.6941476054616619,
+            "avg_precision": 0.5391699965103492,
+            "precision_top_10pct": 0.6582109479305741,
+            "lift_top_10pct": 1.9488665789261126,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.02811940896659674,
+          "kept": [
+            "is_home_player",
+            "saison",
+            "nb_matchs_avant_match",
+            "jours_repos_raw",
+            "is_premier_match_joueur",
+            "jours_repos",
+            "tirs_moy_5",
+            "toi_moy_5",
+            "pp_moy_5",
+            "points_moy_5",
+            "buts_moy_5",
+            "passes_moy_5",
+            "tirs_moy_10",
+            "toi_moy_10",
+            "points_moy_10",
+            "buts_moy_10",
+            "passes_moy_10",
+            "nb_matchs_joues_10",
+            "hist_ok_5",
+            "hist_ok_10",
+            "tirs_par_60_5",
+            "points_par_60_5",
+            "buts_par_60_5",
+            "nb_matchs_vs_adv_avant",
+            "points_vs_adv_5",
+            "buts_vs_adv_5",
+            "tirs_vs_adv_5",
+            "points_vs_adv_shrunk",
+            "buts_vs_adv_shrunk",
+            "tirs_vs_adv_shrunk",
+            "jours_absence_pre_match",
+            "games_missed_proxy",
+            "absence_longue_flag",
+            "retour_episode",
+            "return_from_absence_flag",
+            "matchs_depuis_retour_avant_match",
+            "toi_pre_absence_ref",
+            "pp_pre_absence_ref",
+            "toi_moy_retour_3_avant_match",
+            "pp_moy_retour_3_avant_match",
+            "ratio_toi_retour_vs_pre_absence",
+            "ratio_pp_retour_vs_pre_absence",
+            "return_stabilized_flag",
+            "historical_current_weight",
+            "historical_prev_weight",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "point_hit_rate_last_20",
+            "point_hit_rate_season_pre",
+            "point_hit_rate_prev_season",
+            "point_hit_rate_weighted_pre",
+            "points_per_game_season_pre",
+            "points_per_game_prev_season",
+            "points_per_game_weighted_pre",
+            "recent_vs_expected_gap",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "max_point_streak_last_2_seasons_pre",
+            "max_no_point_streak_last_2_seasons_pre",
+            "count_5plus_point_streaks_last_2_seasons_pre",
+            "is_home_team",
+            "jours_repos_team",
+            "team_back_to_back",
+            "team_back_to_back_away",
+            "consecutive_away_games",
+            "team_winrate_5",
+            "team_gf_moy_5",
+            "team_ga_moy_5",
+            "team_games_played_pre_approx",
+            "games_played_team_pre",
+            "games_remaining_team_pre",
+            "team_points_pre",
+            "conference_rank_pre",
+            "division_rank_pre",
+            "conference_cutoff_points_pre",
+            "wildcard_distance_pre",
+            "point_pctg_pre",
+            "goal_differential_pre",
+            "l10_points_pre",
+            "late_season_flag",
+            "playoff_pressure_simple"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 9,
+              "mean_probability": 0.09060540423077465,
+              "observed_rate": 0.2222222222222222
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1071,
+              "mean_probability": 0.16920131838488256,
+              "observed_rate": 0.17647058823529413
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2434,
+              "mean_probability": 0.24667232990527838,
+              "observed_rate": 0.21651602300739523
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1551,
+              "mean_probability": 0.3523908778345315,
+              "observed_rate": 0.32430689877498386
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1295,
+              "mean_probability": 0.44582473548305224,
+              "observed_rate": 0.4694980694980695
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 831,
+              "mean_probability": 0.5473747972332372,
+              "observed_rate": 0.5932611311672683
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 261,
+              "mean_probability": 0.633257373981519,
+              "observed_rate": 0.685823754789272
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 36,
+              "mean_probability": 0.7188567772248355,
+              "observed_rate": 0.7777777777777778
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "f4f4680d8ac1bfaf7a240faf9f850c588e6e69f9d5209d14fbd574c60b313417"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.20387779496324893,
+            "logloss": 0.5953404673159884,
+            "auc": 0.6807780493186022,
+            "avg_precision": 0.5287214139172152,
+            "precision_top_10pct": 0.633420365535248,
+            "lift_top_10pct": 1.8524667387969136,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.012485938350460545,
+          "kept": [
+            "is_home_player",
+            "saison",
+            "nb_matchs_avant_match",
+            "jours_repos_raw",
+            "is_premier_match_joueur",
+            "jours_repos",
+            "tirs_moy_5",
+            "toi_moy_5",
+            "pp_moy_5",
+            "points_moy_5",
+            "buts_moy_5",
+            "passes_moy_5",
+            "tirs_moy_10",
+            "toi_moy_10",
+            "points_moy_10",
+            "buts_moy_10",
+            "passes_moy_10",
+            "nb_matchs_joues_10",
+            "hist_ok_5",
+            "hist_ok_10",
+            "tirs_par_60_5",
+            "points_par_60_5",
+            "buts_par_60_5",
+            "nb_matchs_vs_adv_avant",
+            "points_vs_adv_5",
+            "buts_vs_adv_5",
+            "tirs_vs_adv_5",
+            "points_vs_adv_shrunk",
+            "buts_vs_adv_shrunk",
+            "tirs_vs_adv_shrunk",
+            "jours_absence_pre_match",
+            "games_missed_proxy",
+            "absence_longue_flag",
+            "retour_episode",
+            "return_from_absence_flag",
+            "matchs_depuis_retour_avant_match",
+            "toi_pre_absence_ref",
+            "pp_pre_absence_ref",
+            "toi_moy_retour_3_avant_match",
+            "pp_moy_retour_3_avant_match",
+            "ratio_toi_retour_vs_pre_absence",
+            "ratio_pp_retour_vs_pre_absence",
+            "return_stabilized_flag",
+            "historical_current_weight",
+            "historical_prev_weight",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "point_hit_rate_last_20",
+            "point_hit_rate_season_pre",
+            "point_hit_rate_prev_season",
+            "point_hit_rate_weighted_pre",
+            "points_per_game_season_pre",
+            "points_per_game_prev_season",
+            "points_per_game_weighted_pre",
+            "recent_vs_expected_gap",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "max_point_streak_last_2_seasons_pre",
+            "max_no_point_streak_last_2_seasons_pre",
+            "count_5plus_point_streaks_last_2_seasons_pre",
+            "is_home_team",
+            "jours_repos_team",
+            "team_back_to_back",
+            "team_back_to_back_away",
+            "consecutive_away_games",
+            "team_winrate_5",
+            "team_gf_moy_5",
+            "team_ga_moy_5",
+            "team_games_played_pre_approx",
+            "games_played_team_pre",
+            "games_remaining_team_pre",
+            "team_points_pre",
+            "conference_rank_pre",
+            "division_rank_pre",
+            "conference_cutoff_points_pre",
+            "wildcard_distance_pre",
+            "point_pctg_pre",
+            "goal_differential_pre",
+            "l10_points_pre",
+            "late_season_flag",
+            "playoff_pressure_simple"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 107,
+              "mean_probability": 0.0888874364716245,
+              "observed_rate": 0.1588785046728972
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3737,
+              "mean_probability": 0.16563571475845948,
+              "observed_rate": 0.17982338774417983
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5142,
+              "mean_probability": 0.2449019002121959,
+              "observed_rate": 0.24893037728510306
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 3693,
+              "mean_probability": 0.34876348705146043,
+              "observed_rate": 0.33604115894936365
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 2791,
+              "mean_probability": 0.44713348441749035,
+              "observed_rate": 0.43067001074883554
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 2130,
+              "mean_probability": 0.5484989091547643,
+              "observed_rate": 0.5295774647887324
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1210,
+              "mean_probability": 0.641028621040684,
+              "observed_rate": 0.6247933884297521
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 301,
+              "mean_probability": 0.7371203246351825,
+              "observed_rate": 0.7275747508305648
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 36,
+              "mean_probability": 0.8307828922810625,
+              "observed_rate": 0.8888888888888888
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "b63891fdee592aba04b10d50eab1edec1d439c5f1c69870027b5bd92f8ff81d6",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V0_frozen_fold.joblib",
+            "sha256": "5ec1d10c307e0fbeade40665b6cc39a5c58f2fee61725c46135a1f717a78f7e5"
+          }
+        }
+      ]
+    },
+    "V1": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.20570446163570105,
+        "logloss": 0.5995650740206645,
+        "auc": 0.6773153555841305,
+        "avg_precision": 0.5232992047256757,
+        "precision_top_10pct": 0.6252666508651339,
+        "lift_top_10pct": 1.8100253162284043,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.012185207370412336,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 182,
+          "mean_probability": 0.08876736364374238,
+          "observed_rate": 0.14285714285714285
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 5543,
+          "mean_probability": 0.1655338354147482,
+          "observed_rate": 0.176979974742919
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12745,
+          "mean_probability": 0.24816910966829187,
+          "observed_rate": 0.23883876029815615
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 9927,
+          "mean_probability": 0.3476199135150336,
+          "observed_rate": 0.3310164198650146
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6795,
+          "mean_probability": 0.4449934826410091,
+          "observed_rate": 0.4565121412803532
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 4276,
+          "mean_probability": 0.5482682757713807,
+          "observed_rate": 0.5570626753975678
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2226,
+          "mean_probability": 0.638809855964913,
+          "observed_rate": 0.6248876909254267
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 417,
+          "mean_probability": 0.7381783734718022,
+          "observed_rate": 0.7146282973621103
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 75,
+          "mean_probability": 0.8355810072313357,
+          "observed_rate": 0.84
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.18904970851833347,
+            "logloss": 0.5636234637724236,
+            "auc": 0.6425878973574096,
+            "avg_precision": 0.4254785275377656,
+            "precision_top_10pct": 0.5308988764044944,
+            "lift_top_10pct": 1.9069759035119804,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.01910622591309769,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 67,
+              "mean_probability": 0.09173620938068318,
+              "observed_rate": 0.1044776119402985
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2974,
+              "mean_probability": 0.1659218931378931,
+              "observed_rate": 0.17787491593813046
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5952,
+              "mean_probability": 0.24425614255332947,
+              "observed_rate": 0.22614247311827956
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2609,
+              "mean_probability": 0.34363600398601424,
+              "observed_rate": 0.310463779225757
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1488,
+              "mean_probability": 0.44371299694684274,
+              "observed_rate": 0.4368279569892473
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 854,
+              "mean_probability": 0.5418648414750379,
+              "observed_rate": 0.5128805620608899
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 262,
+              "mean_probability": 0.641824866850538,
+              "observed_rate": 0.6183206106870229
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 29,
+              "mean_probability": 0.7262288974204171,
+              "observed_rate": 0.7241379310344828
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.21418646265984076,
+            "logloss": 0.6178695648039533,
+            "auc": 0.6773659789026469,
+            "avg_precision": 0.5518689897419505,
+            "precision_top_10pct": 0.6444921316165951,
+            "lift_top_10pct": 1.6978510434321819,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.011164647433309638,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 115,
+              "mean_probability": 0.0870376883013508,
+              "observed_rate": 0.16521739130434782
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2569,
+              "mean_probability": 0.16508460082205337,
+              "observed_rate": 0.17594394706111327
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 6793,
+              "mean_probability": 0.2515976361320422,
+              "observed_rate": 0.2499631974090976
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 7318,
+              "mean_probability": 0.34904024966715314,
+              "observed_rate": 0.338343809784094
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 5307,
+              "mean_probability": 0.4453525108514706,
+              "observed_rate": 0.4620312794422461
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 3422,
+              "mean_probability": 0.5498663274631039,
+              "observed_rate": 0.5680888369374635
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1964,
+              "mean_probability": 0.6384076498284397,
+              "observed_rate": 0.6257637474541752
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 388,
+              "mean_probability": 0.7390715044137871,
+              "observed_rate": 0.7139175257731959
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 75,
+              "mean_probability": 0.8355810072313357,
+              "observed_rate": 0.84
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        }
+      },
+      "feature_count": 29,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.2136599756377008,
+            "logloss": 0.6171471590724135,
+            "auc": 0.6580008266678914,
+            "avg_precision": 0.5112137192166826,
+            "precision_top_10pct": 0.6036505867014341,
+            "lift_top_10pct": 1.689120090598502,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.02169724028808409,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_points_current_mean",
+            "s_buts_current_mean",
+            "s_tirs_current_mean",
+            "s_point_hit_current_mean",
+            "s_goal_hit_current_mean",
+            "s_points_current60",
+            "s_buts_current60",
+            "s_tirs_current60"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 3,
+              "mean_probability": 0.09025374676686776,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1121,
+              "mean_probability": 0.16955938206347143,
+              "observed_rate": 0.19803746654772525
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2338,
+              "mean_probability": 0.24944252358854827,
+              "observed_rate": 0.2668947818648417
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1472,
+              "mean_probability": 0.34431739647832543,
+              "observed_rate": 0.33695652173913043
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1146,
+              "mean_probability": 0.4483957063909755,
+              "observed_rate": 0.45462478184991273
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 908,
+              "mean_probability": 0.5454899522648831,
+              "observed_rate": 0.5044052863436124
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 464,
+              "mean_probability": 0.6433742114826789,
+              "observed_rate": 0.5905172413793104
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 214,
+              "mean_probability": 0.7371358797115453,
+              "observed_rate": 0.677570093457944
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 1,
+              "mean_probability": 0.803350356832909,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "c147c8bce388afc894d9f905bedce65feb7a804d7ecb396d73a4d9090b85f59d"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.2085227266402859,
+            "logloss": 0.6059665559301777,
+            "auc": 0.6705596244932575,
+            "avg_precision": 0.5221397067597655,
+            "precision_top_10pct": 0.6273764258555133,
+            "lift_top_10pct": 1.7940644691493894,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.017115674614442664,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 25,
+              "mean_probability": 0.08313927922381127,
+              "observed_rate": 0.16
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 899,
+              "mean_probability": 0.1653036636723127,
+              "observed_rate": 0.1846496106785317
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2108,
+              "mean_probability": 0.2516306354181287,
+              "observed_rate": 0.23481973434535106
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2209,
+              "mean_probability": 0.3519435692476655,
+              "observed_rate": 0.3345405160706202
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1528,
+              "mean_probability": 0.4452566188423418,
+              "observed_rate": 0.4410994764397906
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 748,
+              "mean_probability": 0.5479568711893511,
+              "observed_rate": 0.5815508021390374
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 344,
+              "mean_probability": 0.6314316975567579,
+              "observed_rate": 0.6511627906976745
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 23,
+              "mean_probability": 0.7183538969207363,
+              "observed_rate": 0.8695652173913043
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "2ee5fd189217156e3cc022a8ce07f0cd0e9e77bb0c0615b6d0adf3b98aa6b488"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.20140832782524726,
+            "logloss": 0.5901515618330327,
+            "auc": 0.6895418668750022,
+            "avg_precision": 0.5314984270286902,
+            "precision_top_10pct": 0.6395193591455274,
+            "lift_top_10pct": 1.893523511776081,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.02937737672059623,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 22,
+              "mean_probability": 0.09126459060938079,
+              "observed_rate": 0.18181818181818182
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 820,
+              "mean_probability": 0.17137671386983855,
+              "observed_rate": 0.16829268292682928
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2440,
+              "mean_probability": 0.24852109431419617,
+              "observed_rate": 0.21885245901639344
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1718,
+              "mean_probability": 0.34551370739524284,
+              "observed_rate": 0.3119906868451688
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1478,
+              "mean_probability": 0.44874405382845634,
+              "observed_rate": 0.4709066305818674
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 823,
+              "mean_probability": 0.5446489660345188,
+              "observed_rate": 0.5893074119076549
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 141,
+              "mean_probability": 0.6294503711764544,
+              "observed_rate": 0.7304964539007093
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 42,
+              "mean_probability": 0.7468333276117454,
+              "observed_rate": 0.7380952380952381
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 4,
+              "mean_probability": 0.8370015633379316,
+              "observed_rate": 0.5
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "b4c3333642b94ce653b547aa29fc508d6237d4e1fa481542dfcbf1fcc0f91c4b"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.20303852560515837,
+            "logloss": 0.5935702575896112,
+            "auc": 0.6840235501053433,
+            "avg_precision": 0.5304916267925155,
+            "precision_top_10pct": 0.6323759791122715,
+            "lift_top_10pct": 1.8494123830857891,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.011522595502632153,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 132,
+              "mean_probability": 0.08938330279438524,
+              "observed_rate": 0.13636363636363635
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2703,
+              "mean_probability": 0.16216836233670773,
+              "observed_rate": 0.16833148353681096
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5859,
+              "mean_probability": 0.24626895937605395,
+              "observed_rate": 0.23741252773510838
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 4528,
+              "mean_probability": 0.3473833436560341,
+              "observed_rate": 0.33458480565371024
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 2643,
+              "mean_probability": 0.441268789206221,
+              "observed_rate": 0.45819144911085885
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 1797,
+              "mean_probability": 0.551459338812391,
+              "observed_rate": 0.558708959376739
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1277,
+              "mean_probability": 0.6401723562682291,
+              "observed_rate": 0.6186374314800314
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 138,
+              "mean_probability": 0.7404649571782651,
+              "observed_rate": 0.7391304347826086
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 70,
+              "mean_probability": 0.8359602704595076,
+              "observed_rate": 0.8714285714285714
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "0710c4c4d8c2af9d0a27f11913bd3b61ff05d4684fa6c68c53b0c62a846fbc45",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V1_frozen_fold.joblib",
+            "sha256": "7c7d95e2759b5869b10c63c60b1afc1980b702c264006dd9e6eefca86bbb00ed"
+          }
+        }
+      ]
+    },
+    "V2": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.2046688611804276,
+        "logloss": 0.5971712253863399,
+        "auc": 0.6820175946999009,
+        "avg_precision": 0.5282388406378309,
+        "precision_top_10pct": 0.6354586394880304,
+        "lift_top_10pct": 1.8395291405641974,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.013313616652831192,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 209,
+          "mean_probability": 0.08426342942351447,
+          "observed_rate": 0.14354066985645933
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 6004,
+          "mean_probability": 0.1663965556226646,
+          "observed_rate": 0.18104596935376416
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12516,
+          "mean_probability": 0.24834979279108663,
+          "observed_rate": 0.23346116970278044
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 9847,
+          "mean_probability": 0.3480824658149833,
+          "observed_rate": 0.33726007921194273
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6825,
+          "mean_probability": 0.44572813864620386,
+          "observed_rate": 0.4562637362637363
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 3972,
+          "mean_probability": 0.5472308542585684,
+          "observed_rate": 0.5694864048338368
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2388,
+          "mean_probability": 0.6405272640594839,
+          "observed_rate": 0.640284757118928
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 416,
+          "mean_probability": 0.7327462597088981,
+          "observed_rate": 0.71875
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 9,
+          "mean_probability": 0.8128766518472849,
+          "observed_rate": 1.0
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.18844556185556682,
+            "logloss": 0.5621127769141029,
+            "auc": 0.6470323747192686,
+            "avg_precision": 0.42717975947303666,
+            "precision_top_10pct": 0.5273876404494382,
+            "lift_top_10pct": 1.8943636290178536,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.017834497095881176,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 61,
+              "mean_probability": 0.08505522271550733,
+              "observed_rate": 0.13114754098360656
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3336,
+              "mean_probability": 0.16703932722921044,
+              "observed_rate": 0.17835731414868106
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5524,
+              "mean_probability": 0.24422218395691195,
+              "observed_rate": 0.2280955829109341
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2769,
+              "mean_probability": 0.34277095182135736,
+              "observed_rate": 0.3080534488985193
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1457,
+              "mean_probability": 0.44499475102359337,
+              "observed_rate": 0.43994509265614273
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 754,
+              "mean_probability": 0.5452404662290852,
+              "observed_rate": 0.5238726790450928
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 313,
+              "mean_probability": 0.6372273351749763,
+              "observed_rate": 0.6389776357827476
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 21,
+              "mean_probability": 0.7177625115477185,
+              "observed_rate": 0.5238095238095238
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.21293112964629266,
+            "logloss": 0.6150259359155623,
+            "auc": 0.6828115756021276,
+            "avg_precision": 0.5577547296211264,
+            "precision_top_10pct": 0.644134477825465,
+            "lift_top_10pct": 1.6969088397454826,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.012729676279673169,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 148,
+              "mean_probability": 0.08393708218830118,
+              "observed_rate": 0.14864864864864866
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2668,
+              "mean_probability": 0.1655928501955892,
+              "observed_rate": 0.18440779610194902
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 6992,
+              "mean_probability": 0.25161079267666736,
+              "observed_rate": 0.23770022883295194
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 7078,
+              "mean_probability": 0.35016039492608114,
+              "observed_rate": 0.3486860695111613
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 5368,
+              "mean_probability": 0.44592719709742284,
+              "observed_rate": 0.4606929955290611
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 3218,
+              "mean_probability": 0.5476972161523628,
+              "observed_rate": 0.5801740211311374
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 2075,
+              "mean_probability": 0.6410250364647131,
+              "observed_rate": 0.6404819277108433
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 395,
+              "mean_probability": 0.7335428640415177,
+              "observed_rate": 0.7291139240506329
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 9,
+              "mean_probability": 0.8128766518472849,
+              "observed_rate": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        }
+      },
+      "feature_count": 48,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.21198267282077216,
+            "logloss": 0.6129314071535508,
+            "auc": 0.6675557297121921,
+            "avg_precision": 0.5165979900877291,
+            "precision_top_10pct": 0.6127770534550195,
+            "lift_top_10pct": 1.7146575433721296,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.021909750463335098,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_points_current_mean",
+            "s_buts_current_mean",
+            "s_tirs_current_mean",
+            "s_point_hit_current_mean",
+            "s_goal_hit_current_mean",
+            "s_points_current60",
+            "s_buts_current60",
+            "s_tirs_current60",
+            "s_toi_current_mean",
+            "s_pp_current_mean",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 44,
+              "mean_probability": 0.08320804533919561,
+              "observed_rate": 0.13636363636363635
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1357,
+              "mean_probability": 0.1671962807377441,
+              "observed_rate": 0.20044215180545322
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2232,
+              "mean_probability": 0.24526634997338304,
+              "observed_rate": 0.25985663082437277
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1554,
+              "mean_probability": 0.34853008038379507,
+              "observed_rate": 0.38223938223938225
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1153,
+              "mean_probability": 0.4538514663056596,
+              "observed_rate": 0.45446660884648743
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 888,
+              "mean_probability": 0.5433769464596307,
+              "observed_rate": 0.5574324324324325
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 345,
+              "mean_probability": 0.6408162914402592,
+              "observed_rate": 0.5855072463768116
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 91,
+              "mean_probability": 0.7332066716477453,
+              "observed_rate": 0.7032967032967034
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 3,
+              "mean_probability": 0.8050522482715735,
+              "observed_rate": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "980985d1cc5dbc6c1af05d55f0a968897ee008b894b6c434d2a3e7185330976b"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.2083499754167316,
+            "logloss": 0.6056506440645336,
+            "auc": 0.6717686327668939,
+            "avg_precision": 0.520556300319671,
+            "precision_top_10pct": 0.6311787072243346,
+            "lift_top_10pct": 1.8049375871442341,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.01749338239564476,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 14,
+              "mean_probability": 0.08878351458368815,
+              "observed_rate": 0.21428571428571427
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 914,
+              "mean_probability": 0.16761519513440967,
+              "observed_rate": 0.1925601750547046
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2146,
+              "mean_probability": 0.25258842370265294,
+              "observed_rate": 0.22600186393289842
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2312,
+              "mean_probability": 0.3486096034950652,
+              "observed_rate": 0.3391003460207612
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1326,
+              "mean_probability": 0.4420698472616357,
+              "observed_rate": 0.4577677224736048
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 679,
+              "mean_probability": 0.5471712432938503,
+              "observed_rate": 0.5522827687776142
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 437,
+              "mean_probability": 0.6405646630172129,
+              "observed_rate": 0.6590389016018307
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 56,
+              "mean_probability": 0.7314566646745827,
+              "observed_rate": 0.6964285714285714
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "b46bfd06cf0c90a2600aa85c067af359af85a2b343f2e4a4eaac7c9c52df5d30"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.20091650978892486,
+            "logloss": 0.5891876181315331,
+            "auc": 0.6908800443589989,
+            "avg_precision": 0.5338752239809335,
+            "precision_top_10pct": 0.636849132176235,
+            "lift_top_10pct": 1.8856173593260763,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.03471565374871864,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 12,
+              "mean_probability": 0.09038181383852205,
+              "observed_rate": 0.16666666666666666
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 777,
+              "mean_probability": 0.1710253624175571,
+              "observed_rate": 0.16731016731016732
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2476,
+              "mean_probability": 0.24956922832341452,
+              "observed_rate": 0.21809369951534732
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1758,
+              "mean_probability": 0.3474935081660318,
+              "observed_rate": 0.30204778156996587
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1437,
+              "mean_probability": 0.4470868596906889,
+              "observed_rate": 0.4732080723729993
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 736,
+              "mean_probability": 0.547097632756375,
+              "observed_rate": 0.595108695652174
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 260,
+              "mean_probability": 0.631015287880339,
+              "observed_rate": 0.7192307692307692
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 32,
+              "mean_probability": 0.7347919902021091,
+              "observed_rate": 0.65625
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "0929cff5ad3ce172c8045f8953b374ab3b04a693c3f9d1d12180165c4c6a8b2d"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.20169193052466067,
+            "logloss": 0.590491129321991,
+            "auc": 0.6900288572737786,
+            "avg_precision": 0.5368446355759127,
+            "precision_top_10pct": 0.6407310704960836,
+            "lift_top_10pct": 1.873847228774784,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.01233809814189687,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 139,
+              "mean_probability": 0.08361404161407206,
+              "observed_rate": 0.1366906474820144
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2956,
+              "mean_probability": 0.1644359174716059,
+              "observed_rate": 0.17219215155615697
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5662,
+              "mean_probability": 0.24742552928964706,
+              "observed_rate": 0.23260332038149065
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 4223,
+              "mean_probability": 0.3478743323057657,
+              "observed_rate": 0.3343594600994554
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 2909,
+              "mean_probability": 0.4435047682246363,
+              "observed_rate": 0.4479202475077346
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 1669,
+              "mean_probability": 0.5493643455684033,
+              "observed_rate": 0.5715997603355303
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1346,
+              "mean_probability": 0.6422784200889657,
+              "observed_rate": 0.6329866270430906
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 237,
+              "mean_probability": 0.7325979747287453,
+              "observed_rate": 0.7383966244725738
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 6,
+              "mean_probability": 0.8167888536351405,
+              "observed_rate": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "da3ab871f93a95ccdb3597aaa72bf2a4f842cc8f6a5e3eae267e5ef5d9028509",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V2_frozen_fold.joblib",
+            "sha256": "fcd6992fe6431eaf33a888c2f53fb6f9614d2aed205498b6a1810158ae3936b2"
+          }
+        }
+      ]
+    },
+    "V3": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.20550555514732402,
+        "logloss": 0.5989911981986584,
+        "auc": 0.678205530081269,
+        "avg_precision": 0.523399097536754,
+        "precision_top_10pct": 0.6264517658212847,
+        "lift_top_10pct": 1.8134559934767525,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.008409467563359016,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 69,
+          "mean_probability": 0.08968712785304091,
+          "observed_rate": 0.13043478260869565
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 5830,
+          "mean_probability": 0.16685969139584908,
+          "observed_rate": 0.17598627787307033
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 13089,
+          "mean_probability": 0.2487524750425126,
+          "observed_rate": 0.2400488960195584
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 9510,
+          "mean_probability": 0.34738778473345133,
+          "observed_rate": 0.33711882229232387
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6637,
+          "mean_probability": 0.44463543983977727,
+          "observed_rate": 0.45442217869519363
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 4135,
+          "mean_probability": 0.5487156639978633,
+          "observed_rate": 0.5492140266021766
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2394,
+          "mean_probability": 0.6410284616197588,
+          "observed_rate": 0.6399331662489557
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 473,
+          "mean_probability": 0.7337966361807872,
+          "observed_rate": 0.6976744186046512
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 49,
+          "mean_probability": 0.8277556845407168,
+          "observed_rate": 0.8367346938775511
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.1890863484913353,
+            "logloss": 0.563765318977487,
+            "auc": 0.6428647229866923,
+            "avg_precision": 0.42393264630879607,
+            "precision_top_10pct": 0.5351123595505618,
+            "lift_top_10pct": 1.9221106329049327,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.019396311776802688,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 39,
+              "mean_probability": 0.09320467088254732,
+              "observed_rate": 0.15384615384615385
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3048,
+              "mean_probability": 0.16587343260019596,
+              "observed_rate": 0.17618110236220472
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5943,
+              "mean_probability": 0.246290692395026,
+              "observed_rate": 0.23052330472825172
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2584,
+              "mean_probability": 0.34342515865602513,
+              "observed_rate": 0.30224458204334365
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1518,
+              "mean_probability": 0.44552015891141683,
+              "observed_rate": 0.43412384716732544
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 800,
+              "mean_probability": 0.547744605243131,
+              "observed_rate": 0.5225
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 259,
+              "mean_probability": 0.6352704955002183,
+              "observed_rate": 0.6293436293436293
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 43,
+              "mean_probability": 0.7296946395026509,
+              "observed_rate": 0.6744186046511628
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 1,
+              "mean_probability": 0.8002947465884714,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.21386759610285333,
+            "logloss": 0.6169311785468884,
+            "auc": 0.6785801830238829,
+            "avg_precision": 0.5524742542710739,
+            "precision_top_10pct": 0.6491416309012875,
+            "lift_top_10pct": 1.710099691359273,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.0061805307547643925,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 30,
+              "mean_probability": 0.08511432191468263,
+              "observed_rate": 0.1
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2782,
+              "mean_probability": 0.16794025099655024,
+              "observed_rate": 0.1757728253055356
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 7146,
+              "mean_probability": 0.25079982660618644,
+              "observed_rate": 0.24797089280716486
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 6926,
+              "mean_probability": 0.34886618868725855,
+              "observed_rate": 0.35012994513427664
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 5119,
+              "mean_probability": 0.4443730832172437,
+              "observed_rate": 0.4604414924789998
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 3335,
+              "mean_probability": 0.5489486016301829,
+              "observed_rate": 0.5556221889055473
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 2135,
+              "mean_probability": 0.6417269689850801,
+              "observed_rate": 0.6412177985948477
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 430,
+              "mean_probability": 0.7342068358486008,
+              "observed_rate": 0.7
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 48,
+              "mean_probability": 0.828327787414722,
+              "observed_rate": 0.8541666666666666
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        }
+      },
+      "feature_count": 44,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.2134208424787594,
+            "logloss": 0.6165125323317717,
+            "auc": 0.6599230517378544,
+            "avg_precision": 0.50826470481573,
+            "precision_top_10pct": 0.6036505867014341,
+            "lift_top_10pct": 1.689120090598502,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.017045877218642355,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_points_current_mean",
+            "s_buts_current_mean",
+            "s_tirs_current_mean",
+            "s_point_hit_current_mean",
+            "s_goal_hit_current_mean",
+            "s_points_current60",
+            "s_buts_current60",
+            "s_tirs_current60",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 2,
+              "mean_probability": 0.09626527851721431,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1067,
+              "mean_probability": 0.17239310843409625,
+              "observed_rate": 0.19868791002811623
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2502,
+              "mean_probability": 0.24769097450312658,
+              "observed_rate": 0.26179056754596325
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1433,
+              "mean_probability": 0.3449094859861628,
+              "observed_rate": 0.35519888346127004
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1139,
+              "mean_probability": 0.44674838870193334,
+              "observed_rate": 0.44688323090430204
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 912,
+              "mean_probability": 0.5457242621238803,
+              "observed_rate": 0.5263157894736842
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 457,
+              "mean_probability": 0.6438501214153377,
+              "observed_rate": 0.6017505470459519
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 144,
+              "mean_probability": 0.7381089666530052,
+              "observed_rate": 0.6388888888888888
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 11,
+              "mean_probability": 0.8216781265593017,
+              "observed_rate": 0.7272727272727273
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "8d1c375e8d77fefb1e6eddc3aeb919ee93b6b05830d4d0ddc939af51991af260"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.20802699941408045,
+            "logloss": 0.6049336628798451,
+            "auc": 0.6711213098081313,
+            "avg_precision": 0.5257074793669958,
+            "precision_top_10pct": 0.6362484157160964,
+            "lift_top_10pct": 1.8194350778040274,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.014325368028276091,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 7,
+              "mean_probability": 0.08418154782688836,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 934,
+              "mean_probability": 0.17112698184420103,
+              "observed_rate": 0.1905781584582441
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2261,
+              "mean_probability": 0.24956348107311835,
+              "observed_rate": 0.22821760283060594
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2092,
+              "mean_probability": 0.3502750450734387,
+              "observed_rate": 0.34655831739961757
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1354,
+              "mean_probability": 0.44546588915464047,
+              "observed_rate": 0.4431314623338257
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 810,
+              "mean_probability": 0.5511249712544244,
+              "observed_rate": 0.5407407407407407
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 395,
+              "mean_probability": 0.6370407954892355,
+              "observed_rate": 0.7037974683544304
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 31,
+              "mean_probability": 0.7162961396597095,
+              "observed_rate": 0.7096774193548387
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "7fd7b6607b88ce33b6bf3db63428d4405d3d11c57c284066b95520ce1935d759"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.2011045028510971,
+            "logloss": 0.5893318742229292,
+            "auc": 0.690308254057331,
+            "avg_precision": 0.5324447789045539,
+            "precision_top_10pct": 0.650200267022697,
+            "lift_top_10pct": 1.925148121576099,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.026834948296236113,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 858,
+              "mean_probability": 0.17281433391366313,
+              "observed_rate": 0.1655011655011655
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2440,
+              "mean_probability": 0.25045717123467964,
+              "observed_rate": 0.22172131147540983
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1800,
+              "mean_probability": 0.3465032922407587,
+              "observed_rate": 0.3194444444444444
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1350,
+              "mean_probability": 0.4455267867399361,
+              "observed_rate": 0.4622222222222222
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 764,
+              "mean_probability": 0.5448688187422783,
+              "observed_rate": 0.5942408376963351
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 231,
+              "mean_probability": 0.6331327021219247,
+              "observed_rate": 0.683982683982684
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 44,
+              "mean_probability": 0.7264917506278783,
+              "observed_rate": 0.7954545454545454
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 1,
+              "mean_probability": 0.8042013341147222,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "25a8bf06c9d2e11ca4701eaedb75061ad899af8c0d6b46a43261a2b3d16bf82b"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.20301897787803502,
+            "logloss": 0.5933058457980321,
+            "auc": 0.6847052751654096,
+            "avg_precision": 0.529427361634014,
+            "precision_top_10pct": 0.635509138381201,
+            "lift_top_10pct": 1.8585754502191623,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.009817290686804255,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 60,
+              "mean_probability": 0.09011017383395294,
+              "observed_rate": 0.15
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2971,
+              "mean_probability": 0.16181126038310759,
+              "observed_rate": 0.1662739818243016
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5886,
+              "mean_probability": 0.24818549084364358,
+              "observed_rate": 0.24294937138973835
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 4185,
+              "mean_probability": 0.34717352904897286,
+              "observed_rate": 0.3338112305854241
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 2794,
+              "mean_probability": 0.44294095328232025,
+              "observed_rate": 0.45919828203292773
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 1649,
+              "mean_probability": 0.5509689140927844,
+              "observed_rate": 0.5451788963007883
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1311,
+              "mean_probability": 0.6426375768287418,
+              "observed_rate": 0.6262395118230358
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 254,
+              "mean_probability": 0.7347531510173305,
+              "observed_rate": 0.7125984251968503
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 37,
+              "mean_probability": 0.8301991301683268,
+              "observed_rate": 0.8918918918918919
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "28c8d378a55f19549aac22aff18bb753613dc4091a9689eb6d608dfe06b13b3e",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V3_frozen_fold.joblib",
+            "sha256": "e3bb8780158f5170dd7fae0d29728c3e568441e8749aecc7723c50335e091895"
+          }
+        }
+      ]
+    },
+    "V4": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.2049291787081088,
+        "logloss": 0.5976295921964796,
+        "auc": 0.6806656432695868,
+        "avg_precision": 0.5271828077850067,
+        "precision_top_10pct": 0.6347475705143399,
+        "lift_top_10pct": 1.8374707342151886,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.01014856299329902,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 200,
+          "mean_probability": 0.08208120565285348,
+          "observed_rate": 0.1
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 5976,
+          "mean_probability": 0.16827461306409255,
+          "observed_rate": 0.17921686746987953
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12612,
+          "mean_probability": 0.2485115289955518,
+          "observed_rate": 0.23794798604503647
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 9992,
+          "mean_probability": 0.34741652528274036,
+          "observed_rate": 0.3402722177742194
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6621,
+          "mean_probability": 0.44564398319575627,
+          "observed_rate": 0.45310376076121434
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 4064,
+          "mean_probability": 0.5474546181119838,
+          "observed_rate": 0.5674212598425197
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2256,
+          "mean_probability": 0.6408039311127504,
+          "observed_rate": 0.6329787234042553
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 455,
+          "mean_probability": 0.7308195976258384,
+          "observed_rate": 0.7428571428571429
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 10,
+          "mean_probability": 0.8127088004544436,
+          "observed_rate": 0.9
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.18875370930820673,
+            "logloss": 0.562758290290747,
+            "auc": 0.6454899850486155,
+            "avg_precision": 0.4253211331499819,
+            "precision_top_10pct": 0.5280898876404494,
+            "lift_top_10pct": 1.8968860839166788,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.017824231727513136,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 37,
+              "mean_probability": 0.08318738069508025,
+              "observed_rate": 0.08108108108108109
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3235,
+              "mean_probability": 0.16863574258212635,
+              "observed_rate": 0.17527047913446678
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5593,
+              "mean_probability": 0.2448232685674712,
+              "observed_rate": 0.22957268013588414
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2782,
+              "mean_probability": 0.34290436874138347,
+              "observed_rate": 0.3098490294751977
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1470,
+              "mean_probability": 0.44717903663677894,
+              "observed_rate": 0.4204081632653061
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 764,
+              "mean_probability": 0.5456834268345377,
+              "observed_rate": 0.5405759162303665
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 327,
+              "mean_probability": 0.6362764018838806,
+              "observed_rate": 0.6146788990825688
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 27,
+              "mean_probability": 0.7263863888346004,
+              "observed_rate": 0.5555555555555556
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.21316708815348132,
+            "logloss": 0.6153889919542023,
+            "auc": 0.6815899117556627,
+            "avg_precision": 0.5573059052382843,
+            "precision_top_10pct": 0.6494992846924177,
+            "lift_top_10pct": 1.7110418950459723,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.01114231266519072,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 163,
+              "mean_probability": 0.08183011070461796,
+              "observed_rate": 0.10429447852760736
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2741,
+              "mean_probability": 0.16784839854718656,
+              "observed_rate": 0.18387449835826342
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 7019,
+              "mean_probability": 0.2514504719467208,
+              "observed_rate": 0.24462174098874484
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 7210,
+              "mean_probability": 0.3491575543393361,
+              "observed_rate": 0.3520110957004161
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 5151,
+              "mean_probability": 0.44520590737391513,
+              "observed_rate": 0.46243447874199184
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 3300,
+              "mean_probability": 0.547864675728944,
+              "observed_rate": 0.5736363636363636
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1929,
+              "mean_probability": 0.6415714282915167,
+              "observed_rate": 0.6360808709175739
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 428,
+              "mean_probability": 0.7310992626664071,
+              "observed_rate": 0.7546728971962616
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 10,
+              "mean_probability": 0.8127088004544436,
+              "observed_rate": 0.9
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        }
+      },
+      "feature_count": 63,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.21161333748029604,
+            "logloss": 0.6119864381626015,
+            "auc": 0.6695520660030608,
+            "avg_precision": 0.5183594316342583,
+            "precision_top_10pct": 0.621903520208605,
+            "lift_top_10pct": 1.740194996145757,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.024708957849548324,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_points_current_mean",
+            "s_buts_current_mean",
+            "s_tirs_current_mean",
+            "s_point_hit_current_mean",
+            "s_goal_hit_current_mean",
+            "s_points_current60",
+            "s_buts_current60",
+            "s_tirs_current60",
+            "s_toi_current_mean",
+            "s_pp_current_mean",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 40,
+              "mean_probability": 0.08113932423749029,
+              "observed_rate": 0.075
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1454,
+              "mean_probability": 0.16867575364681933,
+              "observed_rate": 0.2015130674002751
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2186,
+              "mean_probability": 0.2449566631305976,
+              "observed_rate": 0.26578225068618483
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1514,
+              "mean_probability": 0.3469463261627445,
+              "observed_rate": 0.38639365918097757
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1168,
+              "mean_probability": 0.45224419276594674,
+              "observed_rate": 0.4469178082191781
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 902,
+              "mean_probability": 0.5430136848083061,
+              "observed_rate": 0.5598669623059866
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 323,
+              "mean_probability": 0.6396656461681118,
+              "observed_rate": 0.5975232198142415
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 77,
+              "mean_probability": 0.73668161123812,
+              "observed_rate": 0.7272727272727273
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 3,
+              "mean_probability": 0.8150649493917279,
+              "observed_rate": 0.6666666666666666
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "67c6e2af3c1fd6009acb7f291d3c241457a560de7bf4e12e4a2beda319efef08"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.20829419819166986,
+            "logloss": 0.605374777821688,
+            "auc": 0.6712126778519829,
+            "avg_precision": 0.5206054591744538,
+            "precision_top_10pct": 0.6349809885931559,
+            "lift_top_10pct": 1.815810705139079,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.012076368868297811,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 8,
+              "mean_probability": 0.08076678803596282,
+              "observed_rate": 0.125
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 908,
+              "mean_probability": 0.1707489165088604,
+              "observed_rate": 0.19383259911894274
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2185,
+              "mean_probability": 0.2525845261385459,
+              "observed_rate": 0.22745995423340962
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2319,
+              "mean_probability": 0.34824854304324404,
+              "observed_rate": 0.34583872358775336
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1262,
+              "mean_probability": 0.44309545290481783,
+              "observed_rate": 0.44532488114104596
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 681,
+              "mean_probability": 0.5487175964287683,
+              "observed_rate": 0.5491923641703378
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 447,
+              "mean_probability": 0.6413530643146854,
+              "observed_rate": 0.6577181208053692
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 74,
+              "mean_probability": 0.7291708946557147,
+              "observed_rate": 0.6891891891891891
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "c79869b1b526e68fc7ca3018c0f13250a1d60306dad11fdedd11ba4d54215a9e"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.20119606255631703,
+            "logloss": 0.5896914655197378,
+            "auc": 0.6899112859891601,
+            "avg_precision": 0.5307158621960613,
+            "precision_top_10pct": 0.6395193591455274,
+            "lift_top_10pct": 1.893523511776081,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.03164524310712107,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 4,
+              "mean_probability": 0.08801542646023469,
+              "observed_rate": 0.25
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 839,
+              "mean_probability": 0.1711066522797211,
+              "observed_rate": 0.15852205005959474
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2395,
+              "mean_probability": 0.2474671079179008,
+              "observed_rate": 0.22630480167014613
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1799,
+              "mean_probability": 0.34874367833075753,
+              "observed_rate": 0.30127848804891605
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1399,
+              "mean_probability": 0.44693515051623256,
+              "observed_rate": 0.46962115796997855
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 780,
+              "mean_probability": 0.5463828765239404,
+              "observed_rate": 0.5948717948717949
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 239,
+              "mean_probability": 0.6343495398440142,
+              "observed_rate": 0.7071129707112971
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 33,
+              "mean_probability": 0.7190914949234689,
+              "observed_rate": 0.6363636363636364
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "69788645855be09a8d30e5944431bb0e9e02fc320a3481c8a9e7cc542197b02d"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.20232701204126094,
+            "logloss": 0.591795973930644,
+            "auc": 0.6870740991269477,
+            "avg_precision": 0.5347391708624343,
+            "precision_top_10pct": 0.6370757180156658,
+            "lift_top_10pct": 1.8631569837858488,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.011186532164576792,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 148,
+              "mean_probability": 0.0822464334523138,
+              "observed_rate": 0.10135135135135136
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 2775,
+              "mean_probability": 0.16639857456425602,
+              "observed_rate": 0.169009009009009
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5846,
+              "mean_probability": 0.24874636076160075,
+              "observed_rate": 0.23622990078686282
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 4360,
+              "mean_probability": 0.3465896638028512,
+              "observed_rate": 0.33738532110091746
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 2792,
+              "mean_probability": 0.4433878432845226,
+              "observed_rate": 0.45093123209169056
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 1701,
+              "mean_probability": 0.5497953541759819,
+              "observed_rate": 0.5661375661375662
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1247,
+              "mean_probability": 0.6421389776316607,
+              "observed_rate": 0.6190858059342422
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 271,
+              "mean_probability": 0.7310323517248113,
+              "observed_rate": 0.7749077490774908
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 7,
+              "mean_probability": 0.8116990223384646,
+              "observed_rate": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "03b2e2f8d2617913262803a3f7d47653ba1a46b3d61ff2b19c6e82d9bc2943b7",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V4_frozen_fold.joblib",
+            "sha256": "ea73a0f5b32136ee582345251cc8867e5bd6b7e536fef6d1431b27d28a39c9fd"
+          }
+        }
+      ]
+    },
+    "V5": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.20486737395498308,
+        "logloss": 0.5976733042846477,
+        "auc": 0.681989478694595,
+        "avg_precision": 0.5226264304088373,
+        "precision_top_10pct": 0.6264517658212847,
+        "lift_top_10pct": 1.8134559934767525,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.006938531427581158,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 54,
+          "mean_probability": 0.08809951761027042,
+          "observed_rate": 0.12962962962962962
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 6712,
+          "mean_probability": 0.16365575029715002,
+          "observed_rate": 0.1734207389749702
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12891,
+          "mean_probability": 0.2456706825698782,
+          "observed_rate": 0.24086572026995579
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 9514,
+          "mean_probability": 0.35291068194632275,
+          "observed_rate": 0.35305865040992224
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 5665,
+          "mean_probability": 0.43782615580558065,
+          "observed_rate": 0.4616063548102383
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 4949,
+          "mean_probability": 0.55074378929807,
+          "observed_rate": 0.554859567589412
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 2180,
+          "mean_probability": 0.6470477750136339,
+          "observed_rate": 0.6477064220183486
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 125,
+          "mean_probability": 0.7265895112119024,
+          "observed_rate": 0.696
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 93,
+          "mean_probability": 0.8206515439234948,
+          "observed_rate": 0.8172043010752689
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 3,
+          "mean_probability": 0.9703895654968693,
+          "observed_rate": 0.6666666666666666
+        }
+      ],
+      "rows": 42186,
+      "dates": 161,
+      "players": 915,
+      "positions": {
+        "D": {
+          "metrics": {
+            "rows": 14235,
+            "brier": 0.18816039719859026,
+            "logloss": 0.5613406077511578,
+            "auc": 0.6488356103340637,
+            "avg_precision": 0.42656571745139205,
+            "precision_top_10pct": 0.5428370786516854,
+            "lift_top_10pct": 1.9498576367920117,
+            "positive_rate": 0.27839831401475235
+          },
+          "ece": 0.01465861842734158,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 20,
+              "mean_probability": 0.09112052016490736,
+              "observed_rate": 0.1
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3560,
+              "mean_probability": 0.16471689451602275,
+              "observed_rate": 0.175561797752809
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5617,
+              "mean_probability": 0.24267384707160675,
+              "observed_rate": 0.2300160227879651
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2594,
+              "mean_probability": 0.3482117434018622,
+              "observed_rate": 0.3269082498072475
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1228,
+              "mean_probability": 0.4395398841379046,
+              "observed_rate": 0.43322475570032576
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 942,
+              "mean_probability": 0.5488311669570543,
+              "observed_rate": 0.5254777070063694
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 260,
+              "mean_probability": 0.643365914295345,
+              "observed_rate": 0.6038461538461538
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 9,
+              "mean_probability": 0.7350533296292959,
+              "observed_rate": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 5,
+              "mean_probability": 0.8212264125765664,
+              "observed_rate": 0.6
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ]
+        },
+        "F": {
+          "metrics": {
+            "rows": 27951,
+            "brier": 0.2133759716483483,
+            "logloss": 0.6161769690964334,
+            "auc": 0.6818236634006749,
+            "avg_precision": 0.5508205723474979,
+            "precision_top_10pct": 0.6516452074391988,
+            "lift_top_10pct": 1.7166951171661684,
+            "positive_rate": 0.3795928589317019
+          },
+          "ece": 0.010707334431378255,
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 34,
+              "mean_probability": 0.08632245728401342,
+              "observed_rate": 0.14705882352941177
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3152,
+              "mean_probability": 0.16245724984690044,
+              "observed_rate": 0.171002538071066
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 7274,
+              "mean_probability": 0.24798484602791926,
+              "observed_rate": 0.24924388232059388
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 6920,
+              "mean_probability": 0.3546721048631336,
+              "observed_rate": 0.36286127167630056
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 4437,
+              "mean_probability": 0.4373518582189019,
+              "observed_rate": 0.4694613477574938
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 4007,
+              "mean_probability": 0.5511934249969062,
+              "observed_rate": 0.5617669079111555
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1920,
+              "mean_probability": 0.6475463603192356,
+              "observed_rate": 0.6536458333333334
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 116,
+              "mean_probability": 0.7259328356450356,
+              "observed_rate": 0.6724137931034483
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 88,
+              "mean_probability": 0.8206188809318428,
+              "observed_rate": 0.8295454545454546
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 3,
+              "mean_probability": 0.9703895654968693,
+              "observed_rate": 0.6666666666666666
+            }
+          ]
+        }
+      },
+      "feature_count": 71,
+      "folds": [
+        {
+          "metrics": {
+            "rows": 7667,
+            "brier": 0.21219175506271395,
+            "logloss": 0.6134934501725559,
+            "auc": 0.6685075089000132,
+            "avg_precision": 0.5167408931189859,
+            "precision_top_10pct": 0.6075619295958279,
+            "lift_top_10pct": 1.7000647132157711,
+            "positive_rate": 0.3573757662710317
+          },
+          "ece": 0.03075250216719777,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_points_current_mean",
+            "s_buts_current_mean",
+            "s_tirs_current_mean",
+            "s_point_hit_current_mean",
+            "s_goal_hit_current_mean",
+            "s_points_current60",
+            "s_buts_current60",
+            "s_tirs_current60",
+            "s_toi_current_mean",
+            "s_pp_current_mean",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "team_pp_opportunities_rate_pre",
+            "team_penalties_drawn_rate_pre",
+            "opponent_penalties_taken_rate_pre",
+            "opponent_times_shorthanded_rate_pre",
+            "team_pp_efficiency_pre",
+            "opponent_pk_efficiency_pre",
+            "expected_pp_opportunities",
+            "player_pp_exposure_interaction"
+          ],
+          "fit_end": "2023-04-05 00:00:00",
+          "calibration_end": "2023-10-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 32,
+              "mean_probability": 0.08698024229668994,
+              "observed_rate": 0.125
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1539,
+              "mean_probability": 0.16712634884391767,
+              "observed_rate": 0.19623131903833657
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2212,
+              "mean_probability": 0.24462449501564856,
+              "observed_rate": 0.27034358047016277
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1561,
+              "mean_probability": 0.3484878160284827,
+              "observed_rate": 0.39654067905188983
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1307,
+              "mean_probability": 0.44834258350485817,
+              "observed_rate": 0.4774292272379495
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 728,
+              "mean_probability": 0.5396106676130025,
+              "observed_rate": 0.5604395604395604
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 241,
+              "mean_probability": 0.6416204757892556,
+              "observed_rate": 0.6265560165975104
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 46,
+              "mean_probability": 0.7338118225490002,
+              "observed_rate": 0.7391304347826086
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 1,
+              "mean_probability": 0.8142483704235848,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "2eaf7c5b8036accb06ddfe6c665670e2cf8e799d7173dee2c1dc7472bae5ab36"
+        },
+        {
+          "metrics": {
+            "rows": 7884,
+            "brier": 0.2078037520954172,
+            "logloss": 0.6043038745102641,
+            "auc": 0.674184916045042,
+            "avg_precision": 0.5213948498653544,
+            "precision_top_10pct": 0.632446134347275,
+            "lift_top_10pct": 1.8085619598091824,
+            "positive_rate": 0.3496955859969559
+          },
+          "ece": 0.015300395533472387,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap",
+            "team_pp_opportunities_rate_pre",
+            "team_penalties_drawn_rate_pre",
+            "opponent_penalties_taken_rate_pre",
+            "opponent_times_shorthanded_rate_pre",
+            "team_pp_efficiency_pre",
+            "opponent_pk_efficiency_pre",
+            "expected_pp_opportunities",
+            "player_pp_exposure_interaction"
+          ],
+          "fit_end": "2023-10-24 00:00:00",
+          "calibration_end": "2023-11-30 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 4,
+              "mean_probability": 0.09256455937691833,
+              "observed_rate": 0.25
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 742,
+              "mean_probability": 0.17326221596686722,
+              "observed_rate": 0.1765498652291105
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2369,
+              "mean_probability": 0.25150804785220354,
+              "observed_rate": 0.22330097087378642
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 2128,
+              "mean_probability": 0.34825269556140726,
+              "observed_rate": 0.34116541353383456
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1449,
+              "mean_probability": 0.44246628032109847,
+              "observed_rate": 0.4554865424430642
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 694,
+              "mean_probability": 0.5480931784479531,
+              "observed_rate": 0.5461095100864554
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 438,
+              "mean_probability": 0.6414906903677761,
+              "observed_rate": 0.6666666666666666
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 60,
+              "mean_probability": 0.7230789346292127,
+              "observed_rate": 0.65
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "3b6bbc015ace011069a06d1323bde501fb9491b8022bf39fd5055c01c300240d"
+        },
+        {
+          "metrics": {
+            "rows": 7488,
+            "brier": 0.1997916632171683,
+            "logloss": 0.5859719243733639,
+            "auc": 0.6970524054462887,
+            "avg_precision": 0.5351090526620175,
+            "precision_top_10pct": 0.6395193591455274,
+            "lift_top_10pct": 1.893523511776081,
+            "positive_rate": 0.33774038461538464
+          },
+          "ece": 0.022590516108900602,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap",
+            "team_pp_opportunities_rate_pre",
+            "team_penalties_drawn_rate_pre",
+            "opponent_penalties_taken_rate_pre",
+            "opponent_times_shorthanded_rate_pre",
+            "team_pp_efficiency_pre",
+            "opponent_pk_efficiency_pre",
+            "expected_pp_opportunities",
+            "player_pp_exposure_interaction"
+          ],
+          "fit_end": "2023-11-17 00:00:00",
+          "calibration_end": "2023-12-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 16,
+              "mean_probability": 0.09183830034378183,
+              "observed_rate": 0.125
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1058,
+              "mean_probability": 0.1691704273470791,
+              "observed_rate": 0.15122873345935728
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2335,
+              "mean_probability": 0.24818170259137395,
+              "observed_rate": 0.22612419700214131
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1600,
+              "mean_probability": 0.34919676569324465,
+              "observed_rate": 0.330625
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1387,
+              "mean_probability": 0.44627638656944235,
+              "observed_rate": 0.4585436193222783
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 800,
+              "mean_probability": 0.5450533392467624,
+              "observed_rate": 0.58875
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 277,
+              "mean_probability": 0.6348829848686051,
+              "observed_rate": 0.6931407942238267
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 15,
+              "mean_probability": 0.7122405990987356,
+              "observed_rate": 0.7333333333333333
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 0,
+              "mean_probability": null,
+              "observed_rate": null
+            }
+          ],
+          "prediction_sha256": "74490713e9bdb98787679cde23a8a602da91b0f0b8ae0806ec487f158b08d82e"
+        },
+        {
+          "metrics": {
+            "rows": 19147,
+            "brier": 0.2027104035049179,
+            "logloss": 0.5931844265802728,
+            "auc": 0.6872740149977815,
+            "avg_precision": 0.5191913840678379,
+            "precision_top_10pct": 0.6323759791122715,
+            "lift_top_10pct": 1.8494123830857891,
+            "positive_rate": 0.3419334621611741
+          },
+          "ece": 0.009371369351601171,
+          "kept": [
+            "is_home_player",
+            "s_games_pre",
+            "s_prev_games",
+            "s_points_prev_mean",
+            "s_points_current_mean",
+            "s_points_blend10",
+            "s_points_blend30",
+            "s_buts_prev_mean",
+            "s_buts_current_mean",
+            "s_buts_blend10",
+            "s_buts_blend30",
+            "s_tirs_prev_mean",
+            "s_tirs_current_mean",
+            "s_tirs_blend10",
+            "s_tirs_blend30",
+            "s_point_hit_prev_mean",
+            "s_point_hit_current_mean",
+            "s_point_hit_blend10",
+            "s_point_hit_blend30",
+            "s_goal_hit_prev_mean",
+            "s_goal_hit_current_mean",
+            "s_goal_hit_blend10",
+            "s_goal_hit_blend30",
+            "s_points_prev60",
+            "s_points_current60",
+            "s_buts_prev60",
+            "s_buts_current60",
+            "s_tirs_prev60",
+            "s_tirs_current60",
+            "s_toi_prev_mean",
+            "s_toi_current_mean",
+            "s_pp_prev_mean",
+            "s_pp_current_mean",
+            "s_share_prev",
+            "s_share_current",
+            "tirs_moy_5",
+            "tirs_moy_10",
+            "toi_moy_5",
+            "toi_moy_10",
+            "pp_moy_5",
+            "s_pp10",
+            "s_pp_sd10",
+            "s_pp_delta",
+            "s_toi_delta",
+            "jours_repos",
+            "team_back_to_back",
+            "player_team_changed_pre",
+            "team_games_previous4days_pre",
+            "points_moy_5",
+            "points_moy_10",
+            "buts_moy_5",
+            "buts_moy_10",
+            "point_hit_rate_last_5",
+            "point_hit_rate_last_10",
+            "goal_hit_rate_last_10",
+            "current_point_streak_pre",
+            "current_no_point_streak_pre",
+            "goal_drought_pre",
+            "goal_relative_drought_pre",
+            "s_points_recent_shrunk",
+            "s_buts_recent_shrunk",
+            "s_points_recent_gap",
+            "s_buts_recent_gap",
+            "team_pp_opportunities_rate_pre",
+            "team_penalties_drawn_rate_pre",
+            "opponent_penalties_taken_rate_pre",
+            "opponent_times_shorthanded_rate_pre",
+            "team_pp_efficiency_pre",
+            "opponent_pk_efficiency_pre",
+            "expected_pp_opportunities",
+            "player_pp_exposure_interaction"
+          ],
+          "fit_end": "2023-12-15 00:00:00",
+          "calibration_end": "2024-01-31 00:00:00",
+          "calibration": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 2,
+              "mean_probability": 0.06716757722617128,
+              "observed_rate": 0.0
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 3373,
+              "mean_probability": 0.1582291932235567,
+              "observed_rate": 0.16928550252001187
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 5975,
+              "mean_probability": 0.24276226696585052,
+              "observed_rate": 0.24267782426778242
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 4225,
+              "mean_probability": 0.3582973221190502,
+              "observed_rate": 0.3514792899408284
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1522,
+              "mean_probability": 0.416677022102941,
+              "observed_rate": 0.45663600525624176
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 2727,
+              "mean_probability": 0.5560598129716147,
+              "observed_rate": 0.5456545654565457
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 1224,
+              "mean_probability": 0.6528579294728937,
+              "observed_rate": 0.6348039215686274
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 4,
+              "mean_probability": 0.75,
+              "observed_rate": 0.75
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 92,
+              "mean_probability": 0.8207211436354503,
+              "observed_rate": 0.8260869565217391
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 3,
+              "mean_probability": 0.9703895654968693,
+              "observed_rate": 0.6666666666666666
+            }
+          ],
+          "prediction_sha256": "ca7f2ae8d646159d0a9aca185c940c51a271078e0e6374d665b07d62d0534b2b",
+          "frozen_model": {
+            "path": "outputs/structural_20261012/point/V5_frozen_fold.joblib",
+            "sha256": "6719df43d5a47c9e3a1402e339a2439b0725d24900f08b6aa6d9eb172c6edbb2"
+          }
+        }
+      ]
+    },
+    "player_smoothed": {
+      "metrics": {
+        "rows": 42186,
+        "brier": 0.20689720443025103,
+        "logloss": 0.6023747636963788,
+        "auc": 0.6713921937240777,
+        "avg_precision": 0.519883154202328,
+        "precision_top_10pct": 0.6295330647072767,
+        "lift_top_10pct": 1.8223757543224575,
+        "positive_rate": 0.34544635661119805
+      },
+      "ece": 0.019379947876790378,
+      "calibration": [
+        {
+          "lower": 0.0,
+          "upper": 0.1,
+          "count": 17,
+          "mean_probability": 0.09579911166786395,
+          "observed_rate": 0.23529411764705882
+        },
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "count": 4300,
+          "mean_probability": 0.17167169423463563,
+          "observed_rate": 0.18255813953488373
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "count": 12192,
+          "mean_probability": 0.25342336564195383,
+          "observed_rate": 0.23400590551181102
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "count": 11642,
+          "mean_probability": 0.3454460931728183,
+          "observed_rate": 0.3179007043463322
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "count": 6912,
+          "mean_probability": 0.44259741285713605,
+          "observed_rate": 0.43561921296296297
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "count": 5037,
+          "mean_probability": 0.5452933773369788,
+          "observed_rate": 0.5709747865793131
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "count": 1823,
+          "mean_probability": 0.6331271170827597,
+          "observed_rate": 0.6220515633571037
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "count": 263,
+          "mean_probability": 0.7445743340346764,
+          "observed_rate": 0.7946768060836502
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 0,
+          "mean_probability": null,
+          "observed_rate": null
+        }
+      ]
+    }
+  },
+  "artifacts": {
+    "outputs/structural_20261012/point/V0_0.csv.gz": "c82b58bc8267b459fbac110868b190822325ec0b70369942def2409b7d3ba362",
+    "outputs/structural_20261012/point/V0_0.json": "3dc89c1c6da8dde6200d9d2dc111299e122377ef8e5711848b773a8a1cf85846",
+    "outputs/structural_20261012/point/V0_1.csv.gz": "392325a821317d8114c2a07759a1d2e126bffc14f76b9c63905489768a8fae14",
+    "outputs/structural_20261012/point/V0_1.json": "837aec2757952f68a0ddb5fe0de510f10a43b126022e03dcee902e2fd16add4d",
+    "outputs/structural_20261012/point/V0_2.csv.gz": "f4f4680d8ac1bfaf7a240faf9f850c588e6e69f9d5209d14fbd574c60b313417",
+    "outputs/structural_20261012/point/V0_2.json": "c36b08a4c8d46ad2118f0718187fa81ed25ec788cdd1e835e65073c8698c4949",
+    "outputs/structural_20261012/point/V0_3.csv.gz": "b63891fdee592aba04b10d50eab1edec1d439c5f1c69870027b5bd92f8ff81d6",
+    "outputs/structural_20261012/point/V0_3.json": "b9e1b4063f41cb429de097f2e125889ff4affbc44766d8ab19c5d5dd05749968",
+    "outputs/structural_20261012/point/V0_frozen_fold.joblib": "5ec1d10c307e0fbeade40665b6cc39a5c58f2fee61725c46135a1f717a78f7e5",
+    "outputs/structural_20261012/point/V1_0.csv.gz": "c147c8bce388afc894d9f905bedce65feb7a804d7ecb396d73a4d9090b85f59d",
+    "outputs/structural_20261012/point/V1_0.json": "ba2e70d766ed829279c36ceb1063686bb7658de5cb6dc658cccc196dc7ee6828",
+    "outputs/structural_20261012/point/V1_1.csv.gz": "2ee5fd189217156e3cc022a8ce07f0cd0e9e77bb0c0615b6d0adf3b98aa6b488",
+    "outputs/structural_20261012/point/V1_1.json": "d562eaa299186f638f3366311bba5bf5df54ea16f5e4d53cdfd77ceb72837461",
+    "outputs/structural_20261012/point/V1_2.csv.gz": "b4c3333642b94ce653b547aa29fc508d6237d4e1fa481542dfcbf1fcc0f91c4b",
+    "outputs/structural_20261012/point/V1_2.json": "cbb2c1b0e90ca7f9ae285f904fe8da2fb791f0ed973ea35fbda3b6f4d4027bd2",
+    "outputs/structural_20261012/point/V1_3.csv.gz": "0710c4c4d8c2af9d0a27f11913bd3b61ff05d4684fa6c68c53b0c62a846fbc45",
+    "outputs/structural_20261012/point/V1_3.json": "9cfd4ddccc3b3c813bc647814494ddca65439e230a4d055512fa28bd8a0a76ca",
+    "outputs/structural_20261012/point/V1_frozen_fold.joblib": "7c7d95e2759b5869b10c63c60b1afc1980b702c264006dd9e6eefca86bbb00ed",
+    "outputs/structural_20261012/point/V2_0.csv.gz": "980985d1cc5dbc6c1af05d55f0a968897ee008b894b6c434d2a3e7185330976b",
+    "outputs/structural_20261012/point/V2_0.json": "0918bf07a69387e2520e6545a99eefb8cd57e27f8735433bfbdf0af106ad48eb",
+    "outputs/structural_20261012/point/V2_1.csv.gz": "b46bfd06cf0c90a2600aa85c067af359af85a2b343f2e4a4eaac7c9c52df5d30",
+    "outputs/structural_20261012/point/V2_1.json": "d190542419b97ebfb1efe5f7b69e026b46f5103124d8807a7259a99e508d984d",
+    "outputs/structural_20261012/point/V2_2.csv.gz": "0929cff5ad3ce172c8045f8953b374ab3b04a693c3f9d1d12180165c4c6a8b2d",
+    "outputs/structural_20261012/point/V2_2.json": "0eb062954882b33583500616d47fc041a63af063a1d353980fc8b78330a6437d",
+    "outputs/structural_20261012/point/V2_3.csv.gz": "da3ab871f93a95ccdb3597aaa72bf2a4f842cc8f6a5e3eae267e5ef5d9028509",
+    "outputs/structural_20261012/point/V2_3.json": "f7c4ed760ace25daf2c586d8add8f911fd18c3a54b07dfe1f330e3c8174eba7a",
+    "outputs/structural_20261012/point/V2_frozen_fold.joblib": "fcd6992fe6431eaf33a888c2f53fb6f9614d2aed205498b6a1810158ae3936b2",
+    "outputs/structural_20261012/point/V3_0.csv.gz": "8d1c375e8d77fefb1e6eddc3aeb919ee93b6b05830d4d0ddc939af51991af260",
+    "outputs/structural_20261012/point/V3_0.json": "c890c324d23b5881aa3b1bf802fe9a6771c42fe1697e640c24fa573e142df24f",
+    "outputs/structural_20261012/point/V3_1.csv.gz": "7fd7b6607b88ce33b6bf3db63428d4405d3d11c57c284066b95520ce1935d759",
+    "outputs/structural_20261012/point/V3_1.json": "5534ea9f3be12c27995a0fda3bea65f7db71fdc1834bcc9c498931cc75063200",
+    "outputs/structural_20261012/point/V3_2.csv.gz": "25a8bf06c9d2e11ca4701eaedb75061ad899af8c0d6b46a43261a2b3d16bf82b",
+    "outputs/structural_20261012/point/V3_2.json": "52a35e29df8b2e5cf799b7ecd1e09d8423bc05dc2ce7b3ee9b71bd13e3c62a9f",
+    "outputs/structural_20261012/point/V3_3.csv.gz": "28c8d378a55f19549aac22aff18bb753613dc4091a9689eb6d608dfe06b13b3e",
+    "outputs/structural_20261012/point/V3_3.json": "55b47b0eae8d9cf9e9e009237ae6d13896860d010337902c555d205fd7e1b961",
+    "outputs/structural_20261012/point/V3_frozen_fold.joblib": "e3bb8780158f5170dd7fae0d29728c3e568441e8749aecc7723c50335e091895",
+    "outputs/structural_20261012/point/V4_0.csv.gz": "67c6e2af3c1fd6009acb7f291d3c241457a560de7bf4e12e4a2beda319efef08",
+    "outputs/structural_20261012/point/V4_0.json": "b0b3ae8eb0e4f426cedd4196d973d83f2a6a230235a9c446948fc7b84a47d3d7",
+    "outputs/structural_20261012/point/V4_1.csv.gz": "c79869b1b526e68fc7ca3018c0f13250a1d60306dad11fdedd11ba4d54215a9e",
+    "outputs/structural_20261012/point/V4_1.json": "86d8a7f9d80d03edadfd1aed6c011a0846d22c1fa9492b6e8ce493abc6c07583",
+    "outputs/structural_20261012/point/V4_2.csv.gz": "69788645855be09a8d30e5944431bb0e9e02fc320a3481c8a9e7cc542197b02d",
+    "outputs/structural_20261012/point/V4_2.json": "6f774ab59a518bafd0f51d134c365c2961c039f9b3651debf7d03430465a7be4",
+    "outputs/structural_20261012/point/V4_3.csv.gz": "03b2e2f8d2617913262803a3f7d47653ba1a46b3d61ff2b19c6e82d9bc2943b7",
+    "outputs/structural_20261012/point/V4_3.json": "b997332f830aff33d2c92008ac68aa71e1a88ab5dd25d59c0c42f9a3c790210a",
+    "outputs/structural_20261012/point/V4_frozen_fold.joblib": "ea73a0f5b32136ee582345251cc8867e5bd6b7e536fef6d1431b27d28a39c9fd",
+    "outputs/structural_20261012/point/V5_0.csv.gz": "2eaf7c5b8036accb06ddfe6c665670e2cf8e799d7173dee2c1dc7472bae5ab36",
+    "outputs/structural_20261012/point/V5_0.json": "e719b82d73abdb9ce113e9cc1360127b12e71700049a415cef5db36747078b89",
+    "outputs/structural_20261012/point/V5_1.csv.gz": "3b6bbc015ace011069a06d1323bde501fb9491b8022bf39fd5055c01c300240d",
+    "outputs/structural_20261012/point/V5_1.json": "2f0a68a546c58e292f7adf8c5f74e199ac04aa38060e342d541a4e80b5c94a33",
+    "outputs/structural_20261012/point/V5_2.csv.gz": "74490713e9bdb98787679cde23a8a602da91b0f0b8ae0806ec487f158b08d82e",
+    "outputs/structural_20261012/point/V5_2.json": "91618ac7d160ad798ef22f25f0e17604065084d59094ab7ff945e94f5b216405",
+    "outputs/structural_20261012/point/V5_3.csv.gz": "ca7f2ae8d646159d0a9aca185c940c51a271078e0e6374d665b07d62d0534b2b",
+    "outputs/structural_20261012/point/V5_3.json": "337a66cfa9de97242d12cb5dafabeac05e214a63ab868224fae23c34a2f24afb",
+    "outputs/structural_20261012/point/V5_frozen_fold.joblib": "6719df43d5a47c9e3a1402e339a2439b0725d24900f08b6aa6d9eb172c6edbb2",
+    "outputs/structural_20261012/point/identity.json": "bc23f6af6e00b4da16eac461d5fb4c753d60327373701dac36f4cfac4368b01a",
+    "outputs/structural_20261012/point/summary.json": "4ae48890223da2954c659856ea046df77ed4accdcb7fbad19a0a3fa625b34b7b"
+  }
+}
