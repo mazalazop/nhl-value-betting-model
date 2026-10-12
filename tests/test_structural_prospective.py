@@ -55,7 +55,7 @@ def test_invalid_or_late_predictions_refused(tmp_path,field,value):
 
 
 def test_prospective_not_opened_early_or_reopened(tmp_path):
-    path=locked(tmp_path);obs=pd.DataFrame(dict(id_match=range(20000),id_joueur=range(20000),date_match=[pd.Timestamp('2026-11-01')+pd.Timedelta(days=i%100) for i in range(20000)]))
+    path=locked(tmp_path);obs=pd.DataFrame(dict(position=['D']*4000+['F']*16000,id_match=range(20000),id_joueur=range(20000),date_match=[pd.Timestamp('2026-11-01')+pd.Timedelta(days=i%100) for i in range(20000)]))
     with pytest.raises(ValueError,match='not closed'):s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-19T00:00:00Z')
     s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-20T00:00:00Z')
     with pytest.raises(FileExistsError):s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-20T00:00:00Z')
@@ -65,3 +65,12 @@ def test_cannot_backdate_archive_after_game(tmp_path):
     path=locked(tmp_path)
     with pytest.raises(ValueError,match='actual puck drop'):
         s.archive_predictions(path,rows(),tmp_path/'snapshots',now='2026-11-04T00:00:00Z')
+
+
+def test_prospective_requires_preregistered_defender_coverage(tmp_path):
+    path=locked(tmp_path)
+    obs=pd.DataFrame(dict(id_match=range(20000),id_joueur=range(20000),position=['F']*20000,
+                         date_match=[pd.Timestamp('2026-11-01')+pd.Timedelta(days=i%100) for i in range(20000)]))
+    with pytest.raises(ValueError,match='defender coverage'):
+        s.open_final_once(path,tmp_path/'opened.json',obs,now='2027-04-20T00:00:00Z')
+    assert not (tmp_path/'opened.json').exists()

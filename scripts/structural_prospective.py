@@ -65,6 +65,7 @@ def open_final_once(lock_path, output, observations, now=None):
     keys=['id_match','id_joueur']
     if observations.duplicated(keys).any():raise ValueError('Duplicate final observations')
     minimum=lock['prospective']
+    if 'position' not in observations or observations.position.eq('D').sum()<minimum['minimum_defender_games']:raise ValueError('Insufficient defender coverage; inconclusive')
     if len(observations)<minimum['minimum_player_games'] or dates.nunique()<minimum['minimum_dates']:raise ValueError('Insufficient prospective coverage; inconclusive')
     # Consume before any metric access; interruption cannot enable reselection.
     with Path(output).open('x') as f:json.dump(dict(lock_sha256=digest(lock_path),opened_at_utc=now.isoformat(),status='consumed'),f)
