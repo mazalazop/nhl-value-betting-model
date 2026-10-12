@@ -1423,7 +1423,12 @@ def build_future_features(history, matches, players, standings=None):
     targets = pd.DataFrame(rows)
     if targets.duplicated(['id_match', 'id_joueur']).any():
         raise ValueError('Duplicate future player/game')
-    source = pd.concat([past.reindex(columns=SOURCE_COLUMNS), targets.reindex(columns=SOURCE_COLUMNS)], ignore_index=True)
+    # An empty history has no rows or observations to contribute. Avoid dtype
+    # inference from its empty blocks (deprecated by pandas); retain every
+    # target column, including entirely unknown metadata.
+    target_source = targets.reindex(columns=SOURCE_COLUMNS)
+    source = (target_source.reset_index(drop=True) if past.empty else
+              pd.concat([past.reindex(columns=SOURCE_COLUMNS), target_source], ignore_index=True))
     all_features = build_feature_frame(source, standings)
     out = all_features[pd.to_datetime(all_features.date_match) == cutoff].copy()
     extra = [c for c in ['days_since_last_game', 'roster_source'] if c in targets]

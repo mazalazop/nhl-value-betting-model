@@ -102,3 +102,22 @@ def test_unknown_pp_stays_unknown_but_observed_zero_is_zero():
     known=build(raw);past=known.season_games_before_match.gt(0)
     assert known.loc[past,'pp_moy_5'].eq(0).all()
     assert known.loc[past,'pp_moy_season_pre'].eq(0).all()
+
+
+def test_empty_history_source_concat_preserves_first_game_features():
+    from henachel.features import build_future_features
+    raw=games_fixture().copy()
+    # Exact official research source types: numeric season + integer TOI.
+    raw['season_source']=pd.to_numeric(raw.season_source)
+    raw['temps_de_glace']=18
+    raw['temps_pp']=2.0
+    raw['temps_de_glace']=18.0
+    raw['date_match']=pd.to_datetime(raw.date_match).dt.strftime('%Y-%m-%d')
+    date=raw.date_match.min();today=raw[raw.date_match.eq(date)]
+    matches=today.drop_duplicates('id_match')[['id_match','date_match','saison','id_equipe_domicile','id_equipe_exterieur']]
+    players=today[['id_joueur','team_player_match','nom','position']]
+    actual=build_future_features(raw,matches,players)
+    expected=build(raw);expected=expected[expected.date_match.eq(pd.Timestamp(date))]
+    assert len(actual)==len(today)
+    for col in future.FEATURE_WHITELIST:
+        np.testing.assert_allclose(actual[col].to_numpy(float),expected[col].to_numpy(float),equal_nan=True,atol=1e-10)

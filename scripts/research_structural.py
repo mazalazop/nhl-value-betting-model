@@ -1,5 +1,6 @@
 """Preregistered isolated structural study; production is never modified."""
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -47,6 +48,22 @@ def labels(frame,target):
     return values.ge(1).astype(int)
 
 
+def historical_code_digest():
+    tree=ast.parse((ROOT/'model/henachel/features.py').read_text())
+    tree.body=[n for n in tree.body if not isinstance(n,ast.FunctionDef) or n.name!='build_future_features']
+    return hashlib.sha256(ast.dump(tree).encode()).hexdigest()
+
+
+def compatible_cache_inputs(saved,current):
+    if saved==current:return True
+    code=str(ROOT/'model/henachel/features.py')
+    # Only the demonstrated cold-start inference concat changed. All historical
+    # functions/imports/constants must remain AST-identical to the cached code.
+    return (saved.get(code)=='8c58c4bed4058042a93c734b5fbcec4bcddbc288c166ab39aa7b70f8f9ebbc31'
+            and historical_code_digest()=='1fefecdc7bdbb5c9f5e2680b0ab404446133c017f00b70dd5f166cbe1fda556d'
+            and {k:v for k,v in saved.items() if k!=code}=={k:v for k,v in current.items() if k!=code})
+
+
 def source_season_alias(raw):
     raw=raw.copy();season=season_ids(raw.season_source)
     if 'saison' in raw and not season_ids(raw.saison).eq(season).all():raise ValueError('Conflicting source season aliases')
@@ -70,7 +87,7 @@ def prepare(history,context,standings_path,output):
     inputs={str(f):digest(f) for f in [history,standings_path,ROOT/'model/henachel/features.py']}
     if base_cache.exists() and cache_meta.exists():
         saved=json.loads(cache_meta.read_text())
-        if saved['inputs']!=inputs or saved['sha256']!=digest(base_cache):raise ValueError('Production feature cache mismatch')
+        if not compatible_cache_inputs(saved['inputs'],inputs) or saved['sha256']!=digest(base_cache):raise ValueError('Production feature cache mismatch')
         base=pd.read_csv(base_cache,parse_dates=['date_match'],dtype={'season_source':str},low_memory=False)
         print('Reusing production historical features',flush=True)
     else:

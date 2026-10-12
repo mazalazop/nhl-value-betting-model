@@ -56,3 +56,13 @@ def test_official_source_season_alias_required_by_point_baseline():
     assert 'saison' not in raw
     result.loc[0,'saison']=20232024
     with pytest.raises(ValueError,match='Conflicting'):r.source_season_alias(result)
+
+
+def test_cache_compatibility_only_for_unchanged_historical_code(monkeypatch):
+    code=str(r.ROOT/'model/henachel/features.py')
+    saved={code:'8c58c4bed4058042a93c734b5fbcec4bcddbc288c166ab39aa7b70f8f9ebbc31','history':'same'}
+    current={code:r.digest(code),'history':'same'}
+    assert r.compatible_cache_inputs(saved,current)
+    assert not r.compatible_cache_inputs(saved,{**current,'history':'changed'})
+    monkeypatch.setattr(r,'historical_code_digest',lambda:'different')
+    assert not r.compatible_cache_inputs(saved,current)
