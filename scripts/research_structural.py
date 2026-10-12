@@ -57,10 +57,12 @@ def prepare(history,context,standings_path,output):
     if not final_mask(raw).all() or not raw.game_type.eq(2).all():raise ValueError('Invalid research universe')
     standings,info=charger_standings(standings_path)
     if standings is None:raise ValueError('POINT standings required')
+    print('Building production historical features',flush=True)
     base=build_feature_frame(raw,standings)
     base=base.merge(raw[['id_match','id_joueur','game_type']],on=['id_match','id_joueur'],validate='one_to_one')
     if len(base)!=len(raw):raise ValueError('Silent row filtering')
     goal=augment_goal_features(base);derived=augment_research_features(goal)
+    print('Building structural features',flush=True)
     result=structural_features(derived,ctx)
     all_columns=sorted(set(sum(p['variants'].values(),[])+p['baselines']['POINT']+p['baselines']['GOAL']))
     if set(all_columns)-set(result):raise ValueError(f'Missing features {set(all_columns)-set(result)}')
@@ -68,7 +70,7 @@ def prepare(history,context,standings_path,output):
     # No new fits; pregame values checked at cold start, season turnover and development.
     for requested in ['2022-10-07','2023-10-10','2023-11-01','2024-02-01']:
         dates=sorted(d for d in pd.to_datetime(raw.date_match).unique() if d>=pd.Timestamp(requested))
-        date=pd.Timestamp(dates[0]);today=raw[pd.to_datetime(raw.date_match).eq(date)]
+        date=pd.Timestamp(dates[0]);print('Parity',date,flush=True);today=raw[pd.to_datetime(raw.date_match).eq(date)]
         matches=today.drop_duplicates('id_match')[['id_match','date_match','season_source','id_equipe_domicile','id_equipe_exterieur']].rename(columns={'season_source':'saison'})
         players=today[['id_joueur','team_player_match','nom','position']].drop_duplicates('id_joueur')
         upcoming=build_future_features(raw,matches,players,standings)

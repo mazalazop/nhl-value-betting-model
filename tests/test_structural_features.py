@@ -81,3 +81,10 @@ def test_standings_empty_explicit_and_wrong_date_refused():
     assert flatten({'standings':[]},'2022-10-06',20222023)==[]
     with pytest.raises(ValueError,match='date/season'):
         flatten({'standings':[{'date':'2022-10-05','seasonId':20222023}]},'2022-10-06',20222023)
+
+
+def test_production_string_seasons_match_official_integer_seasons():
+    source,ctx=fixture();expected=structural_features(source,ctx)
+    source.season_source=source.season_source.astype(str)
+    actual=structural_features(source,ctx)
+    pd.testing.assert_frame_equal(expected,actual)

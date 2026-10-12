@@ -10,6 +10,13 @@ KEYS = ['id_match', 'id_joueur']
 STATS = {'points': 'points', 'buts': 'buts', 'tirs': 'tirs', 'toi': 'temps_de_glace', 'pp': 'temps_pp'}
 
 
+def season_ids(values):
+    numeric = pd.to_numeric(values, errors='raise')
+    if numeric.isna().any() or not np.isfinite(numeric).all() or not numeric.mod(1).eq(0).all() or not numeric.mod(10000).eq(numeric.floordiv(10000)+1).all():
+        raise ValueError('Invalid NHL season')
+    return numeric.astype('int64')
+
+
 def structural_features(frame, context, prior_history=None):
     current = frame.copy(); current['_requested'] = True
     if prior_history is not None:
@@ -25,9 +32,10 @@ def structural_features(frame, context, prior_history=None):
         raise ValueError('Ambiguous player/date or identity')
     work = work.sort_values(['id_joueur', 'date_match']).reset_index(drop=True)
     season = 'season_source'
+    work[season] = season_ids(work[season])
     for col in ['team_player_match', 'adversaire_match']:
         work[col] = work[col].map(normalize_team)
-    ctx = context.copy(); ctx.date_match = pd.to_datetime(ctx.date_match, errors='raise')
+    ctx = context.copy(); ctx[season] = season_ids(ctx[season]); ctx.date_match = pd.to_datetime(ctx.date_match, errors='raise')
     ctx.team = ctx.team.map(normalize_team); ctx.opponent = ctx.opponent.map(normalize_team)
     if ctx.duplicated(['id_match', 'team']).any() or ctx.duplicated(['date_match', 'team']).any():
         raise ValueError('Ambiguous team context')
