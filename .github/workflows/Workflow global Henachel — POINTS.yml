@@ -184,6 +184,10 @@ jobs:
       - name: Settle canonical bets after result refresh
         run: python model/09_settle_previous_bets.py --run-date "$RUN_DATE"
 
+      - name: Append final results to existing prospective archive
+        continue-on-error: true
+        run: python scripts/archive_prospective_outcomes.py
+
       - name: Refresh pregame standings
         run: python model/00c_refresh_team_standings.py
 
@@ -191,7 +195,27 @@ jobs:
         run: python model/01_build_base_features.py
 
       - name: Predict upcoming games
-        run: python model/05_predict_upcoming_games.py --target-date "$RUN_DATE"
+        env:
+          CAPTURE_PROSPECTIVE: ${{ inputs.capture_prospective_pp == true || vars.HENACHEL_CAPTURE_PROSPECTIVE_PP == 'true' }}
+        shell: bash
+        run: |
+          ARGS=()
+          if [ "$CAPTURE_PROSPECTIVE" = "true" ]; then ARGS+=(--export-future-features outputs/upcoming_features.json); fi
+          python model/05_predict_upcoming_games.py --target-date "$RUN_DATE" "${ARGS[@]}"
+
+      - name: Score frozen GOAL17 reference for prospective research only
+        if: ${{ inputs.capture_prospective_pp == true || vars.HENACHEL_CAPTURE_PROSPECTIVE_PP == 'true' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -f outputs/upcoming_features.json ]; then
+            python scripts/predict_frozen_goal.py \
+              --bundle model/research_artifacts/goal17_frozen_20240201.joblib \
+              --expected-sha256 5f3ca87d8dbf5d49a5a5333066b3803947446da6894107d212e2251794b86d87 \
+              --future-features outputs/upcoming_features.json \
+              --prior-history data/final/base_features_context_v2.csv \
+              --output outputs/predictions_upcoming_goal_research.csv
+          fi
 
       - name: Collect verified public Unibet POINT markets
         run: |

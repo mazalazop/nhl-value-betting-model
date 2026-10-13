@@ -1,7 +1,7 @@
 """Score prepared future GOAL features with a trusted frozen local bundle; never fit.
 
-This is a research-only inference adapter. It does not prepare features, choose a
-model, promote a candidate, or claim that old frozen weights are current production.
+This research-only adapter reuses existing GOAL feature functions when history is
+provided. It never fits, selects or promotes a model, or calls old weights current.
 """
 import argparse
 import hashlib
@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'model'))
-from henachel.goal import BASE_FEATURES, FEATURE_FAMILIES, numeric_features
+from henachel.goal import BASE_FEATURES, FEATURE_FAMILIES, numeric_features, augment_goal_features
 from henachel.matching import utc
 
 
@@ -44,18 +44,36 @@ def predict(bundle, future, model_hash, now=None):
     return out
 
 
+def prepare(future, history, features):
+    # Reuse the existing scientifically tested inference definition; no new feature.
+    if any(c in future and future[c].notna().any() for c in ['buts', 'points', 'a_marque_un_but', 'a_marque_un_point']):
+        raise ValueError('Current outcomes forbidden')
+    if future.empty: return future
+    if pd.to_datetime(history.date_match).max() >= pd.to_datetime(future.date_match).min():
+        raise ValueError('History must be strictly earlier than the slate')
+    result = augment_goal_features(future, prior_history=history)
+    if {'team_games_previous4days_pre', 'player_team_changed_pre'} & set(features):
+        from research_goal_temporal import augment_research_features
+        result = augment_research_features(result, prior_history=augment_goal_features(history))
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bundle', required=True, type=Path)
     p.add_argument('--expected-sha256', required=True)
     p.add_argument('--future-features', required=True, type=Path)
     p.add_argument('--output', required=True, type=Path)
+    p.add_argument('--prior-history', type=Path, help='Existing production historical feature file; strictly earlier than slate')
     a = p.parse_args()
     digest = hashlib.sha256(a.bundle.read_bytes()).hexdigest()
     if digest != a.expected_sha256: raise ValueError('Frozen artifact hash changed')
     # joblib is executable serialization: only explicitly trusted local artifacts.
     bundle = joblib.load(a.bundle)
-    rows = predict(bundle, pd.read_csv(a.future_features), digest)
+    future = pd.read_json(a.future_features, orient='table') if a.future_features.suffix == '.json' else pd.read_csv(a.future_features)
+    if a.prior_history:
+        future = prepare(future, pd.read_csv(a.prior_history, low_memory=False), bundle['features'])
+    rows = predict(bundle, future, digest)
     a.output.parent.mkdir(parents=True, exist_ok=True)
     with a.output.open('x') as f: rows.to_csv(f, index=False)
     print(f'GOAL research only: {len(rows)} predictions; model SHA {digest}')

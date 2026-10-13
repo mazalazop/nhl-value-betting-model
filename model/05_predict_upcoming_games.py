@@ -724,6 +724,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_RECENT_LOOKBACK_DAYS,
         help="Récence maximale (en jours) depuis la dernière apparition historique du joueur pour l'inclure dans le slate.",
     )
+    parser.add_argument("--export-future-features", type=Path, default=None, help="Optional prospective pregame feature export (JSON table)")
     return parser.parse_args()
 
 
@@ -788,6 +789,10 @@ def main() -> None:
         player_pool=player_pool,
         standings_by_team=standings_by_team,
     )
+
+    if args.export_future_features is not None:
+        args.export_future_features.parent.mkdir(parents=True, exist_ok=True)
+        upcoming_universe.to_json(args.export_future_features, orient="table", date_format="iso", index=False)
 
     model, calibrator, fit_summary = fit_point_model_and_calibrator(
         history=history_before_target,
