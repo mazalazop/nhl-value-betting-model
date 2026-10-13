@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 import sqlite3
+import pandas as pd
 
 from henachel.matching import name, utc
 
@@ -94,7 +95,7 @@ def snapshots(players, roster, evidence, now=None, max_age_hours=24):
     """
     clock = utc(now or datetime.now(timezone.utc)); captured = utc(evidence['collected_at_utc'])
     if captured > clock: raise ValueError('Future collection time')
-    if clock - captured > __import__('pandas').Timedelta(hours=max_age_hours):
+    if clock - captured > pd.Timedelta(hours=max_age_hours):
         raise ValueError('Stale collection')
     output = []; seen = set()
     for p in players:
@@ -110,7 +111,8 @@ def snapshots(players, roster, evidence, now=None, max_age_hours=24):
                    evidence_status='player_not_observed', document_sha256=evidence.get('document_sha256'))
         candidates = [x for x in evidence['observations'] if x['team'] == p['team'] and name(x['player_name']) == name(p['player_name'])]
         identities = [r for r in roster if r['team'] == p['team'] and name(r['player_name']) == name(p['player_name'])]
-        valid_roster = len(identities) == 1 and identities[0]['player_id'] == p['player_id']
+        valid_roster = (len(identities) == 1 and identities[0]['player_id'] == p['player_id']
+                        and sum(r['player_id'] == p['player_id'] for r in roster) == 1)
         if valid_roster:
             try:
                 observed = utc(identities[0]['observed_at'])
@@ -210,3 +212,35 @@ class Archive:
                     if row['actual_goals'] > row['actual_points']: raise ValueError('Inconsistent outcome')
             self.db.execute('INSERT INTO batches VALUES (?,?,?,?)', (batch_id, kind, payload, clock.isoformat()))
         return True
+
+
+def attach_point_odds(predictions, odds, now=None):
+    """Preserve verified matching output as timed evidence, not as a betting policy."""
+    from henachel.matching import value_metrics
+    clock = utc(now or datetime.now(timezone.utc))
+    output = [dict(p, bookmaker_observations=[]) for p in predictions]
+    lookup = {(p['game_id'], p['player_id']): p for p in output if p['target'] == 'POINT'}
+    rejected = []; seen = set()
+    for o in odds:
+        try:
+            key = (o['id_match'], o['id_joueur']); p = lookup.get(key)
+            if p is None: raise ValueError('No POINT prediction for odds')
+            if o.get('market') != 'player_points' or o.get('stat') != 'points' or float(o.get('threshold', 0)) != 1:
+                raise ValueError('Unsupported market')
+            if o.get('outcome_key') not in {'1_plus', 'points_1_plus', '1+', 'over_0.5'}: raise ValueError('Unsupported outcome')
+            if o.get('team') != p['team']: raise ValueError('Team mismatch')
+            if utc(o['start_time_utc']) != utc(p['event_start_utc']): raise ValueError('Event time mismatch')
+            captured = utc(o['captured_at'])
+            if not 0 <= (clock-captured).total_seconds() <= 21600 or clock >= utc(p['event_start_utc']):
+                raise ValueError('Stale/future/postgame odds')
+            if any(not isinstance(o.get(k), str) or not o[k].strip() for k in ['event_id', 'bookmaker']):
+                raise ValueError('Missing bookmaker identity')
+            identity = key+(o['bookmaker'], o['event_id'])
+            if identity in seen: raise ValueError('Duplicate odds')
+            metrics = value_metrics(p['probability'], o['odds_decimal'], o.get('implied_probability'))
+            observation = {k: o[k] for k in ['event_id', 'bookmaker', 'market', 'stat', 'threshold', 'outcome_key', 'captured_at']}
+            observation.update(metrics)
+            p['bookmaker_observations'].append(observation); seen.add(identity)
+        except (ValueError, TypeError, KeyError) as exc:
+            rejected.append(dict(reason=str(exc)))
+    return output, rejected

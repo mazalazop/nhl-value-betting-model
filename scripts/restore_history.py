@@ -32,8 +32,10 @@ def restore(session,repository,ref,destination,bootstrap=False):
         files={Path(p).name:p for p in archive.namelist() if not p.endswith('/')}
         canonical='master_daily_bets_history.csv'
         if canonical not in files: raise ValueError('Artifact lacks canonical ledger')
+        if 'prospective_enabled.json' in files and 'prospective.sqlite3' not in files:
+            raise ValueError('Prospective archive missing from previously enabled history')
         destination.mkdir(parents=True,exist_ok=True)
-        for filename in [canonical,'settlement_revisions.csv']:
+        for filename in [canonical,'settlement_revisions.csv','prospective.sqlite3','prospective_enabled.json']:
             if filename in files:
                 target=destination/filename
                 if target.exists():raise ValueError('Refuse to overwrite existing local history during restore')

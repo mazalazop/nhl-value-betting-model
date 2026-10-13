@@ -118,3 +118,30 @@ def test_final_outcomes_are_separate_append_only_revisions(tmp_path):
     assert a.append('correction1', 'outcome', [dict(row, actual_goals=1)], now=row['collected_at_utc'])
     with pytest.raises(ValueError): a.append('unknown', 'outcome', [dict(row, actual_goals=None)], now=row['collected_at_utc'])
     a.close()
+
+
+def test_bookmaker_evidence_preserves_probabilities_rejects_stale_and_wrong_market():
+    from henachel.prospective_pp import attach_point_odds
+    p=dict(player(), target='POINT', probability=.37)
+    o=dict(id_match=p['game_id'],id_joueur=p['player_id'],market='player_points',stat='points',threshold=1,
+           outcome_key='1_plus',team='TOR',start_time_utc=START,captured_at=NOW,event_id='123',bookmaker='unibet',odds_decimal=2.,implied_probability=.5)
+    rows,bad=attach_point_odds([p],[o,dict(o,stat='goals'),dict(o,captured_at='2026-10-11T00:00:00Z'),o],now=NOW)
+    assert len(bad)==3 and len(rows[0]['bookmaker_observations'])==1
+    assert rows[0]['probability']==p['probability']==.37
+    assert 'bookmaker_observations' not in p
+
+
+def test_second_process_preserves_archive_and_exact_rerun(tmp_path):
+    import json
+    import subprocess
+    a=Archive(tmp_path/'archive.sqlite3'); a.append('first','pregame',valid(),now=NOW); a.close()
+    code='''import json,sys
+sys.path.insert(0,sys.argv[1])
+from henachel.prospective_pp import Archive
+archive=Archive(sys.argv[2])
+rows=json.loads(archive.db.execute("SELECT payload FROM batches WHERE batch_id='first'").fetchone()[0])
+assert not archive.append('first','pregame',rows,now='2026-10-14T06:00:00Z')
+assert archive.db.execute('SELECT count(*) FROM batches').fetchone()[0]==1
+archive.close()
+'''
+    subprocess.run([sys.executable,'-c',code,str(Path(__file__).parents[1]/'model'),str(tmp_path/'archive.sqlite3')],check=True)

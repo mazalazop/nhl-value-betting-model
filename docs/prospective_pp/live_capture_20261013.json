@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-13",
+  "games": 16,
+  "goal_predictions": 0,
+  "goal_production_approved": false,
+  "players": 704,
+  "point_predictions": 0,
+  "pp_filter_validated": false,
+  "reasons": {
+    "player_not_observed": 643,
+    "roster_identity_unverified": 2,
+    "source_timestamp_unverified": 59
+  },
+  "run_id": "9b7bd98418d0aed56620174af21083391e8b402630f77a9fafa5791141e37e8e",
+  "source_observations": 60,
+  "source_status": "source_timestamp_unavailable",
+  "status": "partial_predictions_unavailable",
+  "units": {
+    "UNKNOWN": 704
+  },
+  "scope": "live PP/roster capture only; no model training or new predictions"
+}

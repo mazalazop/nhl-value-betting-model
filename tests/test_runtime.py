@@ -36,3 +36,23 @@ def test_workflow_contract_and_shell_syntax():
             assert '${{' not in step['run']
             proc=subprocess.run(['bash','-n'],input=step['run'],text=True,capture_output=True)
             assert proc.returncode==0,proc.stderr
+
+
+def test_prospective_archive_restored_and_loss_refused(tmp_path):
+    import io
+    import zipfile
+    def session_for(files):
+        data=io.BytesIO()
+        with zipfile.ZipFile(data,'w') as z:
+            for name,content in files.items(): z.writestr(name,content)
+        index=Mock();index.json.return_value={'artifacts':[dict(expired=False,created_at='2026-10-13',archive_download_url='https://example.test/archive')]}
+        body=Mock();body.content=data.getvalue()
+        session=Mock();session.get.side_effect=[index,body];return session
+    files={'master_daily_bets_history.csv':'bet_id\n', 'prospective_enabled.json':'{}', 'prospective.sqlite3':'opaque bytes'}
+    m=module('restore_history')
+    assert m.restore(session_for(files),'org/repo','branch',tmp_path/'ok')=='restored'
+    assert (tmp_path/'ok/prospective.sqlite3').read_text()=='opaque bytes'
+    del files['prospective.sqlite3']
+    with pytest.raises(ValueError,match='Prospective archive missing'):
+        m.restore(session_for(files),'org/repo','branch',tmp_path/'bad')
+    assert not (tmp_path/'bad').exists()

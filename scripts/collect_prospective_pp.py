@@ -14,27 +14,27 @@ import requests
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'model'))
-from henachel.prospective_pp import Archive, collect, overlay, snapshots, TEAMS
+from henachel.prospective_pp import Archive, collect, overlay, snapshots, TEAMS, attach_point_odds
 from henachel.matching import name, utc
+from henachel.prospective_http import get_json
 
 
-def live_players(session, date):
-    response = session.get(f'https://api-web.nhle.com/v1/schedule/{date}', timeout=30)
-    response.raise_for_status()
+def live_players(session, date, cache):
+    response = get_json(session, f'https://api-web.nhle.com/v1/schedule/{date}', cache, 60)
     now = pd.Timestamp.now(tz='UTC'); games = []
-    for day in response.json()['gameWeek']:
+    for day in response['document']['gameWeek']:
         if day['date'] != date: continue
         for g in day['games']:
-            if g['gameState'] in {'FUT', 'PRE'} and utc(g['startTimeUTC']) > now:
+            if g['gameState'] in {'FUT', 'PRE'} and g.get('gameScheduleState') == 'OK' and utc(g['startTimeUTC']) > now:
                 games.append(g)
     if len({g['id'] for g in games}) != len(games): raise ValueError('Duplicate NHL schedule game')
     teams = {g[side]['abbrev'] for g in games for side in ['homeTeam', 'awayTeam']}
     if teams-TEAMS: raise ValueError('Unknown live NHL team')
     roster = []
     for team in sorted(teams):
-        response = session.get(f'https://api-web.nhle.com/v1/roster/{team}/current', timeout=30)
-        observed = datetime.now(timezone.utc).isoformat(); response.raise_for_status()
-        document = response.json()
+        response = get_json(session, f'https://api-web.nhle.com/v1/roster/{team}/current', cache, 21600)
+        observed = response['observed_at']
+        document = response['document']
         for group in ['forwards', 'defensemen']:
             for p in document[group]:
                 roster.append(dict(team=team, player_id=int(p['id']),
@@ -76,20 +76,24 @@ def main():
     p.add_argument('--date', default=str(pd.Timestamp.now(tz='America/New_York').date()))
     p.add_argument('--archive', type=Path, default=Path('outputs/prospective/archive.sqlite3'))
     p.add_argument('--output-dir', type=Path, default=Path('outputs/prospective/runs'))
+    p.add_argument('--cache', type=Path, default=Path('outputs/prospective/nhl_cache'))
     p.add_argument('--point', type=Path); p.add_argument('--goal', type=Path)
+    p.add_argument('--matched-odds', type=Path)
     p.add_argument('--pp1-only', action='store_true')
     a = p.parse_args()
     if str(pd.Timestamp(a.date).date()) != a.date: raise ValueError('Expected NHL date YYYY-MM-DD')
     if pd.Timestamp(a.date).date() < pd.Timestamp.now(tz='America/New_York').date():
         raise ValueError('No retrospective capture allowed')
     session = requests.Session()
-    players, roster, games = live_players(session, a.date)
-    evidence = collect(session)
+    players, roster, games = live_players(session, a.date, a.cache)
+    evidence = collect(session) if players else dict(collected_at_utc=datetime.now(timezone.utc).isoformat(), observations=[], status='no_games')
     roles = snapshots(players, roster, evidence)
     captured = datetime.now(timezone.utc).isoformat()
     predictions = []
     for target, path in [('POINT', a.point), ('GOAL', a.goal)]:
         if path: predictions.extend(read_predictions(path, target, players, captured))
+    odds = pd.read_csv(a.matched_odds, dtype={'event_id':str, 'bookmaker':str}).to_dict('records') if a.matched_odds else []
+    predictions, rejected_odds = attach_point_odds(predictions, odds)
     raw, operational = overlay(predictions, roles, a.pp1_only)
     run_id = hashlib.sha256(json.dumps(dict(evidence=evidence, roles=roles, predictions=raw), sort_keys=True).encode()).hexdigest()
     archive = Archive(a.archive)
@@ -97,14 +101,19 @@ def main():
         archive.append(run_id+':pp', 'pregame', roles)
         archive.append(run_id+':predictions', 'pregame', raw)
     finally: archive.close()
+    marker = a.archive.parent/'prospective_enabled.json'
+    if not marker.exists():
+        with marker.open('x') as f: json.dump(dict(schema_version=1, archive_filename=a.archive.name), f)
     report = dict(run_id=run_id, date=a.date, games=len(games), players=len(players),
                   source_status=evidence['status'], source_observations=len(evidence['observations']),
                   units=dict(Counter(r['pp_unit'] for r in roles)),
                   reasons=dict(Counter(r['evidence_status'] for r in roles)),
                   point_predictions=sum(r['target']=='POINT' for r in raw),
                   goal_predictions=sum(r['target']=='GOAL' for r in raw),
-                  status='captured' if a.point and a.goal else 'partial_predictions_unavailable',
-                  goal_production_approved=False, pp_filter_validated=False)
+                  status='no_games' if not games else 'captured' if {r['target'] for r in raw} == {'POINT', 'GOAL'} else 'partial_predictions_unavailable',
+                  goal_production_approved=False, pp_filter_validated=False,
+                  bookmaker_observations=sum(len(r['bookmaker_observations']) for r in raw),
+                  rejected_odds=rejected_odds)
     dest = a.output_dir/run_id; dest.mkdir(parents=True, exist_ok=True)
     for file, data in [('report.json', report), ('source_evidence.json', evidence), ('raw_ranking.json', raw), ('operational_ranking.json', operational)]:
         path = dest/file

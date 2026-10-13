@@ -23,4 +23,21 @@ SQLite batches are committed transactionally, keyed uniquely, protected against 
 
 Archive roles and predictions together with run ID, source-document hash, prediction-file hash, NHL game/player IDs, game date/start, collection/source times, raw observed unit, evidence status and optional pregame TOI/PP TOI. UNKNOWN remains measurable rather than disappearing through filtering. Outcome events retain their own collection timestamp.
 
-This is local crash-safe persistence, not a trusted external timestamp service. Keep a durable off-runner backup; do not rely on expiring GitHub artifacts alone. Daily workflow integration/restore, frozen GOAL inference, bookmaker evidence and automatic outcome capture are not yet deployed. No production workflow or Sheet has been changed.
+This is local crash-safe persistence, not a trusted external timestamp service. Keep a durable off-runner backup; do not rely on expiring GitHub artifacts alone. The workflow now contains an opt-in `capture_prospective_pp` step (or repository variable `HENACHEL_CAPTURE_PROSPECTIVE_PP=true`). It consumes existing POINT output, optionally an existing GOAL research CSV, and validated `06_matched_point_edges.csv`. It does not train a GOAL model. Failure is explicitly warned without changing POINT output. The archive and enable marker travel with the branch-scoped canonical-history artifact; restore refuses an enabled marker without its database. Daily full copies refresh artifact retention, but are NOT a substitute for durable independent backups. This integration has not been executed remotely or enabled on main. No Sheets write was performed.
+
+`python scripts/predict_frozen_goal.py --bundle TRUSTED_LOCAL.joblib --expected-sha256 SHA --future-features PREPARED.csv --output NEW.csv` performs inference only. It requires already prepared, temporally correct GOAL17/C19 features and a trusted, hash-checked bundle with a training cutoff. It refuses current outcomes and late games. It reports the original cutoff and research-only status. It does NOT prepare missing future features or silently substitute a different model. Automatic frozen bundle distribution, daily GOAL feature preparation and outcome capture remain to be connected; no new training was launched.
+
+Matched bookmaker evidence is rechecked for market, event/player/team, timestamps, finite odds and implied probability; rejected rows are counted with reasons. This does not change the selection policy.
+
+## Actual dry run
+
+On 2026-10-13, an initial NHL roster request returned HTTP 429. The new small compressed public cache preserves genuine retrieval times and respects Retry-After (bounded retries, no bypass). The resumed run captured 16 upcoming games / 704 roster players. RotoWire supplied 60 explicit observations. All 704 operational roles remained UNKNOWN: 643 absent observations, 2 identity failures, 59 unverifiable source timestamps. No probabilities were fabricated: zero POINT/GOAL prediction inputs were supplied. Status is `partial_predictions_unavailable`, NOT a successful full end-to-end prediction run.
+
+The append-only archive is local under outputs (not versioned); only the small report is versioned. Initial tests exposed a sandbox physical-core detection warning in an existing synthetic fit test; explicit `OMP_NUM_THREADS=1` resolves the runtime thread budget, without warning suppression or hyperparameter changes.
+
+## Validation checkpoint
+
+`OMP_NUM_THREADS=1 .venv/bin/python -m pytest -q -W error` — 322 passed.
+This includes a second independent process reopening the archive, exact replay after puck drop, rejected modifications, partial-batch rollback, legacy history restoration and required prospective-archive preservation. No historical model campaign was executed; existing synthetic model unit tests remain active.
+
+Remaining release gates: an accessible PP-unit source with verifiable update time; current pregame GOAL feature export and explicitly provisioned frozen model; automatic final-result observation capture; full POINT+GOAL+odds dry run; opt-in workflow execution; independent durable archive backup. Do not call this checkpoint a complete operational deployment.
