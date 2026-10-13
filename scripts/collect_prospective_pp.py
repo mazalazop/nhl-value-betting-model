@@ -1,0 +1,119 @@
+"""Public live NHL/PP capture. No training, bets, Sheets or historical backfill.
+
+Optional prediction CSVs are joined to the live NHL slate; probabilities are never
+recomputed. Missing GOAL input remains explicitly unavailable, never a proxy POINT.
+"""
+import argparse
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import sys
+import requests
+import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'model'))
+from henachel.prospective_pp import Archive, collect, overlay, snapshots, TEAMS
+from henachel.matching import name, utc
+
+
+def live_players(session, date):
+    response = session.get(f'https://api-web.nhle.com/v1/schedule/{date}', timeout=30)
+    response.raise_for_status()
+    now = pd.Timestamp.now(tz='UTC'); games = []
+    for day in response.json()['gameWeek']:
+        if day['date'] != date: continue
+        for g in day['games']:
+            if g['gameState'] in {'FUT', 'PRE'} and utc(g['startTimeUTC']) > now:
+                games.append(g)
+    if len({g['id'] for g in games}) != len(games): raise ValueError('Duplicate NHL schedule game')
+    teams = {g[side]['abbrev'] for g in games for side in ['homeTeam', 'awayTeam']}
+    if teams-TEAMS: raise ValueError('Unknown live NHL team')
+    roster = []
+    for team in sorted(teams):
+        response = session.get(f'https://api-web.nhle.com/v1/roster/{team}/current', timeout=30)
+        observed = datetime.now(timezone.utc).isoformat(); response.raise_for_status()
+        document = response.json()
+        for group in ['forwards', 'defensemen']:
+            for p in document[group]:
+                roster.append(dict(team=team, player_id=int(p['id']),
+                                   player_name=p['firstName']['default']+' '+p['lastName']['default'], observed_at=observed))
+    if len({r['player_id'] for r in roster}) != len(roster): raise ValueError('Ambiguous NHL roster membership')
+    players = []
+    for g in games:
+        for p in roster:
+            if p['team'] in {g['homeTeam']['abbrev'], g['awayTeam']['abbrev']}:
+                players.append(dict(p, game_id=g['id'], game_date=date, event_start_utc=g['startTimeUTC']))
+    return players, roster, games
+
+
+def read_predictions(path, target, players, captured):
+    source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    frame = pd.read_csv(path)
+    probability = 'proba_point_1p_calibree' if target == 'POINT' else 'proba_goal_1p_calibree'
+    required = ['id_match', 'id_joueur', 'team_player_match', 'nom', probability]
+    if set(required)-set(frame): raise ValueError(f'{target}: incomplete prediction columns')
+    lookup = {(p['game_id'], p['player_id']): p for p in players}; rows = []
+    for x in frame.to_dict('records'):
+        p = lookup.get((x['id_match'], x['id_joueur']))
+        if p is None or p['team'] != x['team_player_match'] or name(p['player_name']) != name(x['nom']):
+            raise ValueError(f'{target}: prediction outside verified upcoming roster/slate')
+        row = dict(p, probability=x[probability], target=target, collected_at_utc=captured,
+                   prediction_file_sha256=source_hash,
+                   production_approved=(target == 'POINT'),
+                   model_provenance=x.get('model_sha256'),
+                   model_status='production_output' if target == 'POINT' else 'research_only')
+        # Preserve optional pregame context without inventing values.
+        for key in ['toi_moy_5', 'toi_moy_10', 'pp_moy_5', 'pp_moy_10']:
+            row[key] = None if pd.isna(x.get(key)) else x[key]
+        rows.append(row)
+    return rows
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--date', default=str(pd.Timestamp.now(tz='America/New_York').date()))
+    p.add_argument('--archive', type=Path, default=Path('outputs/prospective/archive.sqlite3'))
+    p.add_argument('--output-dir', type=Path, default=Path('outputs/prospective/runs'))
+    p.add_argument('--point', type=Path); p.add_argument('--goal', type=Path)
+    p.add_argument('--pp1-only', action='store_true')
+    a = p.parse_args()
+    if str(pd.Timestamp(a.date).date()) != a.date: raise ValueError('Expected NHL date YYYY-MM-DD')
+    if pd.Timestamp(a.date).date() < pd.Timestamp.now(tz='America/New_York').date():
+        raise ValueError('No retrospective capture allowed')
+    session = requests.Session()
+    players, roster, games = live_players(session, a.date)
+    evidence = collect(session)
+    roles = snapshots(players, roster, evidence)
+    captured = datetime.now(timezone.utc).isoformat()
+    predictions = []
+    for target, path in [('POINT', a.point), ('GOAL', a.goal)]:
+        if path: predictions.extend(read_predictions(path, target, players, captured))
+    raw, operational = overlay(predictions, roles, a.pp1_only)
+    run_id = hashlib.sha256(json.dumps(dict(evidence=evidence, roles=roles, predictions=raw), sort_keys=True).encode()).hexdigest()
+    archive = Archive(a.archive)
+    try:
+        archive.append(run_id+':pp', 'pregame', roles)
+        archive.append(run_id+':predictions', 'pregame', raw)
+    finally: archive.close()
+    report = dict(run_id=run_id, date=a.date, games=len(games), players=len(players),
+                  source_status=evidence['status'], source_observations=len(evidence['observations']),
+                  units=dict(Counter(r['pp_unit'] for r in roles)),
+                  reasons=dict(Counter(r['evidence_status'] for r in roles)),
+                  point_predictions=sum(r['target']=='POINT' for r in raw),
+                  goal_predictions=sum(r['target']=='GOAL' for r in raw),
+                  status='captured' if a.point and a.goal else 'partial_predictions_unavailable',
+                  goal_production_approved=False, pp_filter_validated=False)
+    dest = a.output_dir/run_id; dest.mkdir(parents=True, exist_ok=True)
+    for file, data in [('report.json', report), ('source_evidence.json', evidence), ('raw_ranking.json', raw), ('operational_ranking.json', operational)]:
+        path = dest/file
+        payload = json.dumps(data, indent=2, sort_keys=True, allow_nan=False)
+        if path.exists():
+            if path.read_text() != payload: raise ValueError('Immutable output conflict')
+        else:
+            with path.open('x') as f: f.write(payload)
+    print(json.dumps(report, sort_keys=True))
+
+
+if __name__ == '__main__': main()
