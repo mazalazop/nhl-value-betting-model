@@ -21,7 +21,7 @@ def main():
     matches=pd.read_csv(args.raw_dir/'matchs.csv');roster=pd.read_csv(args.raw_dir/'roster_current.csv')
     response=requests.get(HUB,timeout=30);response.raise_for_status()
     paths=sorted(set(re.findall(r'/paris-hockey-sur-glace/etats-unis/nhl/\d+/[a-z0-9-]+',response.text)))
-    rows=[];reports=[]
+    rows=[];reports=[];goal_rows=[];goal_reports=[]
     for path in paths:
         if '-vs-' not in path:continue
         url='https://www.unibet.fr'+path
@@ -35,10 +35,16 @@ def main():
         event=events[0]
         (args.output_dir/f'event_{event["id"]}.json').write_text(json.dumps(dict(url=url,captured_at=captured.isoformat(),event=event),indent=2))
         try:
+            goal_accepted,goal_rejected=normalize_event(event,url,captured,matches,roster,captured,market_kind='goals')
+            goal_rows.extend(goal_accepted);goal_reports.append(dict(url=url,rows=len(goal_accepted),rejected=goal_rejected))
+        except ValueError as exc:
+            goal_reports.append(dict(url=url,reason=str(exc)))
+        try:
             accepted,rejected=normalize_event(event,url,captured,matches,roster,captured)
             rows.extend(accepted);reports.append(dict(url=url,rows=len(accepted),rejected=rejected))
         except ValueError as exc:
             reports.append(dict(url=url,reason=str(exc)))
+    (args.output_dir/'normalized_goals_odds.json').write_text(json.dumps(dict(bookmaker='Unibet',market='player_goals',stat='goals',threshold=1,rows=goal_rows,events=goal_reports),indent=2))
     contract=validate_rows(rows,pd.Timestamp.now(tz='UTC'))
     payload=normalized_payload(rows,reports,contract)
     (args.output_dir/'normalized_points_odds.json').write_text(json.dumps(payload,indent=2))
