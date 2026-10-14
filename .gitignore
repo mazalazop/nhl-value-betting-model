@@ -10,3 +10,5 @@ data/**/*.csv
 data/**/*.json
 outputs/**
 !outputs/.gitkeep
+
+data/raw/goal_slate_public_cache/
