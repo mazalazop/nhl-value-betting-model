@@ -1,0 +1,138 @@
+{
+  "date_min": "2024-10-04",
+  "date_max": "2026-10-13",
+  "observations": 104284,
+  "games": 2897,
+  "players": 1096,
+  "seasons": [
+    "20242025",
+    "20252026",
+    "20262027"
+  ],
+  "positive_rate": 0.15058877680181043,
+  "training_cutoff": "2026-10-14",
+  "model_status": "research_only_operational",
+  "model_name": "GOAL17_OPERATIONAL_REFIT",
+  "config_sha": "3a0b589a0e79fcf47e64314c1184fcb5ea06bad92e89edd224cea83ed7273eae",
+  "model_sha256": "f1409849c92c415dcf930cf053feb1dfa13d3a3043edba6ce1182c7ae836f50c",
+  "slate_games": 2,
+  "scored_players": 85,
+  "top_overlap": 5,
+  "refit_frozen_correlation": 0.9344610857922274,
+  "fit": {
+    "target": "GOAL_1_PLUS",
+    "parameters": {
+      "loss": "log_loss",
+      "learning_rate": 0.05,
+      "max_iter": 300,
+      "max_depth": 4,
+      "min_samples_leaf": 50,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 42
+    },
+    "feature_cols_kept": [
+      "is_home_player",
+      "nb_matchs_avant_match",
+      "jours_repos",
+      "tirs_moy_5",
+      "tirs_moy_10",
+      "tirs_par_60_5",
+      "toi_moy_5",
+      "toi_moy_10",
+      "pp_moy_5",
+      "buts_moy_5",
+      "buts_moy_10",
+      "buts_par_60_5",
+      "goal_hit_rate_last_10",
+      "goal_hit_rate_season_pre",
+      "goal_hit_rate_prev_season",
+      "goal_drought_pre",
+      "goal_relative_drought_pre"
+    ],
+    "feature_cols_dropped_train_only": [],
+    "fit_rows": 94672,
+    "calib_rows": 9612,
+    "fit_start": "2024-10-04 00:00:00",
+    "fit_end": "2026-04-06 00:00:00",
+    "calib_start": "2026-04-07 00:00:00",
+    "calib_end": "2026-10-13 00:00:00",
+    "calibration": {
+      "policy": "auto",
+      "rows": 9612,
+      "selection": [
+        {
+          "method": "isotonic",
+          "logloss": 0.39844743074567673,
+          "brier": 0.12220748891944666
+        },
+        {
+          "method": "sigmoid",
+          "logloss": 0.39873987566019164,
+          "brier": 0.12224880756967882
+        },
+        {
+          "method": "raw",
+          "logloss": 0.6327463332495069,
+          "brier": 0.22266299979406393
+        }
+      ],
+      "fit_start": "2026-04-07 00:00:00",
+      "calib_end": "2026-10-13 00:00:00",
+      "fit_end": "2026-05-12 00:00:00",
+      "eval_start": "2026-05-13 00:00:00",
+      "method": "isotonic",
+      "reason": "selected_on_temporal_calibration_eval"
+    }
+  },
+  "goal_matching": {
+    "source_available": true,
+    "accepted": 64,
+    "rejected": [],
+    "value_eligible": 9,
+    "model_status": "research_only_operational"
+  },
+  "prospective": {
+    "bookmaker_observations": 91,
+    "date": "2026-10-14",
+    "games": 2,
+    "goal_predictions": 85,
+    "goal_production_approved": false,
+    "players": 85,
+    "point_predictions": 85,
+    "pp_filter_validated": false,
+    "reasons": {
+      "player_not_observed": 45,
+      "source_timestamp_unverified": 40
+    },
+    "rejected_odds": [],
+    "run_id": "e22597b0243e8570061910a4c4ea875c12689ba2946a0f7aafe81021b006067f",
+    "source_observations": 40,
+    "source_status": "source_timestamp_unavailable",
+    "status": "captured",
+    "units": {
+      "UNKNOWN": 85
+    }
+  },
+  "hashes": {
+    "predictions_upcoming_goal_research.csv": "7d6b74dc8e86b260e82d1644846f62f072c4669365d0c6914af58de9a9e7d73e",
+    "goal_probability_top.csv": "ec1417bb0f949dc92b23d208bfcfa20429ecb3ed5135d3d364022266649f7f9e",
+    "goal_value_ranking.csv": "46154786bd2b5b3451049869175a9f95bae2346cf0509d4f274984ce2b806d93",
+    "goal_operational_bundle.joblib": "f1409849c92c415dcf930cf053feb1dfa13d3a3043edba6ce1182c7ae836f50c",
+    "prospective.sqlite3": "1778f78bf431a723c3a65ee909659600660ca7167e83ccc7c87811e4624a277e"
+  },
+  "source_artifact": {
+    "artifact_id": 11812147381,
+    "sha256": "e77522144e1686395be5656c5e3f778a1fe1ef0eb7436bf315566b607719e997",
+    "files": [
+      "data/raw/stats.csv",
+      "data/raw/matchs.csv",
+      "data/raw/joueurs.csv",
+      "data/raw/roster_current.csv",
+      "data/raw/pp_stats_game.csv",
+      "data/raw/team_standings_daily.csv",
+      "data/final/base_features_context_v2.csv"
+    ]
+  },
+  "note": "Early local refresh used UTC fallback; corrected NHL day headers and regenerated all outputs. Older pregame archive batches preserved; latest run_id above is authoritative for this dry run."
+}

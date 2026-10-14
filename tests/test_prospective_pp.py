@@ -145,3 +145,19 @@ assert archive.db.execute('SELECT count(*) FROM batches').fetchone()[0]==1
 archive.close()
 '''
     subprocess.run([sys.executable,'-c',code,str(Path(__file__).parents[1]/'model'),str(tmp_path/'archive.sqlite3')],check=True)
+
+
+def test_goal_refit_provenance_survives_archive_input(tmp_path):
+    import importlib.util
+    import pandas as pd
+    spec=importlib.util.spec_from_file_location('collect_pp',Path(__file__).parents[1]/'scripts/collect_prospective_pp.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    p=player();path=tmp_path/'goal.csv'
+    pd.DataFrame([dict(id_match=p['game_id'],id_joueur=p['player_id'],nom=p['player_name'],team_player_match=p['team'],
+                      proba_goal_1p_calibree=.25,model_status='research_only_operational',training_cutoff='2026-10-13',
+                      config_sha='config',model_sha256='model',calibration_method='sigmoid')]).to_csv(path,index=False)
+    row=module.read_predictions(path,'GOAL',[p],NOW)[0]
+    assert row['model_status']=='research_only_operational'
+    assert row['training_cutoff']=='2026-10-13' and row['config_sha']=='config'
+    assert row['model_provenance']=='model' and row['production_approved'] is False
+    assert row['probability']==.25

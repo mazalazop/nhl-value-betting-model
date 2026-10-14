@@ -103,7 +103,9 @@ def main():
         for row in predictions:
             odds_row=lookup.get((row['game_id'],row['player_id'])) if row['target']=='GOAL' else None
             if odds_row is not None:
-                row['bookmaker_observations'].append({k:odds_row[k] for k in ['bookmaker','event_id','collected_at_utc','odds_decimal','implied_probability','edge','expected_value']})
+                observation={k:odds_row[k] for k in ['bookmaker','event_id','collected_at_utc','odds_decimal','implied_probability','edge','expected_value','source_market_id','source_outcome_id','goal_value_rank']}
+                observation.update(market='player_goals',stat='goals',threshold=1,outcome_key='1_plus')
+                row['bookmaker_observations'].append(observation)
     raw, operational = overlay(predictions, roles, a.pp1_only)
     run_id = hashlib.sha256(json.dumps(dict(evidence=evidence, roles=roles, predictions=raw), sort_keys=True).encode()).hexdigest()
     archive = Archive(a.archive)
