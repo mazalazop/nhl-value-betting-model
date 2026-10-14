@@ -13,6 +13,17 @@ MESSAGE = 'Operational research model; not prospectively production-approved.'
 CONFIG_SHA = hashlib.sha256(json.dumps(dict(features=FEATURES, parameters=GOAL_PARAMS, calibration='existing temporal select_calibrator'),sort_keys=True).encode()).hexdigest()
 
 
+def upcoming_slate(matches,target_date,now=None):
+    """NHL PRE is admissible only while the actual scheduled puck drop is future."""
+    clock=utc(now or pd.Timestamp.now(tz='UTC'))
+    dates=pd.to_datetime(matches.date_match,errors='raise')
+    candidates=matches.loc[dates.eq(pd.Timestamp(target_date)) & matches.status.isin(['FUT','PRE'])].copy()
+    if candidates.empty:return candidates
+    if 'schedule_state' not in candidates:raise ValueError('Missing schedule state')
+    starts=candidates.start_time_utc.map(utc)
+    return candidates.loc[candidates.schedule_state.eq('OK') & starts.gt(clock)].sort_values(['date_match','id_match'])
+
+
 def admissible_history(frame, target_date):
     cutoff = pd.Timestamp(target_date)
     if cutoff.tzinfo is not None or cutoff != cutoff.normalize(): raise ValueError('Expected NHL date without time')

@@ -61,3 +61,12 @@ def test_pp_filter_requires_verified_evidence_and_preserves_probabilities():
     assert filtered.goal_probability_rank.tolist()==[2]
     assert filtered.probability_goal.tolist()==[.5]
     assert frame.probability_goal.tolist()==[.6,.5,.4]
+
+
+def test_future_pre_is_allowed_but_started_and_postponed_are_not():
+    from henachel.goal_operational import upcoming_slate
+    frame=pd.DataFrame(dict(id_match=[1,2,3,4],date_match=['2026-10-14']*4,
+                            status=['FUT','PRE','PRE','FUT'],schedule_state=['OK','OK','OK','PPD'],
+                            start_time_utc=['2026-10-15T00:00:00Z','2026-10-14T23:00:00Z','2026-10-14T12:00:00Z','2026-10-15T00:00:00Z']))
+    got=upcoming_slate(frame,'2026-10-14',now='2026-10-14T20:00:00Z')
+    assert got.id_match.tolist()==[1,2]

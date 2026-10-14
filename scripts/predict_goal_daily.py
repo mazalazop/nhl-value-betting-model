@@ -9,7 +9,7 @@ import joblib
 import numpy as np
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'model'))
-from henachel.goal_operational import refit,score,top_ranking,STATUS
+from henachel.goal_operational import refit,score,top_ranking,STATUS,upcoming_slate
 from henachel.goal import numeric_features
 
 
@@ -25,7 +25,7 @@ def main():
     m.RAW_DIR=root/'data/raw';m.MATCHS_PATH=m.RAW_DIR/'matchs.csv';m.JOUEURS_PATH=m.RAW_DIR/'joueurs.csv'
     m.TEAM_STANDINGS_PATH=m.RAW_DIR/'team_standings_daily.csv'
     history=pd.read_csv(root/'data/final/base_features_context_v2.csv',low_memory=False)
-    matches=m.load_matchs();date=pd.Timestamp(a.target_date);slate=m.select_future_matches(matches,date)
+    matches=m.load_matchs();date=pd.Timestamp(a.target_date);slate=upcoming_slate(matches,date)
     if slate.empty:
         columns=['id_match','id_joueur','team_player_match','nom','proba_goal_1p_calibree','probability_goal','model_status','game_id','player_id','player_name','team','opponent','game_date','event_start_utc','goal_probability_rank']
         pd.DataFrame(columns=columns).to_csv(out/'predictions_upcoming_goal_research.csv',index=False)
