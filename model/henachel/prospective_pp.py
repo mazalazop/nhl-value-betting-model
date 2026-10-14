@@ -130,7 +130,7 @@ def snapshots(players, roster, evidence, now=None, max_age_hours=24):
                 if stamp > captured or (captured-stamp).total_seconds() > max_age_hours*3600:
                     raise ValueError('Stale/future source')
                 if c['observed_unit'] not in {'PP1', 'PP2'}: raise ValueError('Unknown unit')
-                row.update(pp_unit=c['observed_unit'], confidence='timestamped_source_observation', evidence_status='observed')
+                row.update(pp_unit=c['observed_unit'], confidence='timestamped_source_observation', evidence_status='VERIFIED_FRESH')
             except (ValueError, TypeError): row['evidence_status'] = 'source_timestamp_unverified'
         output.append(row)
     return output
@@ -149,12 +149,13 @@ def overlay(predictions, pp_rows, pp1_only=False):
         if not math.isfinite(probability) or not 0 <= probability <= 1: raise ValueError('Invalid probability')
         role = lookup.get(key[:2], {})
         raw.append(dict(p, pp_unit=role.get('pp_unit', 'UNKNOWN'), pp_confidence=role.get('confidence', 'unknown'),
-                        pp_collected_at_utc=role.get('collected_at_utc'), pp_source_timestamp=role.get('source_timestamp')))
+                        pp_collected_at_utc=role.get('collected_at_utc'), pp_source_timestamp=role.get('source_timestamp'),
+                        evidence_status=role.get('evidence_status','UNKNOWN')))
     raw.sort(key=lambda x: (x['target'], -x['probability'], x['game_id'], x['player_id']))
     ranks = {}
     for row in raw:
         ranks[row['target']] = ranks.get(row['target'], 0)+1; row['model_rank'] = ranks[row['target']]
-    operational = [dict(x) for x in raw if not pp1_only or x['pp_unit'] == 'PP1']
+    operational = [dict(x) for x in raw if not pp1_only or (x['pp_unit'] == 'PP1' and x['evidence_status']=='VERIFIED_FRESH')]
     return raw, operational
 
 

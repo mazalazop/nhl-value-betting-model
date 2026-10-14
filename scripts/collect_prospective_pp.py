@@ -63,9 +63,9 @@ def read_predictions(path, target, players, captured):
                    prediction_file_sha256=source_hash,
                    production_approved=(target == 'POINT'),
                    model_provenance=x.get('model_sha256'),
-                   model_status='production_output' if target == 'POINT' else 'research_only')
+                   model_status='production_output' if target == 'POINT' else x.get('model_status','research_only'))
         # Preserve optional pregame context without inventing values.
-        for key in ['toi_moy_5', 'toi_moy_10', 'pp_moy_5', 'pp_moy_10']:
+        for key in ['toi_moy_5', 'toi_moy_10', 'pp_moy_5', 'pp_moy_10', 'training_cutoff', 'config_sha', 'model_name', 'calibration_method', 'generated_at_utc']:
             row[key] = None if pd.isna(x.get(key)) else x[key]
         rows.append(row)
     return rows
@@ -79,6 +79,7 @@ def main():
     p.add_argument('--cache', type=Path, default=Path('outputs/prospective/nhl_cache'))
     p.add_argument('--point', type=Path); p.add_argument('--goal', type=Path)
     p.add_argument('--matched-odds', type=Path)
+    p.add_argument('--goal-odds', type=Path, help='Strict normalized GOAL source; revalidated at capture')
     p.add_argument('--pp1-only', action='store_true')
     a = p.parse_args()
     if str(pd.Timestamp(a.date).date()) != a.date: raise ValueError('Expected NHL date YYYY-MM-DD')
@@ -94,6 +95,15 @@ def main():
         if path: predictions.extend(read_predictions(path, target, players, captured))
     odds = pd.read_csv(a.matched_odds, dtype={'event_id':str, 'bookmaker':str}).to_dict('records') if a.matched_odds else []
     predictions, rejected_odds = attach_point_odds(predictions, odds)
+    if a.goal_odds and a.goal:
+        from henachel.goal_odds import match_goal_odds
+        matched,goal_rejected=match_goal_odds(pd.read_csv(a.goal),json.loads(a.goal_odds.read_text())['rows'])
+        rejected_odds.extend(dict(target='GOAL',**r) for r in goal_rejected)
+        lookup={(int(r['game_id']),int(r['player_id'])):r for r in matched.to_dict('records')}
+        for row in predictions:
+            odds_row=lookup.get((row['game_id'],row['player_id'])) if row['target']=='GOAL' else None
+            if odds_row is not None:
+                row['bookmaker_observations'].append({k:odds_row[k] for k in ['bookmaker','event_id','collected_at_utc','odds_decimal','implied_probability','edge','expected_value']})
     raw, operational = overlay(predictions, roles, a.pp1_only)
     run_id = hashlib.sha256(json.dumps(dict(evidence=evidence, roles=roles, predictions=raw), sort_keys=True).encode()).hexdigest()
     archive = Archive(a.archive)

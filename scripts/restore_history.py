@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import zipfile
@@ -34,8 +35,12 @@ def restore(session,repository,ref,destination,bootstrap=False):
         if canonical not in files: raise ValueError('Artifact lacks canonical ledger')
         if 'prospective_enabled.json' in files and 'prospective.sqlite3' not in files:
             raise ValueError('Prospective archive missing from previously enabled history')
+        if 'prospective.manifest.json' in files:
+            manifest=json.loads(archive.read(files['prospective.manifest.json']))
+            if 'prospective.sqlite3' not in files or hashlib.sha256(archive.read(files['prospective.sqlite3'])).hexdigest()!=manifest['sha256']:
+                raise ValueError('Prospective archive checksum mismatch')
         destination.mkdir(parents=True,exist_ok=True)
-        for filename in [canonical,'settlement_revisions.csv','prospective.sqlite3','prospective_enabled.json']:
+        for filename in [canonical,'settlement_revisions.csv','prospective.sqlite3','prospective_enabled.json','prospective.manifest.json']:
             if filename in files:
                 target=destination/filename
                 if target.exists():raise ValueError('Refuse to overwrite existing local history during restore')

@@ -27,8 +27,9 @@ def main():
     history=pd.read_csv(root/'data/final/base_features_context_v2.csv',low_memory=False)
     matches=m.load_matchs();date=pd.Timestamp(a.target_date);slate=m.select_future_matches(matches,date)
     if slate.empty:
-        columns=['id_match','id_joueur','team_player_match','nom','proba_goal_1p_calibree','probability_goal','model_status']
+        columns=['id_match','id_joueur','team_player_match','nom','proba_goal_1p_calibree','probability_goal','model_status','game_id','player_id','player_name','team','opponent','game_date','event_start_utc','goal_probability_rank']
         pd.DataFrame(columns=columns).to_csv(out/'predictions_upcoming_goal_research.csv',index=False)
+        pd.DataFrame(columns=columns).to_csv(out/'goal_probability_top.csv',index=False)
         (out/'goal_operational_summary.json').write_text(json.dumps(dict(status='no_games',model_status=STATUS)))
         return
     bundle,past=refit(history,a.target_date)

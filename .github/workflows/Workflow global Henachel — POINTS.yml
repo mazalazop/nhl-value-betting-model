@@ -169,7 +169,7 @@ jobs:
 
       - name: Refresh upstream sources
         env:
-          OPERATIONAL_BRANCH: ${{ github.ref == 'refs/heads/astra/audit-remediation' }}
+          OPERATIONAL_BRANCH: ${{ github.ref == 'refs/heads/astra/audit-remediation' || github.ref == 'refs/heads/research/goal-operational-20261014' }}
         run: |
           ARGS=()
           if [ "$OPERATIONAL_BRANCH" = "true" ]; then ARGS+=(--min-season 20242025 --skip-boxscore-supplement); fi
@@ -203,19 +203,11 @@ jobs:
           if [ "$CAPTURE_PROSPECTIVE" = "true" ]; then ARGS+=(--export-future-features outputs/upcoming_features.json); fi
           python model/05_predict_upcoming_games.py --target-date "$RUN_DATE" "${ARGS[@]}"
 
-      - name: Score frozen GOAL17 reference for prospective research only
+      - name: Refit GOAL17 operational research before slate
         if: ${{ inputs.capture_prospective_pp == true || vars.HENACHEL_CAPTURE_PROSPECTIVE_PP == 'true' }}
-        continue-on-error: true
         shell: bash
         run: |
-          if [ -f outputs/upcoming_features.json ]; then
-            python scripts/predict_frozen_goal.py \
-              --bundle model/research_artifacts/goal17_frozen_20240201.joblib \
-              --expected-sha256 5f3ca87d8dbf5d49a5a5333066b3803947446da6894107d212e2251794b86d87 \
-              --future-features outputs/upcoming_features.json \
-              --prior-history data/final/base_features_context_v2.csv \
-              --output outputs/predictions_upcoming_goal_research.csv
-          fi
+          python scripts/predict_goal_daily.py --target-date "$RUN_DATE" --top 10
 
       - name: Collect verified public Unibet POINT markets
         run: |
@@ -229,15 +221,18 @@ jobs:
       - name: Build daily bets
         run: python model/07_build_daily_bets.py --run-date "$RUN_DATE"
 
+      - name: Rank GOAL research odds separately
+        if: ${{ inputs.capture_prospective_pp == true || vars.HENACHEL_CAPTURE_PROSPECTIVE_PP == 'true' }}
+        run: python scripts/rank_goal_odds.py
+
       - name: Capture prospective PP evidence and existing probabilities
         id: prospective
         if: ${{ inputs.capture_prospective_pp == true || vars.HENACHEL_CAPTURE_PROSPECTIVE_PP == 'true' }}
-        continue-on-error: true
         shell: bash
         run: |
           ARGS=()
           if [ -f outputs/predictions_upcoming_goal_research.csv ]; then
-            ARGS+=(--goal outputs/predictions_upcoming_goal_research.csv)
+            ARGS+=(--goal outputs/predictions_upcoming_goal_research.csv --goal-odds outputs/structured_bookmaker/normalized_goals_odds.json)
           fi
           python scripts/collect_prospective_pp.py --date "$RUN_DATE" \
             --archive outputs/history/prospective.sqlite3 \
@@ -257,6 +252,14 @@ jobs:
         run: |
           python model/08_publish_to_google_sheet.py --sheet-id "$SHEET_ID" --credentials-env
 
+      - name: Verify prospective archive backup restore and hash
+        if: ${{ always() && steps.history.outcome == 'success' }}
+        shell: bash
+        run: |
+          if [ -f outputs/history/prospective.sqlite3 ]; then
+            python scripts/seal_prospective_archive.py outputs/history/prospective.sqlite3
+          fi
+
       - name: Preserve canonical history even after publication failure
         if: ${{ always() && steps.history.outcome == 'success' }}
         uses: actions/upload-artifact@v4
@@ -267,6 +270,7 @@ jobs:
             outputs/history/settlement_revisions.csv
             outputs/history/prospective.sqlite3
             outputs/history/prospective_enabled.json
+            outputs/history/prospective.manifest.json
           if-no-files-found: error
           retention-days: 90
 

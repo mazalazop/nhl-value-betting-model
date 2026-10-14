@@ -56,3 +56,32 @@ def test_prospective_archive_restored_and_loss_refused(tmp_path):
     with pytest.raises(ValueError,match='Prospective archive missing'):
         m.restore(session_for(files),'org/repo','branch',tmp_path/'bad')
     assert not (tmp_path/'bad').exists()
+
+
+def test_goal_operational_workflow_is_opt_in_and_archived():
+    import yaml
+    workflow=yaml.safe_load((Path(__file__).parents[1]/'.github/workflows/Workflow global Henachel — POINTS.yml').read_text())
+    steps=workflow['jobs']['model_points']['steps']
+    goal=next(s for s in steps if 'predict_goal_daily.py' in s.get('run',''))
+    assert 'capture_prospective_pp' in goal['if']
+    assert '--target-date "$RUN_DATE"' in goal['run']
+    assert any('seal_prospective_archive.py' in s.get('run','') for s in steps)
+    assert any('prospective.manifest.json' in s.get('with',{}).get('path','') for s in steps)
+
+
+def test_archive_manifest_checksum_checked_before_restore(tmp_path):
+    import io,zipfile,json,hashlib
+    def session_for(digest):
+        data=io.BytesIO()
+        with zipfile.ZipFile(data,'w') as z:
+            z.writestr('master_daily_bets_history.csv','bet_id\n')
+            z.writestr('prospective.sqlite3',b'archive')
+            z.writestr('prospective.manifest.json',json.dumps({'sha256':digest}))
+        index=Mock();index.json.return_value={'artifacts':[dict(expired=False,created_at='2026-10-14',archive_download_url='https://example.test/archive')]}
+        body=Mock();body.content=data.getvalue()
+        session=Mock();session.get.side_effect=[index,body];return session
+    m=module('restore_history')
+    with pytest.raises(ValueError,match='checksum'):
+        m.restore(session_for('wrong'),'org/repo','branch',tmp_path/'bad')
+    assert not (tmp_path/'bad').exists()
+    assert m.restore(session_for(hashlib.sha256(b'archive').hexdigest()),'org/repo','branch',tmp_path/'ok')=='restored'
