@@ -1,0 +1,24 @@
+{
+  "games": 2,
+  "observed_player_rows": 72,
+  "outcomes_added": 70,
+  "rerun_added": 0,
+  "unknown_reasons": {
+    "missing_player_not_zero": 15
+  },
+  "pregame_batches_preserved": true,
+  "provenance": [
+    {
+      "url": "https://api-web.nhle.com/v1/gamecenter/2026020106/boxscore",
+      "observed_at": "2026-10-15T11:50:41.688496+00:00",
+      "payload_sha256": "9b0dcb4feebea2dfe137ad7c7d5e98e984d973fb0a90b21903ba27280cf53bbd"
+    },
+    {
+      "url": "https://api-web.nhle.com/v1/gamecenter/2026020107/boxscore",
+      "observed_at": "2026-10-15T11:50:43.761619+00:00",
+      "payload_sha256": "ab69cd4128950c5aea84e08028f5a0a36600232b920721f4124c771ea400ff6b"
+    }
+  ],
+  "archive_sha256": "34151232ecfbf5d473122355d8d616ab495a6c963713b420bd5865047eb16459",
+  "note": "Observed outcomes only; no prospective model performance analysis or selection."
+}

@@ -1,0 +1,32 @@
+{
+  "run243": {
+    "id": 38565001793,
+    "status": "success",
+    "sha": "8ee8926bdad4d60740ab4fe57c45937758feed0b"
+  },
+  "run244": {
+    "id": 38567838382,
+    "status": "success",
+    "sha": "356f24944adc36ad29518a30d26b6662246a1dc1",
+    "bootstrap": false
+  },
+  "archive_batches_before": 2,
+  "archive_batches_after": 4,
+  "old_batches_preserved_exactly": true,
+  "ledger_rows_before": 10,
+  "ledger_rows_after": 10,
+  "duplicate_bet_ids": 0,
+  "archive_manifest": {
+    "filename": "prospective.sqlite3",
+    "sha256": "5387e99e9296c8c7b61f19a82a9cb448352f86acd7b64474ccbaa81f92938b0b",
+    "batches": 4,
+    "restore_verified": true,
+    "created_at_utc": "2026-10-14T13:06:22.630681+00:00"
+  },
+  "local_remote_comparison": {
+    "rows": 85,
+    "max_probability_difference": 0.0
+  },
+  "tests": 352,
+  "sheets_publication": "skipped"
+}

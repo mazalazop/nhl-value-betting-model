@@ -1,0 +1,9 @@
+{
+  "initial_changes": 567,
+  "rerun_changes": 0,
+  "unresolved_reasons": {
+    "missing_player_not_zero": 137
+  },
+  "source": "real PP-only pregame archive captured 2026-10-13; no retroactive model predictions",
+  "archive_sha256": "4dd35bcee794692011684e4edc50dab612275c14ffb91137a638df9f8b9d5138"
+}

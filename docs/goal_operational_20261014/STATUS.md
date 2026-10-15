@@ -21,3 +21,15 @@ OMP_NUM_THREADS=1 .venv/bin/python -W error scripts/predict_goal_daily.py --targ
 Opt-in `capture_prospective_pp=true` on this research branch runs refit, goal matching and archive. Keep `publish_to_sheet=false`. First branch run requires explicit `bootstrap_history=true`; later runs restore their own branch's archive. SQLite is append-only; final results/corrections append separate observations. Hash manifest plus backup/restore check precedes artifact upload; restore rejects a mismatching checksum. GitHub artifacts last 90 days: an additional long-term external backup remains necessary before expiry. No production approval, automated real wager, or main merge.
 
 The incremental `refresh_goal_slate.py` helper reuses an existing canonical artifact and only refreshes recent/missing final games. Its weekly schedule adapter explicitly uses NHL day headers rather than UTC calendar dates. It does not replace full refresh verification. Unknown PP stays unknown.
+
+## Completed operational validation
+
+- Local suite: 352 tests passed with warnings as errors; full validation script and dependency check also passed before the final isolated slate-guard test.
+- GitHub runs [#243](https://github.com/mazalazop/nhl-value-betting-model/actions/runs/38565001793) and [#244](https://github.com/mazalazop/nhl-value-betting-model/actions/runs/38567838382) succeeded. #244 tested code `356f249` without bootstrap. Sheets writes were skipped.
+- October 14 dry run: 104,284 historical observations before cutoff; 2 upcoming games, 85 GOAL probabilities, 64 matched goal odds. Local/remote probabilities agree exactly. Value counts depend on the timestamped odds snapshot, not probability changes.
+- Remote archive grew from 2 to 4 batches; every old batch was byte-identical. Canonical ledger stayed at 10 unique bets. Hashes and restore checks passed.
+- October 15 observation: 72 actual skater appearances, of which 70 were covered by the prior scored roster. Appended 70 outcomes locally; rerun added zero; 15 scored roster members without returned stats remain unknown. Two actual participants were outside the captured roster universe: no retrospective predictions were manufactured. Rosters do not certify match participation.
+- All 85 operational PP annotations remain UNKNOWN. No PP1 freshness evidence or predictive approval is claimed.
+- Scheduled GitHub workflows run from the default branch; this unmerged research branch requires daily opt-in dispatch. The next dispatch appends refreshed outcomes to its restored remote archive. The local October 15 outcome append is not claimed as already uploaded to that remote archive.
+
+Compact evidence and hashes: `live_validation.json`, `remote_validation.json`, `outcome_validation.json`, `scored_slate_outcomes.json`. Large datasets, caches, model bundles and archives remain outside Git. No model tuning, main merge or production Sheets publication occurred.
