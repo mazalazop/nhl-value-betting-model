@@ -97,7 +97,10 @@ def main():
     predictions, rejected_odds = attach_point_odds(predictions, odds)
     if a.goal_odds and a.goal:
         from henachel.goal_odds import match_goal_odds
-        matched,goal_rejected=match_goal_odds(pd.read_csv(a.goal),json.loads(a.goal_odds.read_text())['rows'])
+        goal_rows=json.loads(a.goal_odds.read_text())['rows'] if a.goal_odds.exists() else []
+        if not a.goal_odds.exists():
+            print('GOAL odds unavailable; archiving probabilities without odds',file=sys.stderr)
+        matched,goal_rejected=match_goal_odds(pd.read_csv(a.goal),goal_rows)
         rejected_odds.extend(dict(target='GOAL',**r) for r in goal_rejected)
         lookup={(int(r['game_id']),int(r['player_id'])):r for r in matched.to_dict('records')}
         for row in predictions:

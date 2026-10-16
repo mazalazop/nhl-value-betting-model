@@ -54,3 +54,14 @@ def match_goal_odds(predictions, rows, now=None):
     # Operational experimental policy, not a claim of validated betting performance.
     output['experimental_value_eligible']=output.expected_value.gt(0)&output.edge.gt(0)
     return output,rejected
+
+
+def annotate_probability_ranking(predictions, matched):
+    """Keep every scored player and exact model probability, including no-odds days."""
+    columns = ['game_id', 'player_id', 'bookmaker', 'odds_decimal',
+               'implied_probability', 'edge', 'expected_value', 'goal_value_rank']
+    # One bookmaker is currently supported; never pick an arbitrary duplicate.
+    if matched.duplicated(['game_id', 'player_id']).any():
+        raise ValueError('Ambiguous ranking odds')
+    return predictions.merge(matched[columns], on=['game_id', 'player_id'],
+                             how='left', validate='one_to_one', sort=False)

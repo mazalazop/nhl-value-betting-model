@@ -54,3 +54,40 @@ def test_no_odds_keeps_probability_ranking(contract):
     model,_,now=contract
     got,rejected=match_goal_odds(model,[],now)
     assert got.empty and not rejected and model.probability_goal.iloc[0]==.6
+
+
+def test_annotated_ranking_preserves_all_players_with_or_without_odds(contract):
+    from henachel.goal_odds import annotate_probability_ranking
+    model,rows,now=contract
+    extra=model.copy();extra['player_id']=999;extra['probability_goal']=.2;extra['goal_probability_rank']=2
+    predictions=pd.concat([model,extra],ignore_index=True)
+    for odds in [rows, []]:
+        matched,_=match_goal_odds(predictions,odds,now)
+        ranking=annotate_probability_ranking(predictions,matched)
+        pd.testing.assert_frame_equal(ranking[predictions.columns],predictions)
+        assert pd.isna(ranking.iloc[1].odds_decimal)
+        assert ranking.odds_decimal.notna().sum()==len(odds)
+
+
+def test_collector_goal_flag_does_not_change_point_payload(tmp_path,monkeypatch):
+    import importlib.util
+    import sys
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    source=json.loads((Path(__file__).parent/'data/unibet_real_2026_10_03.json').read_text())
+    spec=importlib.util.spec_from_file_location('collector',Path(__file__).parents[1]/'scripts/collect_unibet_structured.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    raw=tmp_path/'raw';raw.mkdir()
+    pd.DataFrame(source['matches']).to_csv(raw/'matchs.csv',index=False)
+    pd.DataFrame(source['roster']).to_csv(raw/'roster_current.csv',index=False)
+    response=Mock();response.status_code=200;response.headers={}
+    response.text=source['url']
+    monkeypatch.setattr(module.requests,'get',lambda *a,**kw:response)
+    monkeypatch.setattr(module,'public_events',lambda text:[source['event']])
+    module.pd=SimpleNamespace(read_csv=pd.read_csv,Timestamp=SimpleNamespace(now=lambda **kw:pd.Timestamp(source['captured_at'])))
+    for enabled in [False,True]:
+        output=tmp_path/str(enabled)
+        argv=['collect','--raw-dir',str(raw),'--output-dir',str(output)]+(['--include-goal'] if enabled else [])
+        monkeypatch.setattr(sys,'argv',argv);module.main()
+        assert (output/'normalized_goals_odds.json').exists()==enabled
+    assert (tmp_path/'False/normalized_points_odds.json').read_bytes()==(tmp_path/'True/normalized_points_odds.json').read_bytes()

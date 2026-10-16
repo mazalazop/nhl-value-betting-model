@@ -1,0 +1,17 @@
+{
+  "reference": "bf41c532e3995cb12dc4aecd9f375503bde92c6c",
+  "unchanged_files": [
+    "model/05_predict_upcoming_games.py",
+    "model/01_build_base_features.py",
+    "model/henachel/point.py",
+    "model/henachel/calibration.py",
+    "model/06_match_model_to_unibet_odds.py",
+    "model/07_build_daily_bets.py"
+  ],
+  "fixture_history_rows": 74,
+  "future_rows": 2,
+  "feature_columns_compared": 132,
+  "max_probability_difference": 0.0,
+  "frozen_algorithm_guard": "passed",
+  "tests": 282
+}
