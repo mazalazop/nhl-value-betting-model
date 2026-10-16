@@ -21,6 +21,14 @@ on:
         description: "Initialiser un nouvel historique vide (jamais pour remplacer un historique existant)"
         type: boolean
         default: false
+      history_import_ref:
+        description: "Import initial explicite depuis une branche existante, uniquement si historique destination absent"
+        type: string
+        required: false
+      goal_research_enabled:
+        description: "Activer GOAL Operational V1 expérimental et archives prospectives"
+        type: boolean
+        default: false
       publish_to_sheet:
         description: "Publier vers Google Sheet"
         required: false
@@ -40,6 +48,7 @@ permissions:
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
+  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true') }}
 
 jobs:
   scrape_points:
@@ -157,10 +166,12 @@ jobs:
         id: history
         env:
           GH_TOKEN: ${{ github.token }}
+          HISTORY_IMPORT_REF: ${{ inputs.history_import_ref }}
           BOOTSTRAP_HISTORY: ${{ inputs.bootstrap_history || github.ref == 'refs/heads/astra/audit-remediation' }}
         run: |
           ARGS=()
           if [ "$BOOTSTRAP_HISTORY" = "true" ]; then ARGS+=(--bootstrap); fi
+          if [ -n "$HISTORY_IMPORT_REF" ]; then ARGS+=(--import-ref "$HISTORY_IMPORT_REF"); fi
           python scripts/restore_history.py "${ARGS[@]}"
 
       - name: Refresh upstream sources
@@ -180,6 +191,10 @@ jobs:
       - name: Settle canonical bets after result refresh
         run: python model/09_settle_previous_bets.py --run-date "$RUN_DATE"
 
+      - name: Append final results to existing prospective archive
+        continue-on-error: true
+        run: python scripts/archive_prospective_outcomes.py
+
       - name: Refresh pregame standings
         run: python model/00c_refresh_team_standings.py
 
@@ -189,9 +204,19 @@ jobs:
       - name: Predict upcoming games
         run: python model/05_predict_upcoming_games.py --target-date "$RUN_DATE"
 
+      - name: Refit GOAL17 operational research before slate
+        id: goal
+        continue-on-error: true
+        if: ${{ env.HENACHEL_GOAL_RESEARCH_ENABLED == 'true' }}
+        shell: bash
+        run: |
+          python scripts/predict_goal_daily.py --target-date "$RUN_DATE" --top 10
+
       - name: Collect verified public Unibet POINT markets
         run: |
-          python scripts/collect_unibet_structured.py
+          ARGS=()
+          if [ "$HENACHEL_GOAL_RESEARCH_ENABLED" = "true" ]; then ARGS+=(--include-goal); fi
+          python scripts/collect_unibet_structured.py "${ARGS[@]}"
           cp outputs/structured_bookmaker/normalized_points_odds.json outputs/normalized_points_odds.json
           python scripts/validate_bookmaker_contract.py outputs/normalized_points_odds.json
 
@@ -200,6 +225,35 @@ jobs:
 
       - name: Build daily bets
         run: python model/07_build_daily_bets.py --run-date "$RUN_DATE"
+
+      - name: Rank GOAL research odds separately
+        id: goal_odds
+        continue-on-error: true
+        if: ${{ env.HENACHEL_GOAL_RESEARCH_ENABLED == 'true' && steps.goal.outcome == 'success' }}
+        run: python scripts/rank_goal_odds.py
+
+      - name: Capture prospective PP evidence and existing probabilities
+        id: prospective
+        continue-on-error: true
+        if: ${{ env.HENACHEL_GOAL_RESEARCH_ENABLED == 'true' }}
+        shell: bash
+        run: |
+          ARGS=()
+          if [ -f outputs/predictions_upcoming_goal_research.csv ]; then
+            ARGS+=(--goal outputs/predictions_upcoming_goal_research.csv --goal-odds outputs/structured_bookmaker/normalized_goals_odds.json)
+          fi
+          python scripts/collect_prospective_pp.py --date "$RUN_DATE" \
+            --archive outputs/history/prospective.sqlite3 \
+            --point outputs/predictions_upcoming_point_enrichi_calibre_v2.csv \
+            --matched-odds outputs/06_matched_point_edges.csv "${ARGS[@]}"
+
+      - name: Report experimental GOAL failure without changing POINT
+        if: ${{ always() && (steps.goal.outcome == 'failure' || steps.goal_odds.outcome == 'failure') }}
+        run: echo "::warning::GOAL research unavailable for this run; no research result or production approval inferred. POINT remains independent."
+
+      - name: Report prospective capture failure explicitly
+        if: ${{ steps.prospective.outcome == 'failure' }}
+        run: echo "::warning::Prospective capture failed. No prospective validation can be claimed for this run. POINT output remains independent."
 
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' && github.ref != 'refs/heads/astra/audit-remediation' }}
@@ -210,6 +264,14 @@ jobs:
         run: |
           python model/08_publish_to_google_sheet.py --sheet-id "$SHEET_ID" --credentials-env
 
+      - name: Verify prospective archive backup restore and hash
+        if: ${{ always() && steps.history.outcome == 'success' }}
+        shell: bash
+        run: |
+          if [ -f outputs/history/prospective.sqlite3 ]; then
+            python scripts/seal_prospective_archive.py outputs/history/prospective.sqlite3
+          fi
+
       - name: Preserve canonical history even after publication failure
         if: ${{ always() && steps.history.outcome == 'success' }}
         uses: actions/upload-artifact@v4
@@ -218,6 +280,9 @@ jobs:
           path: |
             outputs/history/master_daily_bets_history.csv
             outputs/history/settlement_revisions.csv
+            outputs/history/prospective.sqlite3
+            outputs/history/prospective_enabled.json
+            outputs/history/prospective.manifest.json
           if-no-files-found: error
           retention-days: 90
 
