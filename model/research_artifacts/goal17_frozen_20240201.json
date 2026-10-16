@@ -1,0 +1,11 @@
+{
+  "status": "research_only_not_production_approved",
+  "role": "existing GOAL17 reference; not a selected structural candidate",
+  "source": "outputs/structural_20261012/goal/V0_frozen_fold.joblib",
+  "source_study_commit": "17b583350c79e8c0816078fcf6b8d59e3c460db6",
+  "sha256": "5f3ca87d8dbf5d49a5a5333066b3803947446da6894107d212e2251794b86d87",
+  "cutoff_exclusive": "2024-02-01",
+  "calibration": "sigmoid",
+  "features": 17,
+  "warning": "Old frozen research weights, not a model updated through 2026. No refitting in this work."
+}

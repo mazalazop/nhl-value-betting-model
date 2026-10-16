@@ -10,3 +10,6 @@ data/**/*.csv
 data/**/*.json
 outputs/**
 !outputs/.gitkeep
+
+.DS_Store
+data/raw/goal_slate_public_cache/
