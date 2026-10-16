@@ -13,5 +13,6 @@
   "feature_columns_compared": 132,
   "max_probability_difference": 0.0,
   "frozen_algorithm_guard": "passed",
-  "tests": 282
+  "tests": 287,
+  "next_day_restore": "Pregame bytes and settled ledger preserved; new slate and final outcome appended; rerun adds zero duplicates"
 }
