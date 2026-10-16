@@ -14,9 +14,17 @@ def seal(path):
             original=source.execute('SELECT batch_id,kind,payload,archived_at_utc FROM batches ORDER BY batch_id').fetchall()
             copy=restored.execute('SELECT batch_id,kind,payload,archived_at_utc FROM batches ORDER BY batch_id').fetchall()
             if original!=copy:raise ValueError('Restore mismatch')
+            context_counts={}
+            tables={r[0] for r in source.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            for table in ['context_baselines','context_observations','context_views']:
+                if table not in tables:continue
+                expected=source.execute(f'SELECT id,payload FROM {table} ORDER BY id').fetchall()
+                actual=restored.execute(f'SELECT id,payload FROM {table} ORDER BY id').fetchall()
+                if expected!=actual:raise ValueError('Context restore mismatch')
+                context_counts[table]=len(expected)
         finally:restored.close()
     digest=hashlib.sha256(path.read_bytes()).hexdigest()
-    report=dict(filename=path.name,sha256=digest,batches=len(original),restore_verified=True,created_at_utc=datetime.now(timezone.utc).isoformat())
+    report=dict(context_counts=context_counts,filename=path.name,sha256=digest,batches=len(original),restore_verified=True,created_at_utc=datetime.now(timezone.utc).isoformat())
     manifest=path.with_suffix('.manifest.json');temporary=manifest.with_suffix('.tmp')
     temporary.write_text(json.dumps(report,indent=2));temporary.replace(manifest)
     return report

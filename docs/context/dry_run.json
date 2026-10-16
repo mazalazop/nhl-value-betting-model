@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "collected",
+  "executed_at_utc": "2026-10-16T21:57:03.797119+00:00",
+  "completed_at_utc": "2026-10-16T21:57:19.805480+00:00",
+  "dry_run": true,
+  "http_requests": 9,
+  "observations_added": 380,
+  "views_added": 176,
+  "games": 2,
+  "coverage": {
+    "team_stats:CONFIRMED": 4,
+    "calendar:CONFIRMED": 4,
+    "special_teams:CONFIRMED": 4,
+    "goalie:UNKNOWN": 4,
+    "goalie_season:UNKNOWN": 4,
+    "travel:UNKNOWN": 4,
+    "dangerous_shots:UNKNOWN": 4,
+    "player_usage:CONFIRMED": 83,
+    "availability:UNKNOWN": 88,
+    "line:UNKNOWN": 88,
+    "pp_unit:UNKNOWN": 88,
+    "player_usage:UNKNOWN": 5
+  },
+  "unknown_stat_fields": {
+    "pp_toi_minutes": 1,
+    "pp_share": 1
+  },
+  "errors": [],
+  "model_probabilities_modified": false,
+  "source_archive_sha256": "234e751d8c2d14391c0e7a30e80e0f481ad7c348a582a689b4a98ae1e44b2284",
+  "source_archive_unchanged": true,
+  "real_confirmed_lineup_change_observed": false
+}

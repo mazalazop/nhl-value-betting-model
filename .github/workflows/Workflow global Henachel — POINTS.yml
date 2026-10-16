@@ -13,6 +13,10 @@ on:
         description: "SHA256 exact du snapshot revu (requis uniquement pour la migration)"
         type: string
         required: false
+      context_only:
+        description: "Actualiser seulement les annotations pré-match, sans entraînement ni cotes"
+        type: boolean
+        default: false
       run_date:
         description: "Date NHL gameDate (YYYY-MM-DD). Vide = aujourd'hui New York"
         required: false
@@ -36,6 +40,7 @@ on:
         default: false
   schedule:
     - cron: "0 9 * * *"
+    - cron: "17 * * * *"
 
 concurrency:
   group: henachel-points-history
@@ -124,7 +129,7 @@ jobs:
   model_points:
     name: Pipeline modèle POINTS
     needs: scrape_points
-    if: ${{ always() && !cancelled() }}
+    if: ${{ always() && !cancelled() && inputs.context_only != true && github.event.schedule != '17 * * * *' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
@@ -247,6 +252,13 @@ jobs:
             --point outputs/predictions_upcoming_point_enrichi_calibre_v2.csv \
             --matched-odds outputs/06_matched_point_edges.csv "${ARGS[@]}"
 
+      - name: Refresh separate contextual pick views
+        if: ${{ vars.HENACHEL_CONTEXT_ENABLED == 'true' }}
+        continue-on-error: true
+        env:
+          CONTEXT_MINUTES: ${{ vars.HENACHEL_CONTEXT_MIN_INTERVAL_MINUTES || '60' }}
+        run: python scripts/refresh_context.py --min-interval-minutes "$CONTEXT_MINUTES"
+
       - name: Report experimental GOAL failure without changing POINT
         if: ${{ always() && (steps.goal.outcome == 'failure' || steps.goal_odds.outcome == 'failure') }}
         run: echo "::warning::GOAL research unavailable for this run; no research result or production approval inferred. POINT remains independent."
@@ -299,8 +311,8 @@ jobs:
 
   prospective_backup:
     name: Preserve unpublished durable prospective backup
-    needs: model_points
-    if: ${{ needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true')) }}
+    needs: [model_points, context_update]
+    if: ${{ always() && !cancelled() && (needs.context_update.result == 'success' || (needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true')))) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -327,3 +339,55 @@ jobs:
           else
             echo "::warning::No prospective archive available for durable backup."
           fi
+
+  context_update:
+    name: Intraday context only — no model or bookmaker execution
+    if: ${{ inputs.context_only == true || (github.event.schedule == '17 * * * *' && vars.HENACHEL_CONTEXT_ENABLED == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+      - run: python -m pip install -r requirements.lock
+      - name: Restore same canonical archive
+        id: history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HISTORY_IMPORT_REF: ${{ inputs.history_import_ref }}
+        run: |
+          ARGS=()
+          if [ -n "$HISTORY_IMPORT_REF" ]; then ARGS+=(--import-ref "$HISTORY_IMPORT_REF"); fi
+          python scripts/restore_history.py "${ARGS[@]}"
+      - uses: actions/cache@v4
+        with:
+          path: outputs/context/cache
+          key: nhl-context-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: nhl-context-${{ github.ref_name }}-
+      - name: Refresh contextual observations only
+        continue-on-error: true
+        env:
+          CONTEXT_MINUTES: ${{ vars.HENACHEL_CONTEXT_MIN_INTERVAL_MINUTES || '60' }}
+        run: python scripts/refresh_context.py --min-interval-minutes "$CONTEXT_MINUTES"
+      - name: Seal existing archive including contextual tables
+        if: ${{ always() && steps.history.outcome == 'success' }}
+        run: |
+          if [ -f outputs/history/prospective.sqlite3 ]; then
+            python scripts/seal_prospective_archive.py outputs/history/prospective.sqlite3
+          fi
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && steps.history.outcome == 'success' }}
+        with:
+          name: ${{ steps.history.outputs.artifact_name }}
+          path: outputs/history/
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: henachel-context-${{ github.run_id }}
+          path: outputs/context/
+          retention-days: 7
