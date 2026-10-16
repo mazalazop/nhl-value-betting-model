@@ -1,0 +1,53 @@
+{
+  "name": "HENACHEL_GOAL_OPERATIONAL_V1",
+  "status": "research_only_operational",
+  "frozen_at_utc": "2026-10-16T06:11:24.521462+00:00",
+  "commit_sha": "b4df8c6ba0898cc5b3298df1ef475a3760b82a9c",
+  "code_sha256": "4c502c0c19670b7d467ecbd93e988bd6d3574f12eba1425fac82a201b45cf2d3",
+  "file_hashes": {
+    "model/henachel/goal.py": "3be24894840dca736b3bdba7e36e6ebff83f2680d67e2b744c15752c2d61a9dd",
+    "model/henachel/goal_operational.py": "e7bc5edcae2cea0306e22b4c1bffa6151a058c25cfd3cc816eeaaf3bfcbcb8db",
+    "model/henachel/features.py": "648d000ade057243a0568840dfb7b016bed4c49baf3c35c209cda5555cd44848",
+    "model/henachel/calibration.py": "1e53de8aa1de400010d8a7e6995112b2ba86f2030a80bef674cf7d77564ea49c",
+    "model/henachel/data.py": "ce2caaceeb3756bb7843f38b515a8ccd3350432e37c8ca7b1d522624a19ec314",
+    "model/henachel/rosters.py": "4b6f00c4ed325188b9d57cff30ec3a194ab11a7747ea680db01556211875bdc9",
+    "model/research_artifacts/goal17_frozen_20240201.joblib": "5f3ca87d8dbf5d49a5a5333066b3803947446da6894107d212e2251794b86d87",
+    "requirements.lock": "ba7ef7eb519a437acdcd630e82eccdb3a6f4a598346bbfcac2e497c0f95e4edd"
+  },
+  "features": [
+    "is_home_player",
+    "nb_matchs_avant_match",
+    "jours_repos",
+    "tirs_moy_5",
+    "tirs_moy_10",
+    "tirs_par_60_5",
+    "toi_moy_5",
+    "toi_moy_10",
+    "pp_moy_5",
+    "buts_moy_5",
+    "buts_moy_10",
+    "buts_par_60_5",
+    "goal_hit_rate_last_10",
+    "goal_hit_rate_season_pre",
+    "goal_hit_rate_prev_season",
+    "goal_drought_pre",
+    "goal_relative_drought_pre"
+  ],
+  "parameters": {
+    "loss": "log_loss",
+    "learning_rate": 0.05,
+    "max_iter": 300,
+    "max_depth": 4,
+    "min_samples_leaf": 50,
+    "l2_regularization": 1.0,
+    "early_stopping": false,
+    "random_state": 42
+  },
+  "seed": 42,
+  "config_sha": "3a0b589a0e79fcf47e64314c1184fcb5ea06bad92e89edd224cea83ed7273eae",
+  "cutoff": "FINAL/OFF regular season or playoff games with NHL date_match strictly less than target NHL date D; current-day outcomes excluded before validation or feature selection",
+  "split": "Unique eligible dates sorted; first floor(0.85*N) dates fit; remaining dates calibration; minimum 20 dates",
+  "training": "HGB; positive weight n_negative/n_positive; variable usable columns selected using fit partition only; missing values remain NaN",
+  "calibration": "Existing auto selector: raw/sigmoid(logit clipped 1e-6,C=1e6)/isotonic. Fit on first half of calibration dates; rank on later half by log loss then Brier then raw/sigmoid/isotonic order; refit selected method on full calibration window. Existing single-class/insufficient-date raw fallback unchanged.",
+  "weights": "Refitted daily; algorithm frozen, not fitted weights"
+}
