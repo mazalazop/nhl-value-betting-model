@@ -14,5 +14,42 @@
   "max_probability_difference": 0.0,
   "frozen_algorithm_guard": "passed",
   "tests": 287,
-  "next_day_restore": "Pregame bytes and settled ledger preserved; new slate and final outcome appended; rerun adds zero duplicates"
+  "next_day_restore": "Pregame bytes and settled ledger preserved; new slate and final outcome appended; rerun adds zero duplicates",
+  "remote": {
+    "runs": [
+      247,
+      248
+    ],
+    "conclusion": "success",
+    "tested_runtime_sha": "3fe9d310380907b3799f826ba44e04d60ead0496",
+    "later_changes": "tests and validation report only",
+    "slate_date": "2026-10-16",
+    "games": 2,
+    "goal_players": 88,
+    "goal_odds_matched": 63,
+    "goal_odds_rejected": 0,
+    "experimental_positive_ev_rows": 18,
+    "pp_unknown": 88,
+    "pregame_benchmarks_present": true,
+    "old_batches_byte_identical": true,
+    "archive_batches_before": 2,
+    "archive_batches_after": 4,
+    "archive_sha256": "486f26f78252ad1a8d1d44f42649d28b8bf0c54e61e5683c5e06c52c1a151272",
+    "unpublished_backup_asset_id": 647133613,
+    "remote_backup_restore_verified": true,
+    "point_repeat_max_probability_difference": 1.1102230246251565e-16,
+    "scientific_promotion": false,
+    "business_sheet_write": false,
+    "history_observations": 255937,
+    "history_seasons": [
+      "20212022",
+      "20222023",
+      "20232024",
+      "20242025",
+      "20252026",
+      "20262027"
+    ],
+    "history_date_max": "2026-10-15",
+    "new_final_outcomes": "No completed games from these newly captured same-day snapshots yet; next-day behavior covered by tests"
+  }
 }
