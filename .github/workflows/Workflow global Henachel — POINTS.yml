@@ -296,3 +296,34 @@ jobs:
             data/raw/*.csv
             data/final/
           retention-days: 7
+
+  prospective_backup:
+    name: Preserve unpublished durable prospective backup
+    needs: model_points
+    if: ${{ needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+      - run: python -m pip install requests==2.32.3
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: henachel-canonical-history-*
+          path: backup
+          merge-multiple: true
+      - name: Back up archive and verify remote restoration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f backup/prospective.sqlite3 ]; then
+            python scripts/backup_prospective_release.py backup/prospective.sqlite3
+          else
+            echo "::warning::No prospective archive available for durable backup."
+          fi
