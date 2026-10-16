@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import zipfile
@@ -12,11 +13,16 @@ def artifact_name(ref):
     return 'henachel-canonical-history-'+hashlib.sha256(ref.encode()).hexdigest()[:16]
 
 
-def restore(session,repository,ref,destination,bootstrap=False):
+def restore(session,repository,ref,destination,bootstrap=False,import_ref=None):
     name=artifact_name(ref)
     response=session.get(f'https://api.github.com/repos/{repository}/actions/artifacts',params={'name':name,'per_page':100},timeout=60)
     response.raise_for_status(); artifacts=response.json()['artifacts']
     if not artifacts:
+        if import_ref:
+            if import_ref == ref or bootstrap:
+                raise ValueError('Import must use a different branch and cannot bootstrap')
+            restore(session,repository,import_ref,destination,False)
+            return 'imported'
         if not bootstrap: raise ValueError('No canonical history artifact: import existing history or explicitly bootstrap a new ledger')
         import sys
         sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'model'))
@@ -32,8 +38,14 @@ def restore(session,repository,ref,destination,bootstrap=False):
         files={Path(p).name:p for p in archive.namelist() if not p.endswith('/')}
         canonical='master_daily_bets_history.csv'
         if canonical not in files: raise ValueError('Artifact lacks canonical ledger')
+        if 'prospective_enabled.json' in files and 'prospective.sqlite3' not in files:
+            raise ValueError('Prospective archive missing from previously enabled history')
+        if 'prospective.manifest.json' in files:
+            manifest=json.loads(archive.read(files['prospective.manifest.json']))
+            if 'prospective.sqlite3' not in files or hashlib.sha256(archive.read(files['prospective.sqlite3'])).hexdigest()!=manifest['sha256']:
+                raise ValueError('Prospective archive checksum mismatch')
         destination.mkdir(parents=True,exist_ok=True)
-        for filename in [canonical,'settlement_revisions.csv']:
+        for filename in [canonical,'settlement_revisions.csv','prospective.sqlite3','prospective_enabled.json','prospective.manifest.json']:
             if filename in files:
                 target=destination/filename
                 if target.exists():raise ValueError('Refuse to overwrite existing local history during restore')
@@ -41,8 +53,8 @@ def restore(session,repository,ref,destination,bootstrap=False):
     return 'restored'
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--bootstrap',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--bootstrap',action='store_true');parser.add_argument('--import-ref');args=parser.parse_args()
     session=requests.Session();session.headers.update({'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-    result=restore(session,os.environ['GITHUB_REPOSITORY'],os.environ['GITHUB_REF'],Path('outputs/history'),args.bootstrap)
+    result=restore(session,os.environ['GITHUB_REPOSITORY'],os.environ['GITHUB_REF'],Path('outputs/history'),args.bootstrap,args.import_ref)
     with Path(os.environ['GITHUB_OUTPUT']).open('a') as out:
         out.write(f'artifact_name={artifact_name(os.environ["GITHUB_REF"])}\nstatus={result}\n')

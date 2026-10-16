@@ -36,3 +36,76 @@ def test_workflow_contract_and_shell_syntax():
             assert '${{' not in step['run']
             proc=subprocess.run(['bash','-n'],input=step['run'],text=True,capture_output=True)
             assert proc.returncode==0,proc.stderr
+
+
+def test_prospective_archive_restored_and_loss_refused(tmp_path):
+    import io
+    import zipfile
+    def session_for(files):
+        data=io.BytesIO()
+        with zipfile.ZipFile(data,'w') as z:
+            for name,content in files.items(): z.writestr(name,content)
+        index=Mock();index.json.return_value={'artifacts':[dict(expired=False,created_at='2026-10-13',archive_download_url='https://example.test/archive')]}
+        body=Mock();body.content=data.getvalue()
+        session=Mock();session.get.side_effect=[index,body];return session
+    files={'master_daily_bets_history.csv':'bet_id\n', 'prospective_enabled.json':'{}', 'prospective.sqlite3':'opaque bytes'}
+    m=module('restore_history')
+    assert m.restore(session_for(files),'org/repo','branch',tmp_path/'ok')=='restored'
+    assert (tmp_path/'ok/prospective.sqlite3').read_text()=='opaque bytes'
+    del files['prospective.sqlite3']
+    with pytest.raises(ValueError,match='Prospective archive missing'):
+        m.restore(session_for(files),'org/repo','branch',tmp_path/'bad')
+    assert not (tmp_path/'bad').exists()
+
+
+def test_goal_operational_workflow_is_opt_in_and_archived():
+    import yaml
+    workflow=yaml.safe_load((Path(__file__).parents[1]/'.github/workflows/Workflow global Henachel — POINTS.yml').read_text())
+    steps=workflow['jobs']['model_points']['steps']
+    goal=next(s for s in steps if 'predict_goal_daily.py' in s.get('run',''))
+    assert 'HENACHEL_GOAL_RESEARCH_ENABLED' in goal['if']
+    assert goal['continue-on-error'] is True
+    refresh=next(s for s in steps if s.get('name')=='Refresh upstream sources')
+    assert 'GOAL' not in str(refresh)
+    point=next(s for s in steps if s.get('name')=='Predict upcoming games')
+    assert point['run']=='python model/05_predict_upcoming_games.py --target-date "$RUN_DATE"'
+    assert '--target-date "$RUN_DATE"' in goal['run']
+    assert any('seal_prospective_archive.py' in s.get('run','') for s in steps)
+    assert any('prospective.manifest.json' in s.get('with',{}).get('path','') for s in steps)
+
+
+def test_archive_manifest_checksum_checked_before_restore(tmp_path):
+    import io,zipfile,json,hashlib
+    def session_for(digest):
+        data=io.BytesIO()
+        with zipfile.ZipFile(data,'w') as z:
+            z.writestr('master_daily_bets_history.csv','bet_id\n')
+            z.writestr('prospective.sqlite3',b'archive')
+            z.writestr('prospective.manifest.json',json.dumps({'sha256':digest}))
+        index=Mock();index.json.return_value={'artifacts':[dict(expired=False,created_at='2026-10-14',archive_download_url='https://example.test/archive')]}
+        body=Mock();body.content=data.getvalue()
+        session=Mock();session.get.side_effect=[index,body];return session
+    m=module('restore_history')
+    with pytest.raises(ValueError,match='checksum'):
+        m.restore(session_for('wrong'),'org/repo','branch',tmp_path/'bad')
+    assert not (tmp_path/'bad').exists()
+    assert m.restore(session_for(hashlib.sha256(b'archive').hexdigest()),'org/repo','branch',tmp_path/'ok')=='restored'
+
+
+def test_explicit_branch_import_preserves_ledger_and_never_bootstraps(tmp_path):
+    import io, zipfile
+    m=module('restore_history')
+    data=io.BytesIO()
+    ledger='bet_id,bet_status,result\nknown,settled,win\n'
+    with zipfile.ZipFile(data,'w') as z:z.writestr('master_daily_bets_history.csv',ledger)
+    empty=Mock();empty.json.return_value={'artifacts':[]}
+    source=Mock();source.json.return_value={'artifacts':[dict(expired=False,created_at='2026-10-14',archive_download_url='https://example.test/a')]}
+    body=Mock();body.content=data.getvalue()
+    session=Mock();session.get.side_effect=[empty,source,body]
+    assert m.restore(session,'org/repo','main',tmp_path,import_ref='stable')=='imported'
+    assert (tmp_path/'master_daily_bets_history.csv').read_text()==ledger
+    session=Mock();session.get.return_value=empty
+    with pytest.raises(ValueError,match='No canonical'):
+        m.restore(session,'org/repo','main',tmp_path/'missing',import_ref='missing')
+    with pytest.raises(ValueError,match='cannot bootstrap'):
+        m.restore(session,'org/repo','main',tmp_path/'bad',True,'stable')

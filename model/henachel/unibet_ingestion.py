@@ -25,7 +25,10 @@ def public_events(html):
     return events
 
 
-def normalize_event(event,url,captured_at,matches,roster,now):
+def normalize_event(event,url,captured_at,matches,roster,now,market_kind="points"):
+    contracts={"points":(4267,"Nombre de Points", "player_points"), "goals":(4266,"Nombre de Buts", "player_goals")}
+    if market_kind not in contracts:raise ValueError("Unsupported market")
+    group_id, label, market_name=contracts[market_kind]
     now,captured,start=utc(now),utc(captured_at),utc(event.get('parsedStart'))
     if not pd.Timedelta(0)<=now-captured<=MAX_ODDS_AGE or start<=now:
         raise ValueError('Stale capture or started event')
@@ -48,24 +51,24 @@ def normalize_event(event,url,captured_at,matches,roster,now):
     pool=pool[(now-observed).between(pd.Timedelta(0),pd.Timedelta(hours=24))]
     rows=[];rejected=[]
     for group in event.get('groupedMarkets',[]):
-        if group.get('id')!=4267 or group.get('description')!='Nombre de Points - Joueur - Match (Hors TAB)':continue
+        if group.get('id')!=group_id or group.get('description')!=label+' - Joueur - Match (Hors TAB)':continue
         for market in group.get('markets',[]):
             if market.get('suspended') or market.get('period')!='Match' or market.get('parent')!=f'e{event_id}':continue
-            prefix='Nombre de Points - '
+            prefix=label+' - '
             if not str(market.get('description','')).startswith(prefix):continue
             player=market['description'][len(prefix):]
             choices=[o for o in market.get('outcomes',[]) if o.get('description')==player+' 1+' and not o.get('hidden') and not o.get('suspended')]
             if len(choices)!=1:
                 rejected.append({'player':player,'reason':'missing_or_ambiguous_1_plus'});continue
             outcome=choices[0]
-            if outcome.get('eventId')!=event_id or outcome.get('marketId')!=market.get('id') or outcome.get('groupId')!=4267:
+            if outcome.get('eventId')!=event_id or outcome.get('marketId')!=market.get('id') or outcome.get('groupId')!=group_id or outcome.get('isMulti'):
                 rejected.append({'player':player,'reason':'conflicting_outcome_identity'});continue
             people=pool[pool.nom.map(name).eq(name(player))]
             if len(people)!=1:
                 rejected.append({'player':player,'reason':'no_unique_recent_roster_identity'});continue
             person=people.iloc[0]
             odds=float(str(outcome.get('price')).replace(',','.'));value_metrics(.5,odds)
-            rows.append(dict(bookmaker='Unibet',market='player_points',stat='points',threshold=1,
+            rows.append(dict(bookmaker='Unibet',market=market_name,stat=market_kind,threshold=1,
                 outcome_key='1_plus',outcome_label='1+',event_id=str(event_id),event_url=url,
                 event_slug=url.rstrip('/').rsplit('/',1)[-1],
                 home_team=game.id_equipe_domicile,away_team=game.id_equipe_exterieur,

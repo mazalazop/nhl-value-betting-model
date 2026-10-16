@@ -1,0 +1,49 @@
+{
+  "protocol_id": "goal_operational_prospective_v1",
+  "registered_at_utc": "2026-10-16T06:11:24.524059+00:00",
+  "algorithm": "HENACHEL_GOAL_OPERATIONAL_V1",
+  "algorithm_manifest_sha256": "b7cdb30e58a209cde3b8750b078553feffee757cc9c3763e6321ac2b92277aa0",
+  "status": "preregistered",
+  "period": {
+    "start": "2026-11-01",
+    "end_exclusive": "2027-04-20",
+    "minimum_dates": 90,
+    "minimum_player_games": 20000
+  },
+  "universe": "Regular season NHL skaters with all three predictions archived before scheduled puck drop; one player-game, earliest complete daily snapshot; F/D diagnostics only. Report missing predictions, absent players and unknown outcomes explicitly; do not map absence to zero.",
+  "benchmarks": {
+    "operational": "Frozen refit algorithm above",
+    "frozen_reference": "Tracked GOAL17 bundle frozen at 2024-02-01; no refit",
+    "player_smoothed": "(season_goal_hits_before_match + 10 * fit_partition_goal_prevalence) / (season_games_before_match + 10); same strict daily cutoff; no test outcomes"
+  },
+  "metrics": [
+    "log_loss",
+    "Brier",
+    "ROC_AUC",
+    "average_precision",
+    "ECE_10_fixed_equal_width_bins",
+    "top_decile_hit_rate",
+    "sample_sizes",
+    "coverage_by_date_position"
+  ],
+  "top_decile": "ceil(0.10*n) per NHL date, ties by game_id then player_id; pooled hits and n",
+  "decision": {
+    "minimum_logloss_gain": 0.0005,
+    "brier_gain": "strictly positive",
+    "comparisons": [
+      "frozen_reference",
+      "player_smoothed"
+    ],
+    "paired_ci": "10000 moving date-block bootstrap replicates, block 7 dates, seed 20261016; Bonferroni family 2, upper 97.5% two-sided logloss-difference CI < 0 for both benchmarks",
+    "max_ece_degradation": 0.005,
+    "absolute_max_ece": 0.03,
+    "season_phase_stability": "log loss and Brier improve against both benchmarks in Nov-Dec, Jan-Feb and Mar-Apr; missing phase is inconclusive",
+    "promotion": "All criteria required; human review, never automatic"
+  },
+  "analysis": "One final analysis after end and finalized outcomes. No interim predictive-metric inspection or selection. Technical coverage/integrity diagnostics allowed only. Insufficient sample => inconclusive; no post-result extension.",
+  "missing": "Only confirmed final player statistics count as labels; unresolved/DNP excluded with counts published. Common eligible universe for comparisons; publish total roster and each missing-reason count.",
+  "corrections": "Append final corrected outcomes; freeze evaluation extraction 2027-04-27T00:00:00Z. Bug fixes limited to identity/temporal/ingestion/storage/matching; separate comparability assessment and version before use; incomparable predictions cannot count toward V1 promotion.",
+  "pp": "UNKNOWN unless freshness verified; no probability changes or PP-filter promotion in this protocol",
+  "historical_results": "All prior holdouts consumed; no independent evidence claimed from them",
+  "betting": "No ROI or betting-policy selection without independent reliable timestamped odds; model remains research-only until final decision"
+}
