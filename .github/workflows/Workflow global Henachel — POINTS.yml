@@ -221,6 +221,12 @@ jobs:
         run: |
           python scripts/predict_goal_daily.py --target-date "$RUN_DATE" --top 10
 
+      - name: Audit GOAL structural sustainability — research only
+        id: goal_sustainability
+        continue-on-error: true
+        if: ${{ env.HENACHEL_GOAL_RESEARCH_ENABLED == 'true' && steps.goal.outcome == 'success' }}
+        run: python scripts/audit_goal_sustainability.py --target-date "$RUN_DATE"
+
       - name: Collect verified public Unibet POINT markets
         run: |
           ARGS=()
