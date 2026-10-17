@@ -1,0 +1,23 @@
+{
+  "validated_code_sha": "695878174a07e2f68ffbc48193282a9bed4bf958",
+  "workflow_run": 251,
+  "workflow_run_id": 38974246513,
+  "conclusion": "success",
+  "offline_ci_run_id": 38974259847,
+  "offline_ci_conclusion": "success",
+  "local_tests": 313,
+  "warnings": "errors",
+  "model_job": "skipped",
+  "sheets_jobs": "skipped",
+  "games": 2,
+  "observations": 380,
+  "views": 176,
+  "completed_at_utc": "2026-10-16T22:13:12.574162+00:00",
+  "source_errors": [],
+  "archive_sha256": "5f83526ee8bfb35c152359f20d3002cc7cad857dcb5b70ac83764dacdcb67aaa",
+  "restore_verified": true,
+  "remote_restore_verified": true,
+  "production_archive_modified": false,
+  "scope": "branch-specific archive imported from main; unpublished durable backup",
+  "activation": "not merged; automatic context requires HENACHEL_CONTEXT_ENABLED=true"
+}
