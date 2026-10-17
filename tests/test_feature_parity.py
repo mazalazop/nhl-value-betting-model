@@ -117,7 +117,8 @@ def test_empty_history_source_concat_preserves_first_game_features():
     date=raw.date_match.min();today=raw[raw.date_match.eq(date)]
     matches=today.drop_duplicates('id_match')[['id_match','date_match','saison','id_equipe_domicile','id_equipe_exterieur']]
     players=today[['id_joueur','team_player_match','nom','position']]
-    actual=build_future_features(raw,matches,players)
+    empty_history=build(raw).iloc[:0].copy()
+    actual=future.build_upcoming_universe(matches,empty_history,raw.drop_duplicates('id_match'),players,{})
     expected=build(raw);expected=expected[expected.date_match.eq(pd.Timestamp(date))]
     assert len(actual)==len(today)
     for col in future.FEATURE_WHITELIST:
