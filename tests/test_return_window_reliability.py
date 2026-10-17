@@ -5,12 +5,13 @@ from conftest import load_script
 from fixtures import games_fixture
 
 model=load_script("01_build_base_features")
+from henachel.point_return_patch import repair_point_returns
 
 def dataset():
     raw=games_fixture()
-    return model.enrichir_contexte_v2(
+    return repair_point_returns(model.enrichir_contexte_v2(
         model.creer_features_temporelles_v2(model.build_base_canonique(raw))
-    )
+    ))
 
 @pytest.mark.parametrize("season", ["20232024","20242025"])
 def test_return_signal_expires_and_default_weight_restored(season):
@@ -39,7 +40,7 @@ def test_repeated_episodes_restart_in_same_season():
     # A second gap is inserted well after the first one.
     mask=(raw.id_joueur==1)&(raw.season_source=="20232024")&(raw.date_match>=pd.Timestamp("2023-11-20"))
     raw.loc[mask,"date_match"] += pd.Timedelta(days=14)
-    x=model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(raw)))
+    x=repair_point_returns(model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(raw))))
     p=x[(x.id_joueur==1)&(x.season_source=="20232024")].sort_values("date_match").reset_index(drop=True)
     episodes=p.loc[p.absence_longue_flag.eq(1)]
     assert len(episodes)>=2
@@ -49,11 +50,14 @@ def test_repeated_episodes_restart_in_same_season():
 
 def test_return_signal_not_changed_by_current_result():
     raw=games_fixture()
-    original=model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(raw)))
+    original=repair_point_returns(model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(raw))))
     manipulated=raw.copy()
-    manipulated[["points","buts","passes","tirs"]]=50
+    manipulated["buts"]=20
+    manipulated["passes"]=30
+    manipulated["points"]=50
+    manipulated["tirs"]=50
     manipulated["temps_de_glace"]=70.
-    changed=model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(manipulated)))
+    changed=repair_point_returns(model.enrichir_contexte_v2(model.creer_features_temporelles_v2(model.build_base_canonique(manipulated))))
     expected=original[["return_from_absence_flag","retour_episode","matchs_depuis_retour_avant_match"]]
     observed=changed[["return_from_absence_flag","retour_episode","matchs_depuis_retour_avant_match"]]
     pd.testing.assert_frame_equal(expected,observed)
@@ -61,6 +65,6 @@ def test_return_signal_not_changed_by_current_result():
 def test_invalid_windows_fail_closed():
     raw=games_fixture()
     base=model.creer_features_temporelles_v2(model.build_base_canonique(raw))
+    enriched=model.enrichir_contexte_v2(base)
     with pytest.raises(ValueError,match="finite return windows"):
-        model.enrichir_contexte_v2(base,config={"return_recent_games":10,
-                                                 "return_stabilized_until_games":8})
+        repair_point_returns(enriched,recent_games=10,stabilized_until_games=8)
