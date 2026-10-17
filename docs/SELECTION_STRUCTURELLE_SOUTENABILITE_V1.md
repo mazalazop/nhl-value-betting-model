@@ -21,6 +21,18 @@ Aucune de ces étapes ne doit être confondue avec une probabilité issue du mod
 - Potentiel **rebond** : sous-production relative au niveau historique **avec** tirs, temps de jeu et rôle maintenus ou en hausse; jamais « il n'a pas marqué, donc il va marquer ».
 - Traiter individuellement les risques de gardien / défense adverse / contexte offensif et la cote; ne pas confondre **probabilité de marquer un point** avec **value du pari**.
 
+## Application au marché BUT
+
+La même revue est **obligatoire** avant un Top BUT, mais les références changent :
+buts/match, buts/60, tirs et tirs/60, tirs dangereux/xG individuels lorsqu'ils sont fiables,
+pourcentage de tirs convertis, temps sur la glace, PP TOI/PP share et position PP1.
+
+- Une série de buts sur très peu de tirs déclenche une vigilance de conversion non durable.
+- Une disette de buts n'est un rebond plausible que si les tirs et occasions dangereuses restent élevés.
+- Le diagnostic chiffré automatisé de cette V1 concerne **POINT uniquement**. Pour BUT,
+  appliquer la grille de manière explicite et manuelle tant qu'un module BUT dédié
+  n'a pas été validé; GOAL Operational reste `research_only_operational`.
+
 ## Automatisation de diagnostic, sans impact silencieux
 
 `scripts/audit_player_sustainability.py` est une **surcouche indépendante**. Après le calcul POINT pour une date NHL, elle compare :
