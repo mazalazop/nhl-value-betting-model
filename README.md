@@ -26,6 +26,8 @@ Ordre et commandes : [docs/RUN_ORDER.md](docs/RUN_ORDER.md). Contrats, limites e
 - `outputs/history/master_daily_bets_history.csv` est l'historique canonique. Google Sheets est une vue. Le settlement précède la publication ; les relances préservent les résultats et les identifiants.
 - Une journée sans match, sans cote ou sans candidat peut produire une sortie vide avec en-têtes et un statut explicite.
 
+**Audit structurel de sélection (17/10/2026) :** après chaque prédiction POINT, le workflow exporte `outputs/player_sustainability_point.csv` via `scripts/audit_player_sustainability.py`. Cette surcouche vérifie références historiques, production récente, tirs/TOI/PP et séries, et marque les surchauffes ou rebonds. **Aucun changement de P(HENACHEL), aucune pénalité numérique automatique ni impact sur les picks publiés avant validation walk-forward.** Procédure : [docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md](docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md).
+
 **Règle métier conservée :** la sélection privilégie la probabilité du modèle et peut retenir une EV négative. L'exclusion « hot streak » est désormais explicitement optionnelle (`07 --enable-hot-streak-exclude`) ; sa valeur prédictive n'est pas démontrée.
 
 Les artefacts historiques correspondant à Brier ≈ 0.205518, log-loss ≈ 0.599639 et AUC ≈ 0.678702 ne sont pas disponibles ici. Ces nombres restent une référence documentaire, pas des résultats reproduits.
