@@ -114,7 +114,7 @@ def parse_args() -> argparse.Namespace:
         "--override-min-model-proba",
         type=float,
         default=0.90,
-        help="Seuil de probabilité modèle qui autorise un pick même sous la cote minimale.",
+        help="Ancien paramètre conservé pour compatibilité ; ne contourne plus le seuil de cote.",
     )
     parser.add_argument(
         "--value-threshold",
@@ -244,10 +244,11 @@ def build_daily_bets(
     # Value-bet flag kept as secondary information only.
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
 
-    # Eligibility: odds >= min_odds OR model_probability >= override threshold
-    odds_ok = df["odds_decimal"] >= min_odds
-    proba_override_ok = df["model_probability"] >= override_min_model_proba
-    keep_mask = odds_ok | proba_override_ok
+    # Strict business eligibility: an exceptionally high model probability
+    # NEVER overrides a missing or sub-1.40 bookmaker price.
+    # The legacy override argument is retained only for CLI/API compatibility.
+    effective_min_odds = max(float(min_odds), 1.40)
+    keep_mask = df["odds_decimal"].ge(effective_min_odds) & np.isfinite(df["odds_decimal"])
     stats["rows_removed_low_odds"] = int((~keep_mask).sum())
     df = df[keep_mask].copy()
 
