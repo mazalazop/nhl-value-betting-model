@@ -248,6 +248,8 @@ def build_daily_bets(
     # NEVER overrides a missing or sub-1.40 bookmaker price.
     # The legacy override argument is retained only for CLI/API compatibility.
     effective_min_odds = max(float(min_odds), 1.40)
+    # A missing or malformed quote is NOT a bet, even at P(model)=99.9%.
+    df["odds_decimal"] = pd.to_numeric(df["odds_decimal"], errors="coerce")
     keep_mask = df["odds_decimal"].ge(effective_min_odds) & np.isfinite(df["odds_decimal"])
     stats["rows_removed_low_odds"] = int((~keep_mask).sum())
     df = df[keep_mask].copy()
