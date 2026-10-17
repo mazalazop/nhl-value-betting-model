@@ -29,6 +29,8 @@ def repair_point_returns(frame: pd.DataFrame, recent_games=3, stabilized_until_g
     if x.duplicated(["id_joueur","id_match"]).any():
         raise ValueError("Duplicate player/match in return overlay")
     x["date_match"]=pd.to_datetime(x.date_match,errors="raise")
+    # CSV reload converts 20252026 to an integer; the future source uses a str.
+    x["season_source"]=x["season_source"].astype("string").str.strip()
     if x["date_match"].isna().any():raise ValueError("Missing game dates")
     x=x.sort_values(["id_joueur","date_match","id_match"])
     keys=["id_joueur","season_source"]
