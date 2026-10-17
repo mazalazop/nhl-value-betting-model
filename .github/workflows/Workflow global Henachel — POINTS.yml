@@ -209,6 +209,10 @@ jobs:
       - name: Predict upcoming games
         run: python model/05_predict_upcoming_games.py --target-date "$RUN_DATE"
 
+      - name: Audit structural sustainability — research only
+        continue-on-error: true
+        run: python scripts/audit_player_sustainability.py --target-date "$RUN_DATE"
+
       - name: Refit GOAL17 operational research before slate
         id: goal
         continue-on-error: true
