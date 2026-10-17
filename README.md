@@ -28,6 +28,8 @@ Ordre et commandes : [docs/RUN_ORDER.md](docs/RUN_ORDER.md). Contrats, limites e
 
 **Audit structurel de sélection (17/10/2026) :** après chaque prédiction POINT, le workflow exporte `outputs/player_sustainability_point.csv` via `scripts/audit_player_sustainability.py`. Cette surcouche vérifie références historiques, production récente, tirs/TOI/PP et séries, et marque les surchauffes ou rebonds. **Aucun changement de P(HENACHEL), aucune pénalité numérique automatique ni impact sur les picks publiés avant validation walk-forward.** Procédure : [docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md](docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md).
 
+**Audit structurel BUT (recherche) :** lorsque GOAL Operational V1 est activé et s'exécute avec succès, le workflow génère `outputs/player_sustainability_goal_research.csv` via `scripts/audit_goal_sustainability.py`. Ce rapport compare le niveau de finition historique aux buts, tirs, TOI, PP et conversion récents ; il signale surchauffe, disette soutenue par les tirs et changements de volume. Il ne modifie ni le modèle GOAL (`research_only_operational`) ni ses probabilités, ni les picks POINT ni la publication. Voir [méthodologie](docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md) et [tests](tests/test_goal_sustainability_overlay.py).
+
 **Règle métier conservée :** la sélection privilégie la probabilité du modèle et peut retenir une EV négative. L'exclusion « hot streak » est désormais explicitement optionnelle (`07 --enable-hot-streak-exclude`) ; sa valeur prédictive n'est pas démontrée.
 
 Les artefacts historiques correspondant à Brier ≈ 0.205518, log-loss ≈ 0.599639 et AUC ≈ 0.678702 ne sont pas disponibles ici. Ces nombres restent une référence documentaire, pas des résultats reproduits.
