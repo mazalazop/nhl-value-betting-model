@@ -273,6 +273,10 @@ jobs:
         if: ${{ always() && (steps.goal.outcome == 'failure' || steps.goal_odds.outcome == 'failure') }}
         run: echo "::warning::GOAL research unavailable for this run; no research result or production approval inferred. POINT remains independent."
 
+      - name: Report GOAL structural audit status
+        if: ${{ always() && steps.goal_sustainability.outcome == 'failure' }}
+        run: echo "::warning::GOAL structural diagnostic failed. Research probabilities remain unchanged; no diagnostic can be claimed for this run."
+
       - name: Report prospective capture failure explicitly
         if: ${{ steps.prospective.outcome == 'failure' }}
         run: echo "::warning::Prospective capture failed. No prospective validation can be claimed for this run. POINT output remains independent."
