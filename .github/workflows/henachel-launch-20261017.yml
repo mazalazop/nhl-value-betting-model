@@ -1,0 +1,25 @@
+name: Henachel targeted launch 2026-10-17
+on:
+  push:
+    branches: [astra/audit-remediation]
+    paths:
+      - '.github/workflows/henachel-launch-20261017.yml'
+permissions:
+  contents: read
+  actions: write
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger POINT and GOAL research for 2026-10-17 without publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run 'Workflow global Henachel — POINTS.yml' \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f run_date=2026-10-17 \
+            -f goal_research_enabled=true \
+            -f context_only=false \
+            -f publish_to_sheet=false \
+            -f bootstrap_history=false
