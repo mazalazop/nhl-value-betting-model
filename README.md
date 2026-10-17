@@ -32,6 +32,8 @@ Ordre et commandes : [docs/RUN_ORDER.md](docs/RUN_ORDER.md). Contrats, limites e
 
 **Seuil de pari vérifié (17/10/2026) :** `07_build_daily_bets.py` applique un plancher **strict de 1,40 inclus**, sans dérogation pour les très hautes probabilités et sans retenir les cotes absentes ou invalides. Les classements probabilistes POINT/BUT ne sont pas filtrés par les cotes : un joueur sans marché peut rester un candidat d'analyse, mais pas un pari exécutable. Tests dans `tests/test_strict_min_odds.py`.
 
+**Avertissement scientifique POINT — 17/10/2026 :** les champs `return_from_absence_flag` et `return_stabilized_flag` du modèle POINT actuel peuvent persister bien après le premier épisode d'absence enregistré. Il s'agit d'un **proxy de calendrier**, et non d'une blessure confirmée. Une version corrigée, isolée dans la [PR n°6](https://github.com/mazalazop/nhl-value-betting-model/pull/6), a passé les tests fonctionnels, mais **son backtest apparié sur 46 866 observations ne démontre pas de gain prédictif significatif** (log-loss 0,592637 → 0,592582 ; Top10 69,16 % → 68,44 %). Le correctif reste **hors production**; ne pas accorder de bonus/malus de retour de blessure sur la seule base de ces champs. Ne pas contourner le verrou de reproductibilité GOAL17.
+
 **Règle métier conservée :** la sélection privilégie la probabilité du modèle et peut retenir une EV négative. L'exclusion « hot streak » est désormais explicitement optionnelle (`07 --enable-hot-streak-exclude`) ; sa valeur prédictive n'est pas démontrée.
 
 Les artefacts historiques correspondant à Brier ≈ 0.205518, log-loss ≈ 0.599639 et AUC ≈ 0.678702 ne sont pas disponibles ici. Ces nombres restent une référence documentaire, pas des résultats reproduits.
