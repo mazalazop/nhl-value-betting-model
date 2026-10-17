@@ -943,6 +943,12 @@ def enrichir_contexte_v2(
     toi_min_retour = config.get("temps_glace_min_retour", 15.0)
     current_weight_default = config.get("historical_weight_current_season_default", 0.60)
     current_weight_return = config.get("historical_weight_current_season_return", 0.80)
+    # The absence proxy is the interval between observed player games, not a
+    # medically verified injury. Both stages must have finite lifetimes.
+    return_recent_games = int(config.get("return_recent_games", 3))
+    return_stabilized_until_games = int(config.get("return_stabilized_until_games", 8))
+    if not 1 <= return_recent_games < return_stabilized_until_games <= 20:
+        raise ValueError("Invalid finite return windows")
 
     df["date_match"] = pd.to_datetime(df["date_match"], errors="coerce")
 
@@ -1125,35 +1131,46 @@ def enrichir_contexte_v2(
     df["absence_longue_flag"] = (
         same_season_prev.fillna(False) & (df["jours_absence_pre_match"] >= seuil_absence_jours)
     ).astype(int)
-    df["retour_episode"] = df.groupby("id_joueur")["absence_longue_flag"].cumsum()
-    df["matchs_depuis_retour_avant_match"] = df.groupby(["id_joueur", "retour_episode"]).cumcount()
+    # Reset episodes each season: a return in 2023 must not keep a player
+    # classified as returning throughout 2024, 2025, and beyond.
+    df["retour_episode"] = df.groupby(["id_joueur", "season_source"])["absence_longue_flag"].cumsum()
+    episode_keys = ["id_joueur", "season_source", "retour_episode"]
+    df["matchs_depuis_retour_avant_match"] = df.groupby(episode_keys).cumcount()
 
     df["toi_pre_absence_ref"] = np.where(df["absence_longue_flag"] == 1, df["toi_moy_10"], np.nan)
     df["pp_pre_absence_ref"] = np.where(df["absence_longue_flag"] == 1, df["pp_moy_5"], np.nan)
-
-    df["toi_pre_absence_ref"] = df.groupby(["id_joueur", "retour_episode"])["toi_pre_absence_ref"].transform(
+    df["toi_pre_absence_ref"] = df.groupby(episode_keys)["toi_pre_absence_ref"].transform(
         lambda s: s.ffill()
     )
-    df["pp_pre_absence_ref"] = df.groupby(["id_joueur", "retour_episode"])["pp_pre_absence_ref"].transform(
+    df["pp_pre_absence_ref"] = df.groupby(episode_keys)["pp_pre_absence_ref"].transform(
         lambda s: s.ffill()
     )
-
-    df["toi_moy_retour_3_avant_match"] = df.groupby(["id_joueur", "retour_episode"])["temps_de_glace"].transform(
+    df["toi_moy_retour_3_avant_match"] = df.groupby(episode_keys)["temps_de_glace"].transform(
         lambda s: s.shift(1).rolling(3, min_periods=1).mean()
     )
-    df["pp_moy_retour_3_avant_match"] = df.groupby(["id_joueur", "retour_episode"])["temps_pp"].transform(
+    df["pp_moy_retour_3_avant_match"] = df.groupby(episode_keys)["temps_pp"].transform(
         lambda s: s.shift(1).rolling(3, min_periods=1).mean()
     )
+    df["ratio_toi_retour_vs_pre_absence"] = safe_ratio(
+        df["toi_moy_retour_3_avant_match"], df["toi_pre_absence_ref"]
+    )
+    df["ratio_pp_retour_vs_pre_absence"] = safe_ratio(
+        df["pp_moy_retour_3_avant_match"], df["pp_pre_absence_ref"]
+    )
 
-    df["ratio_toi_retour_vs_pre_absence"] = safe_ratio(df["toi_moy_retour_3_avant_match"], df["toi_pre_absence_ref"])
-    df["ratio_pp_retour_vs_pre_absence"] = safe_ratio(df["pp_moy_retour_3_avant_match"], df["pp_pre_absence_ref"])
-
-    df["return_from_absence_flag"] = (df["retour_episode"] > 0).astype(int)
+    has_recent_episode = df["retour_episode"].gt(0)
+    games_after = df["matchs_depuis_retour_avant_match"]
+    # First three games after the observed gap: acute return signal.
+    df["return_from_absence_flag"] = (
+        has_recent_episode & games_after.lt(return_recent_games)
+    ).astype(int)
+    # Later stabilization phase is allowed only within an explicit window.
     df["return_stabilized_flag"] = (
-        (df["retour_episode"] > 0)
-        & (df["matchs_depuis_retour_avant_match"] >= 3)
-        & (df["toi_moy_retour_3_avant_match"].fillna(0) >= toi_min_retour)
-        & (df["ratio_toi_retour_vs_pre_absence"].fillna(0) >= ratio_retour_toi_min)
+        has_recent_episode
+        & games_after.ge(return_recent_games)
+        & games_after.le(return_stabilized_until_games)
+        & df["toi_moy_retour_3_avant_match"].ge(toi_min_retour)
+        & df["ratio_toi_retour_vs_pre_absence"].ge(ratio_retour_toi_min)
     ).astype(int)
 
     # Pondération saison courante / saison précédente
