@@ -3,15 +3,16 @@ import pandas as pd
 import pytest
 from conftest import load_script
 from fixtures import games_fixture, standings_fixture
+from henachel.point_return_patch import repair_point_returns
 
 historical = load_script('01_build_base_features')
 future = load_script('05_predict_upcoming_games')
 
 
 def build(raw, standings=None):
-    return historical.enrichir_contexte_v2(
+    return repair_point_returns(historical.enrichir_contexte_v2(
         historical.creer_features_temporelles_v2(historical.build_base_canonique(raw)),
-        standings=standings)
+        standings=standings))
 
 
 def differences(index, with_standings):
