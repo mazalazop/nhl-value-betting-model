@@ -30,6 +30,8 @@ Ordre et commandes : [docs/RUN_ORDER.md](docs/RUN_ORDER.md). Contrats, limites e
 
 **Audit structurel BUT (recherche) :** lorsque GOAL Operational V1 est activé et s'exécute avec succès, le workflow génère `outputs/player_sustainability_goal_research.csv` via `scripts/audit_goal_sustainability.py`. Ce rapport compare le niveau de finition historique aux buts, tirs, TOI, PP et conversion récents ; il signale surchauffe, disette soutenue par les tirs et changements de volume. Il ne modifie ni le modèle GOAL (`research_only_operational`) ni ses probabilités, ni les picks POINT ni la publication. Voir [méthodologie](docs/SELECTION_STRUCTURELLE_SOUTENABILITE_V1.md) et [tests](tests/test_goal_sustainability_overlay.py).
 
+**Seuil de pari vérifié (17/10/2026) :** `07_build_daily_bets.py` applique un plancher **strict de 1,40 inclus**, sans dérogation pour les très hautes probabilités et sans retenir les cotes absentes ou invalides. Les classements probabilistes POINT/BUT ne sont pas filtrés par les cotes : un joueur sans marché peut rester un candidat d'analyse, mais pas un pari exécutable. Tests dans `tests/test_strict_min_odds.py`.
+
 **Règle métier conservée :** la sélection privilégie la probabilité du modèle et peut retenir une EV négative. L'exclusion « hot streak » est désormais explicitement optionnelle (`07 --enable-hot-streak-exclude`) ; sa valeur prédictive n'est pas démontrée.
 
 Les artefacts historiques correspondant à Brier ≈ 0.205518, log-loss ≈ 0.599639 et AUC ≈ 0.678702 ne sont pas disponibles ici. Ces nombres restent une référence documentaire, pas des résultats reproduits.
