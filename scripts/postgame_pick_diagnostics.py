@@ -72,7 +72,8 @@ def collect(day,input_csv,outdir,archive_id=""):
         for side in ["home","away"]:
             team=(g.get(side+"Team") or {}).get("abbrev")
             if team:team_to_game[str(team).upper()]=g
-    picks=list(csv.DictReader(open(input_csv,encoding="utf-8-sig",newline="")))
+    with open(input_csv,encoding="utf-8-sig",newline="") as source:
+        picks=list(csv.DictReader(source))
     cache={};out=[]
     for pick in picks:
         if pick["date"]!=day:continue
