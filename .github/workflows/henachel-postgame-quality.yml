@@ -12,7 +12,7 @@ on:
       - tests/test_postgame_quality.py
       - .github/workflows/henachel-postgame-quality.yml
   schedule:
-    - cron: "30 5 * * *"
+    - cron: "30 4 * * *"
     - cron: "0 9 * * *"
   workflow_dispatch:
 permissions:
