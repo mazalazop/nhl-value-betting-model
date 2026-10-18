@@ -1,0 +1,2 @@
+date,player,team,market,reported_event,report_origin,verification_status,official_market_result,official_boxscore,note
+2026-10-17,Tim Stutzle,OTT,GOAL,goal_disallowed_after_opponent_coach_challenge,USER_REPORT,NOT_CORROBORATED,LOSS,https://www.nhl.com/gamecenter/2026020128,"Official match ended with 0 goals and 1 assist. A purported disallowed goal is an unverified qualitative observation, not a credited official goal or extra xG; investigate game video before changing status."
