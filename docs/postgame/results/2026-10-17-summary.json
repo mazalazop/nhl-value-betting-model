@@ -7,29 +7,29 @@
     "CLASSEUR": {
       "POINT": {
         "original": 28,
-        "settled": 0,
-        "wins": 0,
-        "unresolved": 28
+        "settled": 27,
+        "wins": 11,
+        "unresolved": 1
       },
       "GOAL": {
         "original": 28,
-        "settled": 0,
-        "wins": 0,
-        "unresolved": 28
+        "settled": 25,
+        "wins": 8,
+        "unresolved": 3
       }
     },
     "EXTRA": {
       "POINT": {
         "original": 2,
-        "settled": 0,
-        "wins": 0,
-        "unresolved": 2
+        "settled": 2,
+        "wins": 2,
+        "unresolved": 0
       },
       "GOAL": {
         "original": 1,
-        "settled": 0,
+        "settled": 1,
         "wins": 0,
-        "unresolved": 1
+        "unresolved": 0
       }
     }
   },
