@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-17",
+  "source": "Official NHL API boxscore and play-by-play",
+  "teams": 28,
+  "picks": 59,
+  "stats": {
+    "CLASSEUR": {
+      "POINT": {
+        "original": 28,
+        "settled": 0,
+        "wins": 0,
+        "unresolved": 28
+      },
+      "GOAL": {
+        "original": 28,
+        "settled": 0,
+        "wins": 0,
+        "unresolved": 28
+      }
+    },
+    "EXTRA": {
+      "POINT": {
+        "original": 2,
+        "settled": 0,
+        "wins": 0,
+        "unresolved": 2
+      },
+      "GOAL": {
+        "original": 1,
+        "settled": 0,
+        "wins": 0,
+        "unresolved": 1
+      }
+    }
+  },
+  "limitations": [
+    "No official individual xG provided",
+    "Distance-based zones are uncalibrated proxies, not xG or dangerous shots",
+    "Disallowed goals require separately corroborated official video/event",
+    "Do not retrain or modify HENACHEL probabilities on a single slate"
+  ]
+}
