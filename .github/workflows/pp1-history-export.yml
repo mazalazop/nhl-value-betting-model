@@ -1,0 +1,27 @@
+name: PP1 matrix official 17 Oct supplemental source
+on:
+  push:
+    branches: [research/pp1-history-20261018]
+    paths:
+      - scripts/pp1_history_export_17.py
+      - .github/workflows/pp1-history-export.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - run: python scripts/pp1_history_export_17.py
+      - run: |
+          git config user.name henachel-research-bot
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/pp1_history/source/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: record all NHL scores 17 October 2026"
+            git push
+          fi
