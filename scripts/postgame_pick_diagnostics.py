@@ -79,6 +79,8 @@ def collect(day,input_csv,outdir):
         gid=g["id"];row["source"]=f"https://www.nhl.com/gamecenter/{gid}"
         if gid not in cache:
             box=fetch(f"{API}/gamecenter/{gid}/boxscore")
+            if len(cache)<2:
+                print("DEBUG_NHL_SHAPE="+json.dumps({"keys":list(box.keys()),"home":box.get("homeTeam"),"away":box.get("awayTeam"),"stats_keys":list((box.get("playerByGameStats") or {}).keys()),"stats_example":str(box.get("playerByGameStats"))[:600]},default=str),flush=True)
             try: pbp=fetch(f"{API}/gamecenter/{gid}/play-by-play")
             except Exception as exc:pbp={"plays":[],"source_error":str(exc)}
             cache[gid]=(box,pbp)
