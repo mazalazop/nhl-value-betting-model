@@ -38,8 +38,13 @@ def lookup_player(box,team,player):
         rows=sum((squad.get(k) or [] for k in ["forwards","defense","defensemen"]),[])
         exact=[x for x in rows if norm(nm(x))==norm(player)]
         if len(exact)==1:return exact[0],"EXACT"
-        # Abbreviated NHL display e.g. J. Eichel; only team-unique surname is allowed.
+        # NHL boxscores abbreviate first names. Disambiguate siblings and
+        # same-surname teammates with first initial + complete surname.
+        first=norm(player.split()[0])[:1]
         surname=norm(player.split()[-1])
+        initial_matches=[x for x in rows if norm(nm(x))==first+surname]
+        if len(initial_matches)==1:return initial_matches[0],"INITIAL_SURNAME"
+        # Team-unique surname is allowed only when unambiguous.
         loose=[x for x in rows if norm(nm(x)).endswith(surname)]
         if len(loose)==1:return loose[0],"TEAM_SURNAME"
         return None,"ABSENT_OR_NAME_MISMATCH"
