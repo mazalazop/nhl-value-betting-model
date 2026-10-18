@@ -1,0 +1,6 @@
+date,archive_group,market,number,settled,wins,unresolved,hit_rate,hit_rate_wilson95,mean_shots,mean_attempts,failed_with_activity,failed_with_low_activity,missing_shot_data,calibrated_n,brier,log_loss,priced_pregame_n,unit_stake_simulated_roi,sample_warning
+2026-10-17,CANONICAL,POINT,11,11,4,0,0.3636,"{""low"": 0.1517, ""high"": 0.6462}",2.182,5.0,2,5,0,11,0.325498,0.852456,11,-0.4509,EXPLORATORY_LOW_N
+2026-10-17,CLASSEUR,GOAL,28,27,8,1,0.2963,"{""low"": 0.1585, ""high"": 0.4848}",2.296,4.815,10,9,0,0,,,0,,EXPLORATORY_LOW_N
+2026-10-17,CLASSEUR,POINT,28,27,11,1,0.4074,"{""low"": 0.2451, ""high"": 0.5927}",1.889,4.481,7,9,0,0,,,0,,EXPLORATORY_LOW_N
+2026-10-17,EXTRA,GOAL,1,1,0,0,0.0,"{""low"": 0, ""high"": 0.7935}",1.0,3.0,0,1,0,0,,,0,,EXPLORATORY_LOW_N
+2026-10-17,EXTRA,POINT,2,2,2,0,1.0,"{""low"": 0.3424, ""high"": 1}",1.0,2.5,0,0,0,0,,,0,,EXPLORATORY_LOW_N
