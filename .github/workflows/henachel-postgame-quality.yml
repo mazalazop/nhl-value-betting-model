@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/henachel-postgame-history
-          gh run list -w 'Workflow global Henachel — POINTS' -L 20 --json databaseId,conclusion \
+          gh run list -w 'henachel-points-global' -L 20 --json databaseId,conclusion \
             | jq -r '.[] | select(.conclusion=="success") | .databaseId' \
             | while read -r run; do
                 if gh run download "$run" --pattern 'henachel-canonical-history-*' \
