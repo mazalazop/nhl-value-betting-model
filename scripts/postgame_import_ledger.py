@@ -73,11 +73,23 @@ def export(input_csv,outdir):
     for day,rows in groups.items():
         path=outdir/(day+"-canonical.csv")
         if path.exists():
-            with path.open(encoding="utf-8-sig",newline="") as f:old=list(csv.DictReader(f))
-            if old!=rows:raise RuntimeError(f"Refusing mutation of canonical frozen snapshot: {path}")
-            continue
-        with path.open("x",encoding="utf-8",newline="") as f:
-            w=csv.DictWriter(f,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
+            with path.open(encoding="utf-8-sig",newline="") as f:
+                old=list(csv.DictReader(f))
+            old_by_id={r["bet_id"]:r for r in old}
+            new_by_id={r["bet_id"]:r for r in rows}
+            for id_,existing in old_by_id.items():
+                if id_ in new_by_id and existing!=new_by_id[id_]:
+                    raise RuntimeError(f"Refusing alteration of frozen pregame bet {id_}: {path}")
+            additions=[r for r in rows if r["bet_id"] not in old_by_id]
+            if not additions:
+                continue
+            # A later legitimate intraday capture may append new bet IDs;
+            # never overwrite or delete an existing snapshot.
+            with path.open("a",encoding="utf-8",newline="") as f:
+                csv.DictWriter(f,fieldnames=list(rows[0])).writerows(additions)
+        else:
+            with path.open("x",encoding="utf-8",newline="") as f:
+                w=csv.DictWriter(f,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
     result={"input_rows":len(records),"dates":{date:len(x) for date,x in sorted(groups.items())},
             "exclusions":excluded,"archival_rule":"pregame UTC timestamp strictly earlier than puckdrop; original price frozen"}
     print("CANONICAL_IMPORT="+json.dumps(result,separators=(",",":")))
