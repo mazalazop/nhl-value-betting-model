@@ -34,7 +34,7 @@ def lookup_player(box,team,player):
         meta=box.get(side+"Team") or {}
         abbr=str(meta.get("abbrev") or meta.get("triCode") or "").upper()
         if abbr!=team.upper():continue
-        squad=box.get("playerByGameStats",{}).get(side) or {}
+        squad=box.get("playerByGameStats",{}).get(side+"Team") or {}
         rows=sum((squad.get(k) or [] for k in ["forwards","defense","defensemen"]),[])
         exact=[x for x in rows if norm(nm(x))==norm(player)]
         if len(exact)==1:return exact[0],"EXACT"
@@ -79,8 +79,6 @@ def collect(day,input_csv,outdir):
         gid=g["id"];row["source"]=f"https://www.nhl.com/gamecenter/{gid}"
         if gid not in cache:
             box=fetch(f"{API}/gamecenter/{gid}/boxscore")
-            if len(cache)<2:
-                print("DEBUG_NHL_SHAPE="+json.dumps({"keys":list(box.keys()),"home":box.get("homeTeam"),"away":box.get("awayTeam"),"stats_keys":list((box.get("playerByGameStats") or {}).keys()),"stats_example":str(box.get("playerByGameStats"))[:600]},default=str),flush=True)
             try: pbp=fetch(f"{API}/gamecenter/{gid}/play-by-play")
             except Exception as exc:pbp={"plays":[],"source_error":str(exc)}
             cache[gid]=(box,pbp)
@@ -94,7 +92,7 @@ def collect(day,input_csv,outdir):
         points=int(player.get("points") if player.get("points") is not None else goals+assists)
         row["goals"]=goals;row["assists"]=assists;row["points"]=points
         row["official_win"]=int(goals>=1 if row["market"]=="GOAL" else points>=1)
-        row["shots"]=int(player.get("shots") or 0)
+        row["shots"]=int(player.get("sog") if player.get("sog") is not None else (player.get("shots") or 0))
         row["toi_min"]=minute(player.get("toi") or player.get("timeOnIce"))
         row["pp_toi_min"]=minute(player.get("powerPlayToi") or player.get("ppTimeOnIce") or player.get("powerPlayTimeOnIce"))
         ev=extract_attempts(pbp,player.get("playerId"))
