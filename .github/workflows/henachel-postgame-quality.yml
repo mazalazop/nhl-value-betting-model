@@ -1,0 +1,40 @@
+name: HENACHEL postgame quality audit (research)
+on:
+  push:
+    branches:
+      - research/postgame-quality-20261018
+    paths:
+      - scripts/postgame_pick_diagnostics.py
+      - docs/postgame/input/**
+      - .github/workflows/henachel-postgame-quality.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  quality-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official NHL boxscores and record all archived picks
+        run: |
+          python scripts/postgame_pick_diagnostics.py \
+            --date 2026-10-17 \
+            --picks docs/postgame/input/2026-10-17.csv \
+            --output-dir docs/postgame/results
+      - name: Save auditable outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-postgame-quality-2026-10-17
+          path: docs/postgame/results/
+          if-no-files-found: warn
+      - name: Commit research observations for reproducibility
+        if: success()
+        run: |
+          git config user.name 'henachel-research-bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/postgame/results
+          if ! git diff --cached --quiet; then
+            git commit -m 'research: archive verified NHL boxscore and shooting diagnostics 2026-10-17'
+            git push
+          fi
