@@ -61,7 +61,9 @@ def extract_attempts(pbp,pid):
         dist=round(math.hypot(89-abs(x),y),1) if isinstance(x,(int,float)) and isinstance(y,(int,float)) else None
         r.append({"type":typ,"dist_ft_proxy":dist,"period":(play.get("periodDescriptor") or {}).get("number")})
     return r
-def collect(day,input_csv,outdir):
+def collect(day,input_csv,outdir,archive_id=""):
+    if archive_id and (not archive_id.replace("_","").isalnum() or len(archive_id)>35):
+        raise ValueError("Invalid archive ID")
     slate=fetch(f"{API}/score/{day}")
     games=[g for g in slate.get("games",[]) if str(g.get("gameDate"))==day]
     if not games: raise ValueError("No official NHL slate available: "+day)
@@ -75,6 +77,7 @@ def collect(day,input_csv,outdir):
     for pick in picks:
         if pick["date"]!=day:continue
         row=dict(pick)
+        row.setdefault("archive_provenance","RETROSPECTIVE_RECONSTRUCTION")
         row.update(status="UNRESOLVED",official_win="",goals="",assists="",points="",shots="",toi_min="",pp_toi_min="",
                    missed_attempts="",blocked_attempts="",attempts_pbp="",close_20ft_proxy="",close_40ft_proxy="",
                    xg_individual="NOT_AVAILABLE",disallowed_goal="NOT_VERIFIED",evidence="",source="")
@@ -82,6 +85,13 @@ def collect(day,input_csv,outdir):
         if not g:
             row["status"]="TEAM_NOT_IN_SLATE";out.append(row);continue
         gid=g["id"];row["source"]=f"https://www.nhl.com/gamecenter/{gid}"
+        row["id_match_official"]=str(gid)
+        # A player appearing in an unfinished boxscore has NOT lost their bet.
+        if str(g.get("gameState") or "").upper() not in {"OFF","FINAL"}:
+            row["status"]="GAME_NOT_FINAL";out.append(row);continue
+        supplied_game_id=str(row.get("id_match") or "").strip()
+        if supplied_game_id and supplied_game_id!=str(gid):
+            row["status"]="GAME_ID_MISMATCH";out.append(row);continue
         if gid not in cache:
             box=fetch(f"{API}/gamecenter/{gid}/boxscore")
             try: pbp=fetch(f"{API}/gamecenter/{gid}/play-by-play")
@@ -91,8 +101,19 @@ def collect(day,input_csv,outdir):
         player,method=lookup_player(box,row["team"],row["player"])
         if player is None:
             row["status"]=method;out.append(row);continue
+        if any(player.get(k) is None for k in ("goals","assists")):
+            row["status"]="MISSING_OFFICIAL_OUTCOME";out.append(row);continue
+        supplied_id=str(row.get("id_joueur") or "").strip()
+        if supplied_id and supplied_id!=str(player.get("playerId")):
+            row["status"]="PLAYER_ID_MISMATCH";out.append(row);continue
+        row["matched_player_id"]=str(player.get("playerId"))
+        row["matching_method"]=method
         row["status"]="SETTLED"
         row["matched_name"]=nm(player)
+        row["observed_scorer_team"]=row["team"]
+        # This is only an uncalibrated geographical proxy.
+        # Blocked shots may be recorded at the blocker location.
+        row["geometric_zone_is_xg"]=False
         goals=int(player.get("goals") or 0);assists=int(player.get("assists") or 0)
         points=int(player.get("points") if player.get("points") is not None else goals+assists)
         row["goals"]=goals;row["assists"]=assists;row["points"]=points
@@ -111,7 +132,8 @@ def collect(day,input_csv,outdir):
     if not out:raise ValueError("No archived picks for target day")
     outdir.mkdir(parents=True,exist_ok=True)
     fields=list(dict.fromkeys(k for row in out for k in row))
-    with (outdir/(day+"-picks.csv")).open("w",newline="",encoding="utf-8") as f:
+    filename=day+(("-"+archive_id) if archive_id else "")+"-picks.csv"
+    with (outdir/filename).open("w",newline="",encoding="utf-8") as f:
         writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader();writer.writerows(out)
     overview={}
     for group in ["CLASSEUR","EXTRA"]:
@@ -125,13 +147,16 @@ def collect(day,input_csv,outdir):
              "Distance-based zones are uncalibrated proxies, not xG or dangerous shots",
              "Disallowed goals require separately corroborated official video/event",
              "Do not retrain or modify HENACHEL probabilities on a single slate"]}
-    (outdir/(day+"-summary.json")).write_text(json.dumps(summary,indent=2),encoding="utf-8")
+    summary["archive_id"]=archive_id or "manual"
+    summary["archive_provenance"]="mixed—see row-level archive_provenance"
+    (outdir/(day+(("-"+archive_id) if archive_id else "")+"-summary.json")).write_text(json.dumps(summary,indent=2),encoding="utf-8")
     print("AUDIT_SUMMARY="+json.dumps(summary,separators=(",",":")),flush=True)
     for x in out:
         print("AUDIT_ROW="+json.dumps({k:x.get(k) for k in ["market","player","team","archive_group","status","goals","assists","points","shots","toi_min","pp_toi_min","attempts_pbp","close_20ft_proxy","official_win"]},separators=(",",":")),flush=True)
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--date",required=True);p.add_argument("--picks",required=True);p.add_argument("--output-dir",required=True)
+    p.add_argument("--archive-id",default="",help="Append source ID (e.g. canonical), avoiding collisions")
     a=p.parse_args();datetime.date.fromisoformat(a.date)
-    collect(a.date,a.picks,pathlib.Path(a.output_dir))
+    collect(a.date,a.picks,pathlib.Path(a.output_dir),a.archive_id)
 if __name__=="__main__":main()
