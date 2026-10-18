@@ -41,7 +41,8 @@ def test_official_point_and_goal_no_fictional_challenge(tmp_path,monkeypatch):
         raise AssertionError(url)
     monkeypatch.setattr(diagnostics,"fetch",fake)
     diagnostics.collect("2026-10-17",inp,tmp_path/"out")
-    saved=list(csv.DictReader((tmp_path/"out/2026-10-17-picks.csv").open()))
+    with (tmp_path/"out/2026-10-17-picks.csv").open() as f:
+        saved=list(csv.DictReader(f))
     assert [x["status"] for x in saved]==["SETTLED","SETTLED"]
     assert [x["official_win"] for x in saved]==["0","1"]
     assert saved[0]["shots"]=="1"
@@ -61,7 +62,8 @@ def test_do_not_settle_an_unfinished_game(tmp_path,monkeypatch):
                       "homeTeam":{"abbrev":"PHI"},"awayTeam":{"abbrev":"OTT"}}]}
       if url.endswith("/score/2026-10-17") else (_ for _ in ()).throw(AssertionError("premature boxscore")))
     diagnostics.collect("2026-10-17",path,tmp_path/"out")
-    r=list(csv.DictReader((tmp_path/"out/2026-10-17-picks.csv").open()))[0]
+    with (tmp_path/"out/2026-10-17-picks.csv").open() as f:
+        r=list(csv.DictReader(f))[0]
     assert r["status"]=="GAME_NOT_FINAL"
     assert r["official_win"]==""
 
