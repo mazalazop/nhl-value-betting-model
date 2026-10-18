@@ -38,5 +38,7 @@
     "Distance-based zones are uncalibrated proxies, not xG or dangerous shots",
     "Disallowed goals require separately corroborated official video/event",
     "Do not retrain or modify HENACHEL probabilities on a single slate"
-  ]
+  ],
+  "archive_id": "manual",
+  "archive_provenance": "mixed\u2014see row-level archive_provenance"
 }
