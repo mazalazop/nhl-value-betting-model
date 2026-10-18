@@ -21,7 +21,7 @@ def number(x):
 def load(paths):
     result=[];seen=set()
     for path in sorted(paths):
-        date=path.name.split("-picks.csv")[0]
+        date=path.name[:10]
         d=datetime.date.fromisoformat(date)
         if d<START: continue
         with path.open(encoding="utf-8-sig",newline="") as f:
@@ -33,7 +33,9 @@ def load(paths):
             market=str(r["market"]).strip().upper()
             if market not in {"POINT","GOAL"}:raise ValueError(f"Unknown market {market}")
             group=r["archive_group"].strip().upper()
-            key=(date,group,market,r["player"].casefold().strip(),r["team"].upper().strip())
+            bet_id=(r.get("bet_id") or "").strip()
+            identity=bet_id if bet_id else (r["player"].casefold().strip(),r["team"].upper().strip())
+            key=(date,group,market,identity)
             if key in seen:raise ValueError(f"Duplicate prediction identity {key}")
             seen.add(key)
             if r["status"]=="SETTLED" and r["official_win"] not in {"0","1"}:
@@ -60,6 +62,18 @@ def metrics(rows):
                       if number(x.get("shots")) is not None and number(x.get("attempts_pbp")) is not None)
     vshots=[x for x in shots if x is not None]
     vats=[x for x in attempts if x is not None]
+    calibrated=[(int(x["official_win"]),number(x.get("model_probability"))) for x in settled
+                if x.get("archive_provenance")=="PREGAME_CANONICAL_LEDGER"
+                and number(x.get("model_probability")) is not None
+                and 0<=number(x.get("model_probability"))<=1]
+    brier=round(sum((y-p)**2 for y,p in calibrated)/len(calibrated),6) if calibrated else None
+    ll=round(-sum(y*math.log(max(1e-6,min(1-1e-6,p)))+
+                  (1-y)*math.log(max(1e-6,1-min(1-1e-6,p))) for y,p in calibrated)/len(calibrated),6) if calibrated else None
+    priced=[(int(x["official_win"]),number(x.get("odds")),x.get("captured_at"),
+             x.get("start_time_utc")) for x in settled
+            if x.get("archive_provenance")=="PREGAME_CANONICAL_LEDGER"]
+    priced=[(win,odds) for win,odds,cap,start in priced if odds is not None and odds>=1.40 and cap and start]
+    unit_roi=round(sum(win*odd-1 for win,odd in priced)/len(priced),4) if priced else None
     return dict(number=len(rows),settled=len(settled),wins=wins,
                 unresolved=len(rows)-len(settled),
                 hit_rate=round(wins/len(settled),4) if settled else None,
@@ -69,6 +83,8 @@ def metrics(rows):
                 failed_with_activity=with_activity,
                 failed_with_low_activity=low_activity,
                 missing_shot_data=len(settled)-len(vshots),
+                calibrated_n=len(calibrated),brier=brier,log_loss=ll,
+                priced_pregame_n=len(priced),unit_stake_simulated_roi=unit_roi,
                 sample_warning="EXPLORATORY_LOW_N" if len(settled)<100 else "")
 def grouping(rows,parts):
     groups=defaultdict(list)
@@ -99,16 +115,16 @@ def report(rows):
              "notes":["Group CLASSEUR and EXTRA never combined for a headline win rate.",
                       "Missing or absent skaters never classified as losers.",
                       "Attempt counts and approximate <=20/40ft distances are NOT xG.",
-                      "No ROI calculated without independently verifiable pregame odds and stakes.",
+                      "Only CANONICAL records with independently archived pregame timestamps are eligible for log-loss, Brier and simulated unit-stake ROI.",
                       "This is postgame descriptive learning, not an out-of-sample model change.",
                       "Game-day selections transcribed after play cannot substantiate pregame provenance."],
              "windows":{}}
     for period,data in datasets.items():
         summary["windows"][period]={g:{market:metrics([r for r in data if r["archive_group"]==g and r["market"]==market])
-                                     for market in ["POINT","GOAL"]} for g in ["CLASSEUR","EXTRA"]}
+                                     for market in ["POINT","GOAL"]} for g in ["CLASSEUR","EXTRA","CANONICAL"]}
     return summary,grouping(rows,["date","archive_group","market"]),grouping(rows,["archive_group","market","signal"])
 def build(resultdir,outdir):
-    rows=load(resultdir.glob("????-??-??-picks.csv"))
+    rows=load(resultdir.glob("????-??-??*-picks.csv"))
     summary,daily,signals=report(rows)
     outdir.mkdir(parents=True,exist_ok=True)
     write_csv(outdir/"daily_metrics.csv",daily)
