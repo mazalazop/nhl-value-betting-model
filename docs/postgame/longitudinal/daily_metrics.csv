@@ -4,3 +4,4 @@ date,archive_group,market,number,settled,wins,unresolved,hit_rate,hit_rate_wilso
 2026-10-17,CLASSEUR,POINT,28,27,11,1,0.4074,"{""low"": 0.2451, ""high"": 0.5927}",1.889,4.481,7,9,0,0,,,0,,EXPLORATORY_LOW_N
 2026-10-17,EXTRA,GOAL,1,1,0,0,0.0,"{""low"": 0, ""high"": 0.7935}",1.0,3.0,0,1,0,0,,,0,,EXPLORATORY_LOW_N
 2026-10-17,EXTRA,POINT,2,2,2,0,1.0,"{""low"": 0.3424, ""high"": 1}",1.0,2.5,0,0,0,0,,,0,,EXPLORATORY_LOW_N
+2026-10-18,CANONICAL,POINT,10,9,3,1,0.3333,"{""low"": 0.1206, ""high"": 0.6458}",2.0,4.333,3,3,0,9,0.27401,0.741887,9,-0.4456,EXPLORATORY_LOW_N

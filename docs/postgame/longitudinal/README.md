@@ -1,12 +1,12 @@
 # HENACHEL – apprentissage longitudinal post-match
 
-Dates couvertes : 1 (jusqu'au 2026-10-17).
+Dates couvertes : 2 (jusqu'au 2026-10-18).
 
 Les observations avec moins de 100 matchs sont exploratoires. Il n'y a pas de coefficient modifié.
 
 ## Dernière journée
-- POINT: 11/27 (non résolus : 1); tentatives moyennes : 4.481
-- GOAL: 8/27 (non résolus : 1); tentatives moyennes : 4.815
+- POINT: 0/0 (non résolus : 0); tentatives moyennes : None
+- GOAL: 0/0 (non résolus : 0); tentatives moyennes : None
 
 ## Points à préserver
 
