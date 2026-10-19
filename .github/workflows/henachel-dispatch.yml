@@ -16,7 +16,7 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Discover and trigger existing prediction workflows
+      - name: Trigger prediction workflow with POINT and experimental GOAL
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -25,24 +25,24 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import json, os, subprocess, sys
-          repo=os.environ["GH_REPO"]
-          data=json.loads(subprocess.check_output(["gh","api",f"repos/{repo}/actions/workflows","--paginate"],text=True))
-          workflows=data.get("workflows",[]) if isinstance(data,dict) else sum((p.get("workflows",[]) for p in data),[])
-          print("Workflows found:",[(w["name"],w["path"],w["state"]) for w in workflows])
-          candidates=[]
-          for w in workflows:
-              label=(w["name"]+" "+w["path"]).lower()
-              if "henachel-dispatch.yml" in label or w["state"]!="active": continue
-              if any(term in label for term in ("henachel","point","goal","but","predict","daily")):
-                  candidates.append(w)
-          if not candidates:
-              sys.exit("No suitable active workflow discovered. No false success.")
-          failures=[]
-          for w in candidates:
-              try:
-                  subprocess.run(["gh","api","-X","POST",f"repos/{repo}/actions/workflows/{w['id']}/dispatches","-f","ref=main"],check=True)
-                  print("Dispatched:",w["name"],w["id"])
-              except subprocess.CalledProcessError:
-                  failures.append(w["name"])
-          if failures: sys.exit("Dispatch failed: "+", ".join(failures))
+          repo = os.environ["GH_REPO"]
+          data = json.loads(subprocess.check_output(
+              ["gh", "api", f"repos/{repo}/actions/workflows", "--paginate"],
+              text=True))
+          workflows = data.get("workflows", []) if isinstance(data, dict) else [
+              w for page in data for w in page.get("workflows", [])]
+          target = ".github/workflows/Workflow global Henachel — POINTS.yml"
+          matches = [w for w in workflows if w["path"] == target and w["state"] == "active"]
+          if len(matches) != 1:
+              sys.exit("Expected exactly one active prediction workflow; no dispatch performed.")
+          payload = {"ref": "main", "inputs": {
+              "goal_research_enabled": True,
+              "publish_to_sheet": False,
+              "context_only": False}}
+          subprocess.run(
+              ["gh", "api", "-X", "POST",
+               f"repos/{repo}/actions/workflows/{matches[0]['id']}/dispatches",
+               "--input", "-"],
+              input=json.dumps(payload), text=True, check=True)
+          print("Dispatched POINT + experimental GOAL:", matches[0]["id"])
           PY
