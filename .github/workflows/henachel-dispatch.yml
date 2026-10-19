@@ -1,0 +1,48 @@
+name: Henachel dispatch POINT and GOAL
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/henachel-dispatch.yml
+  schedule:
+    - cron: '30 10 * * *'
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: henachel-dispatch
+  cancel-in-progress: false
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discover and trigger existing prediction workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          repo=os.environ["GH_REPO"]
+          data=json.loads(subprocess.check_output(["gh","api",f"repos/{repo}/actions/workflows","--paginate"],text=True))
+          workflows=data.get("workflows",[]) if isinstance(data,dict) else sum((p.get("workflows",[]) for p in data),[])
+          print("Workflows found:",[(w["name"],w["path"],w["state"]) for w in workflows])
+          candidates=[]
+          for w in workflows:
+              label=(w["name"]+" "+w["path"]).lower()
+              if "henachel-dispatch.yml" in label or w["state"]!="active": continue
+              if any(term in label for term in ("henachel","point","goal","but","predict","daily")):
+                  candidates.append(w)
+          if not candidates:
+              sys.exit("No suitable active workflow discovered. No false success.")
+          failures=[]
+          for w in candidates:
+              try:
+                  subprocess.run(["gh","api","-X","POST",f"repos/{repo}/actions/workflows/{w['id']}/dispatches","-f","ref=main"],check=True)
+                  print("Dispatched:",w["name"],w["id"])
+              except subprocess.CalledProcessError:
+                  failures.append(w["name"])
+          if failures: sys.exit("Dispatch failed: "+", ".join(failures))
+          PY
