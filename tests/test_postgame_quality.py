@@ -147,3 +147,31 @@ def test_unavailable_pbp_and_shots_remain_unknown(tmp_path,monkeypatch,toi):
     assert row['settlement_status']=='LOSS'
     assert row['shots']==row['attempts_pbp']==row['missed_attempts']==''
     assert row['matching_method']=='NHL_ID' and row['postgame_captured_at_utc']
+
+def test_conflicting_duplicate_bet_cannot_be_silently_dropped():
+    x=dict(date_match='2026-10-17',market='player_points',stat='points',threshold='1',
+        recommended_flag='1',captured_at='2026-10-17T12:00Z',start_time_utc='2026-10-17T20:00Z',
+        odds_decimal='1.5',model_probability='.5',bet_id='x',id_match='1',id_joueur='2',
+        player_name='A',team='OTT',bookmaker='B')
+    with pytest.raises(ValueError,match='Conflicting'):ledger.extract([x,dict(x,model_probability='.6')])
+    assert ledger.extract([x,x])[1]['duplicate_bet_id']==1
+
+def test_collector_preserves_previous_results_and_partial_pbp(tmp_path,monkeypatch):
+    path=tmp_path/'input.csv';out=tmp_path/'out';out.mkdir()
+    csvfile(path,[dict(date='2026-10-17',market='GOAL',player='A',team='OTT',id_joueur='42',archive_group='CANONICAL')])
+    original=b'previous archive bytes\n';(out/'2026-10-17-picks.csv').write_bytes(original)
+    box={'id':1,'gameState':'OFF','homeTeam':{'abbrev':'OTT'},'playerByGameStats':{'homeTeam':{'forwards':[
+        dict(playerId=42,name={'default':'A'},goals=0,assists=0,sog=3,toi='15:00')]}}}
+    def fake(url):
+        if '/score/' in url:return {'games':[dict(id=1,gameDate='2026-10-17',gameState='OFF',homeTeam={'abbrev':'OTT'})]}
+        if url.endswith('boxscore'):return box
+        return {'plays':[{'typeDescKey':'shot-on-goal','details':{'shootingPlayerId':42}}]}
+    monkeypatch.setattr(diagnostics,'fetch',fake)
+    diagnostics.collect('2026-10-17',path,out)
+    assert any(p.read_bytes()==original for p in (out/'revisions').glob('*-picks.csv'))
+    with (out/'2026-10-17-picks.csv').open() as f:row=list(csv.DictReader(f))[0]
+    assert row['official_win']=='0' and row['attempts_pbp']=='' and row['pbp_error']=='SHOT_COUNT_MISMATCH'
+    box['playerByGameStats']['homeTeam']['forwards'][0]['sog']=1
+    diagnostics.collect('2026-10-17',path,out)
+    with (out/'2026-10-17-picks.csv').open() as f:row=list(csv.DictReader(f))[0]
+    assert row['attempts_pbp']=='1' and row['close_20ft_proxy']==''
