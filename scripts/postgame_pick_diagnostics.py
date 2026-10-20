@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Postgame diagnostic of archived HENACHEL picks. Research only, not a model update."""
-import argparse,csv,datetime,json,math,pathlib,re,time,unicodedata
+import argparse,csv,datetime,hashlib,json,math,pathlib,re,time,unicodedata
 from collections import Counter
 from urllib.request import Request,urlopen
 
@@ -49,9 +49,7 @@ def lookup_player(box,team,player,player_id=None):
         surname=norm(player.split()[-1])
         initial_matches=[x for x in rows if norm(nm(x))==first+surname]
         if len(initial_matches)==1:return initial_matches[0],"INITIAL_SURNAME"
-        # Team-unique surname is allowed only when unambiguous.
-        loose=[x for x in rows if norm(nm(x)).endswith(surname)]
-        if len(loose)==1:return loose[0],"TEAM_SURNAME"
+        # Never substitute a different first name or a suffix-matching surname.
         return None,"ABSENT_OR_NAME_MISMATCH"
     return None,"TEAM_NOT_IN_BOXSCORE"
 def extract_attempts(pbp,pid):
@@ -109,6 +107,8 @@ def collect(day,input_csv,outdir,archive_id=""):
             except Exception as exc:pbp={"plays":[],"source_error":str(exc)}
             cache[gid]=(box,pbp)
         box,pbp=cache[gid]
+        if (box.get("id") is not None and str(box["id"])!=str(gid)) or (box.get("gameState") is not None and box["gameState"] not in {"OFF","FINAL"}):
+            row["status"]="BOXSCORE_ID_OR_STATE_MISMATCH";out.append(row);continue
         player,method=lookup_player(box,row["team"],row["player"],str(row.get("id_joueur") or "").strip())
         if player is None:
             row["status"]=method;out.append(row);continue
@@ -133,7 +133,7 @@ def collect(day,input_csv,outdir,archive_id=""):
         row["goals"]=goals;row["assists"]=assists;row["points"]=points
         row["official_win"]=int(goals>=1 if row["market"]=="GOAL" else points>=1)
         row["settlement_status"]="WIN" if row["official_win"] else "LOSS"
-        shots=player.get("sog",player.get("shots"))
+        shots=player.get("sog") if player.get("sog") is not None else player.get("shots")
         row["shots"]=int(shots) if shots is not None else ""
         row["toi_min"]=minute(player.get("toi") or player.get("timeOnIce"))
         row["pp_toi_min"]=minute(player.get("powerPlayToi") or player.get("ppTimeOnIce") or player.get("powerPlayTimeOnIce"))
@@ -143,17 +143,30 @@ def collect(day,input_csv,outdir,archive_id=""):
             row["pbp_error"]=pbp.get("source_error") or "EMPTY_OR_MISSING_PLAYS"
             out.append(row);continue
         ev=extract_attempts(pbp,player.get("playerId"))
+        if row["shots"]!="" and sum(e["type"] in {"shot-on-goal","goal"} for e in ev)!=row["shots"]:
+            row["pbp_error"]="SHOT_COUNT_MISMATCH";out.append(row);continue
         row["attempts_pbp"]=len(ev)
         row["missed_attempts"]=sum(e["type"]=="missed-shot" for e in ev)
         row["blocked_attempts"]=sum(e["type"]=="blocked-shot" for e in ev)
-        row["close_20ft_proxy"]=sum(e["dist_ft_proxy"] is not None and e["dist_ft_proxy"]<=20 for e in ev)
-        row["close_40ft_proxy"]=sum(e["dist_ft_proxy"] is not None and e["dist_ft_proxy"]<=40 for e in ev)
+        row["close_20ft_proxy"]=sum(e["dist_ft_proxy"]<=20 for e in ev) if all(e["dist_ft_proxy"] is not None for e in ev) else ""
+        row["close_40ft_proxy"]=sum(e["dist_ft_proxy"]<=40 for e in ev) if all(e["dist_ft_proxy"] is not None for e in ev) else ""
         row["evidence"]=json.dumps(ev,separators=(",",":"))
         out.append(row)
     if not out:raise ValueError("No archived picks for target day")
     outdir.mkdir(parents=True,exist_ok=True)
-    fields=list(dict.fromkeys(k for row in out for k in row))
     filename=day+(("-"+archive_id) if archive_id else "")+"-picks.csv"
+    # Keep every previous materialized result and raw source response by content hash.
+    # Longitudinal glob is non-recursive: these snapshots never count twice.
+    revisions=outdir/"revisions";revisions.mkdir(exist_ok=True)
+    for existing in (outdir/filename,outdir/filename.replace("-picks.csv","-summary.json")):
+        if existing.exists():
+            payload=existing.read_bytes();backup=revisions/(hashlib.sha256(payload).hexdigest()+"-"+existing.name)
+            if not backup.exists():backup.write_bytes(payload)
+    raw=json.dumps(dict(slate=slate,game_responses=cache),sort_keys=True).encode()
+    rawpath=revisions/(hashlib.sha256(raw).hexdigest()+"-sources.json")
+    if not rawpath.exists():rawpath.write_bytes(raw)
+    for row in out:row["source_snapshot_sha256"]=hashlib.sha256(raw).hexdigest()
+    fields=list(dict.fromkeys(k for row in out for k in row))
     with (outdir/filename).open("w",newline="",encoding="utf-8") as f:
         writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader();writer.writerows(out)
     overview={}

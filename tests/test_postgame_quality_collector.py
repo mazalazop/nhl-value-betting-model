@@ -54,3 +54,8 @@ def test_shootout_attempts_are_not_goal_market_events():
     pbp={"plays":[{"typeDescKey":"goal","periodDescriptor":{"periodType":"SO"},
                    "details":{"scoringPlayerId":42}}]}
     assert m.extract_attempts(pbp,42)==[]
+
+def test_same_surname_different_initial_is_not_a_match():
+    box={'homeTeam':{'abbrev':'TST'},'playerByGameStats':{'homeTeam':{'forwards':[
+        {'playerId':1,'name':{'default':'B. Smith'}}]}}}
+    assert m.lookup_player(box,'TST','Adam Smith')[0] is None
