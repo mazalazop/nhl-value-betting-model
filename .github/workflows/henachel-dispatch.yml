@@ -1,12 +1,9 @@
 name: Henachel dispatch POINT and GOAL
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/henachel-dispatch.yml
   schedule:
-    - cron: '30 10 * * *'
-    - cron: '30 11 * * *'
+    - cron: '30 12 * * *'
+      timezone: 'Europe/Paris'
 permissions:
   actions: write
   contents: read
@@ -24,7 +21,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Explicit execution request 2026-10-20; push starts dispatcher.
           python3 - <<'PY'
           import json, os, subprocess, sys
           repo = os.environ["GH_REPO"]
