@@ -112,6 +112,9 @@ def collect(day,input_csv,outdir,archive_id=""):
         player,method=lookup_player(box,row["team"],row["player"],str(row.get("id_joueur") or "").strip())
         if player is None:
             row["status"]=method;out.append(row);continue
+        observed_toi=minute(player.get("toi") or player.get("timeOnIce"))
+        if observed_toi is not None and observed_toi<=0:
+            row["status"]="NO_ICE_TIME";out.append(row);continue
         if any(player.get(k) is None for k in ("goals","assists")):
             row["status"]="MISSING_OFFICIAL_OUTCOME";out.append(row);continue
         supplied_id=str(row.get("id_joueur") or "").strip()
