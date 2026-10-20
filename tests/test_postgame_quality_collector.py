@@ -43,3 +43,14 @@ def test_geometric_proxy_is_explicitly_not_expected_goals():
     assert len(attempts)==2
     assert attempts[0]["dist_ft_proxy"]<=20
     assert attempts[1]["dist_ft_proxy"]>40
+
+def test_id_wins_over_name_and_never_falls_back_to_another_player():
+    box={"homeTeam":{"abbrev":"OTT"},"playerByGameStats":{"homeTeam":{"forwards":[
+        {"playerId":42,"name":{"default":"Different spelling"}}]}}}
+    assert m.lookup_player(box,"OTT","Old name","42")[1]=="NHL_ID"
+    assert m.lookup_player(box,"OTT","Different spelling","43")[0] is None
+
+def test_shootout_attempts_are_not_goal_market_events():
+    pbp={"plays":[{"typeDescKey":"goal","periodDescriptor":{"periodType":"SO"},
+                   "details":{"scoringPlayerId":42}}]}
+    assert m.extract_attempts(pbp,42)==[]

@@ -118,3 +118,27 @@ def test_longitudinal_canonical_evaluation_and_duplicate_guard(tmp_path):
     csvfile(d/"2026-10-17-duplicate-picks.csv",rows)
     with pytest.raises(ValueError,match="Duplicate"):
         longitudinal.load(d.glob("*-picks.csv"))
+
+@pytest.mark.parametrize("group,cap",[("EXTRA","2026-10-17T14:00Z"),("CANONICAL","2026-10-17T20:00Z"),("CANONICAL","2026-10-17T14:00")])
+def test_provenance_string_alone_does_not_authorize_metrics(group,cap):
+    row=dict(archive_group=group,archive_provenance="PREGAME_CANONICAL_LEDGER",
+             status="SETTLED",official_win="1",model_probability=".6",odds="2",
+             captured_at=cap,start_time_utc="2026-10-17T19:00Z")
+    stats=longitudinal.metrics([row])
+    assert stats['calibrated_n']==stats['priced_pregame_n']==0
+
+def test_unavailable_pbp_and_shots_remain_unknown(tmp_path,monkeypatch):
+    path=tmp_path/'input.csv'
+    csvfile(path,[dict(date='2026-10-17',market='GOAL',player='Name',team='OTT',
+                       id_joueur='42',archive_group='CANONICAL')])
+    def fake(url):
+        if '/score/' in url:return {'games':[dict(id=1,gameDate='2026-10-17',gameState='OFF',homeTeam={'abbrev':'OTT'})]}
+        if url.endswith('boxscore'):return {'homeTeam':{'abbrev':'OTT'},'playerByGameStats':{'homeTeam':{'forwards':[
+            dict(playerId=42,name={'default':'Other spelling'},goals=0,assists=1)]}}}
+        raise RuntimeError('unavailable')
+    monkeypatch.setattr(diagnostics,'fetch',fake)
+    diagnostics.collect('2026-10-17',path,tmp_path/'out')
+    row=list(csv.DictReader((tmp_path/'out/2026-10-17-picks.csv').open()))[0]
+    assert row['settlement_status']=='LOSS'
+    assert row['shots']==row['attempts_pbp']==row['missed_attempts']==''
+    assert row['matching_method']=='NHL_ID' and row['postgame_captured_at_utc']

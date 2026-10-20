@@ -48,6 +48,15 @@ def wilson(w,n,z=1.96):
     delta=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/den
     center=(p+z*z/(2*n))/den
     return {"low":round(max(0,center-delta),4),"high":round(min(1,center+delta),4)}
+
+def eligible_pregame(row):
+    if row.get("archive_group")!="CANONICAL" or row.get("archive_provenance")!="PREGAME_CANONICAL_LEDGER":return False
+    try:
+        cap=datetime.datetime.fromisoformat(row.get("captured_at", "").replace("Z","+00:00"))
+        start=datetime.datetime.fromisoformat(row.get("start_time_utc", "").replace("Z","+00:00"))
+        return cap.tzinfo is not None and start.tzinfo is not None and datetime.timedelta(0)<start-cap<=datetime.timedelta(days=7)
+    except (ValueError,TypeError):return False
+
 def metrics(rows):
     settled=[x for x in rows if x["status"]=="SETTLED"]
     wins=sum(int(x["official_win"]) for x in settled)
@@ -63,7 +72,7 @@ def metrics(rows):
     vshots=[x for x in shots if x is not None]
     vats=[x for x in attempts if x is not None]
     calibrated=[(int(x["official_win"]),number(x.get("model_probability"))) for x in settled
-                if x.get("archive_provenance")=="PREGAME_CANONICAL_LEDGER"
+                if eligible_pregame(x)
                 and number(x.get("model_probability")) is not None
                 and 0<=number(x.get("model_probability"))<=1]
     brier=round(sum((y-p)**2 for y,p in calibrated)/len(calibrated),6) if calibrated else None
@@ -71,7 +80,7 @@ def metrics(rows):
                   (1-y)*math.log(max(1e-6,1-min(1-1e-6,p))) for y,p in calibrated)/len(calibrated),6) if calibrated else None
     priced=[(int(x["official_win"]),number(x.get("odds")),x.get("captured_at"),
              x.get("start_time_utc")) for x in settled
-            if x.get("archive_provenance")=="PREGAME_CANONICAL_LEDGER"]
+            if eligible_pregame(x)]
     priced=[(win,odds) for win,odds,cap,start in priced if odds is not None and odds>=1.40 and cap and start]
     unit_roi=round(sum(win*odd-1 for win,odd in priced)/len(priced),4) if priced else None
     return dict(number=len(rows),settled=len(settled),wins=wins,
