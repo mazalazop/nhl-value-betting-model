@@ -1,0 +1,72 @@
+name: BUT V2 isolated shadow
+on:
+  workflow_dispatch:
+    inputs:
+      input_run_id:
+        description: 'Run contenant un artefact but-v2-inputs validé'
+        required: true
+        type: string
+      mode:
+        description: 'Capture pré-match ou bilan officiel'
+        type: choice
+        options: [capture, report]
+        required: true
+  workflow_call:
+    inputs:
+      input_run_id:
+        required: true
+        type: string
+      mode:
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: but-v2-shadow-${{ inputs.input_run_id }}-${{ inputs.mode }}
+  cancel-in-progress: false
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      SHADOW_MODE: ${{ inputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pytest tests/test_but_v2.py tests/test_but_v2_validation.py tests/test_but_v2_shadow.py -q -W error
+      - uses: actions/download-artifact@v4
+        with:
+          name: but-v2-inputs
+          run-id: ${{ inputs.input_run_id }}
+          github-token: ${{ github.token }}
+          path: shadow-inputs
+      - name: Execute isolated research command
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$SHADOW_MODE" in
+            capture)
+              python scripts/but_v2_shadow.py capture --history shadow-inputs/history.csv \
+                --slate shadow-inputs/slate.csv --v1 shadow-inputs/v1.csv --output outputs/but-v2-shadow
+              ;;
+            report)
+              python scripts/but_v2_shadow.py report --capture shadow-inputs/capture \
+                --outcomes shadow-inputs/outcomes.csv --output outputs/but-v2-shadow
+              ;;
+            *) exit 2 ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: but-v2-shadow-${{ github.run_id }}
+          path: outputs/but-v2-shadow/
+          if-no-files-found: error
+          retention-days: 90
