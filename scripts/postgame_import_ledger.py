@@ -32,7 +32,7 @@ def goal_market(row):
     if market in {"player_goals","goals"} and stat=="goals":return "GOAL"
     return None
 def extract(ledger):
-    grouped=defaultdict(list);excluded=defaultdict(int);seen=set()
+    grouped=defaultdict(list);excluded=defaultdict(int);seen={}
     for x in ledger:
         d=dateval(x.get("date_match"))
         if d is None or d<START:excluded["before_scope_or_invalid_date"]+=1;continue
@@ -52,8 +52,12 @@ def extract(ledger):
         if not all(str(x.get(k,"")).strip() for k in ("bet_id","id_match","id_joueur","player_name","team","bookmaker")):
             excluded["missing_identity"]+=1;continue
         bet_id=x["bet_id"]
-        if bet_id in seen:excluded["duplicate_bet_id"]+=1;continue
-        seen.add(bet_id)
+        frozen_keys=("date_match","market","stat","threshold","captured_at","start_time_utc","odds_decimal","model_probability","id_match","id_joueur","player_name","team","bookmaker")
+        frozen=tuple(str(x.get(k,"")) for k in frozen_keys)
+        if bet_id in seen:
+            if seen[bet_id]!=frozen:raise ValueError("Conflicting duplicate bet_id: "+bet_id)
+            excluded["duplicate_bet_id"]+=1;continue
+        seen[bet_id]=frozen
         grouped[str(d)].append({
             "date":str(d),"market":market,"player":x["player_name"],
             "team":x["team"],"odds":str(odds),"signal":"CANONICAL_PREGAME",
