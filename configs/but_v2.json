@@ -1,0 +1,18 @@
+{
+  "version": "BUT_V2_EXPERIMENT_1",
+  "status": "research_only",
+  "seed": 20261020,
+  "shadow_candidate": "logistic",
+  "candidate_selection": "fixed before evaluation; no automatic winner or promotion",
+  "models": ["logistic", "poisson", "hgb"],
+  "min_train_dates": 160,
+  "test_dates": 60,
+  "calibration_fraction": 0.15,
+  "logistic_C": 1.0,
+  "poisson_alpha": 1.0,
+  "bootstrap_replicates": 2000,
+  "exclude_dates_from": "2026-10-17",
+  "historical_status": "retrospective_replay_not_point_in_time_verified",
+  "unavailable_families": ["shot_quality", "goalie", "confirmed_pp1", "travel_distance"],
+  "promotion_allowed": false
+}
