@@ -138,7 +138,8 @@ def test_unavailable_pbp_and_shots_remain_unknown(tmp_path,monkeypatch):
         raise RuntimeError('unavailable')
     monkeypatch.setattr(diagnostics,'fetch',fake)
     diagnostics.collect('2026-10-17',path,tmp_path/'out')
-    row=list(csv.DictReader((tmp_path/'out/2026-10-17-picks.csv').open()))[0]
+    with (tmp_path/'out/2026-10-17-picks.csv').open() as f:
+        row=list(csv.DictReader(f))[0]
     assert row['settlement_status']=='LOSS'
     assert row['shots']==row['attempts_pbp']==row['missed_attempts']==''
     assert row['matching_method']=='NHL_ID' and row['postgame_captured_at_utc']
