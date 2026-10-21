@@ -31,9 +31,15 @@ def capture(history, slate, reference, output, provenance, now=None):
     history=history[pd.to_datetime(history.date_match)<date].copy()
     v2.validate(history)
     if reference.duplicated(v2.KEYS).any():raise ValueError('Duplicate V1 identity')
+    if set(map(tuple,reference[v2.KEYS].to_numpy()))!=set(map(tuple,slate[v2.KEYS].to_numpy())):
+        raise ValueError('V1 and V2 universes must be identical')
+    for col in ['team_player_match','date_match']:
+        if col in reference:
+            check=slate[v2.KEYS+[col]].merge(reference[v2.KEYS+[col]],on=v2.KEYS,validate='one_to_one')
+            if not check[col+'_x'].astype(str).eq(check[col+'_y'].astype(str)).all():raise ValueError('V1 metadata mismatch')
     refs=utc(reference.generated_at_utc)
     refstarts=utc(reference.start_time_utc)
-    if (refs>=refstarts).any() or (refs>started).any():raise ValueError('V1 is not pregame')
+    if (refs>=refstarts).any() or (refs>started).any() or ((started-refs)>pd.Timedelta(hours=2)).any():raise ValueError('V1 is not pregame')
     p=pd.to_numeric(reference.probability_goal,errors='raise')
     if not p.between(0,1).all():raise ValueError('Invalid V1 probability')
     pricecols=['odds_decimal','odds_captured_at_utc','odds_source','odds_market']
@@ -43,15 +49,16 @@ def capture(history, slate, reference, output, provenance, now=None):
         if not np.isfinite(odds).all() or not odds.gt(1).all():raise ValueError('Invalid odds')
         if not reference.loc[priced,'odds_market'].eq('GOAL_1_PLUS').all():raise ValueError('Wrong odds market')
         quotes=utc(reference.loc[priced,'odds_captured_at_utc'])
-        if (quotes>started).any() or (quotes>=refstarts[priced]).any():raise ValueError('Postgame odds forbidden')
+        if (quotes>started).any() or (quotes>=refstarts[priced]).any() or ((started-quotes)>pd.Timedelta(hours=2)).any():raise ValueError('Postgame odds forbidden')
         if reference.loc[priced,'odds_source'].isna().any():raise ValueError('Odds source required')
     else:
         if 'odds_decimal' in reference and reference.odds_decimal.notna().any():raise ValueError('Incomplete odds provenance')
         reference=reference.copy()
         for col in pricecols:reference[col]=np.nan
     keep=v2.KEYS+['probability_goal','generated_at_utc','start_time_utc']+pricecols
+    keep += [c for c in ['model_name','model_sha256','config_sha','algorithm_id','algorithm_manifest_sha256'] if c in reference]
     reference=reference[keep].rename(columns={'probability_goal':'v1_probability','generated_at_utc':'v1_generated_at_utc',
-                                            'start_time_utc':'v1_start_time_utc'})
+                                            'start_time_utc':'v1_start_time_utc',**{c:'v1_'+c for c in ['model_name','model_sha256','config_sha','algorithm_id','algorithm_manifest_sha256'] if c in reference}})
     # Strictly lagged features from observations actually present at generation.
     features=v2.build_features(history)
     bundle=v2.fit(features,date,v2.config()['shadow_candidate'])
@@ -59,7 +66,7 @@ def capture(history, slate, reference, output, provenance, now=None):
     for col in ['buts','tirs','temps_de_glace','temps_pp']:future[col]=np.nan
     combined=v2.build_features(pd.concat([history,future],ignore_index=True))
     derived=combined[combined.date_match.eq(date)].copy()
-    cols=v2.KEYS+['date_match','team_player_match','start_time_utc']
+    cols=v2.KEYS+['date_match','team_player_match','start_time_utc']+[c for c in ['nom','adversaire_match'] if c in derived]
     out=derived[cols].copy();out['probability']=v2.predict(bundle,derived)
     out=out.merge(reference,on=v2.KEYS,how='left',validate='one_to_one')
     if out.v1_probability.isna().any():raise ValueError('V1 universe does not cover shadow players')
@@ -71,11 +78,14 @@ def capture(history, slate, reference, output, provenance, now=None):
     out['status']='UNRESOLVED'
     out['context_source']='NOT_AVAILABLE';out['context_age_hours']=np.nan
     out['information_captured_at_utc']=started.isoformat()
+    out['history_last_game_date']=str(pd.to_datetime(history.date_match).max().date())
+    out['history_age_days']=(date-pd.to_datetime(history.date_match).max()).days
     out['source_manifest']=json.dumps(provenance,sort_keys=True)
     out['prediction_id']=[hashlib.sha256(f"{generated.isoformat()}|{g}|{p}|{v2.config()['version']}".encode()).hexdigest()
                           for g,p in out[v2.KEYS].itertuples(index=False,name=None)]
     out=out.sort_values(['probability']+v2.KEYS,ascending=[False,True,True])
     out['rank']=np.arange(1,len(out)+1)
+    out['v1_rank']=out.sort_values(['v1_probability']+v2.KEYS,ascending=[False,True,True]).assign(_rank=np.arange(1,len(out)+1))['_rank']
     output=Path(output);output.mkdir(parents=True,exist_ok=False)
     joblib.dump(bundle,output/'model.joblib')
     model_sha=hashlib.sha256((output/'model.joblib').read_bytes()).hexdigest()
@@ -86,6 +96,7 @@ def capture(history, slate, reference, output, provenance, now=None):
     write(output/'manifest.json',dict(version=v2.config(),generated_at_utc=generated.isoformat(),
           input_provenance=provenance,model_sha256=model_sha,training=bundle['metadata'],
           n=len(out),point_or_v1_modified=False,odds_status='ARCHIVED_IF_PROVIDED_ELSE_UNKNOWN',
+          code_hashes={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path(v2.__file__),Path(__file__)]},
           predictions_sha256=hashlib.sha256((output/'predictions.csv').read_bytes()).hexdigest()))
     return out
 
@@ -98,39 +109,25 @@ def report(capture_dir,outcomes,output):
     if not rows.archive_group.eq('CANONICAL').all() or not rows.scope.eq('BUT_V2_SHADOW').all():raise ValueError('Wrong cohort')
     if (utc(rows.generated_at_utc)>=utc(rows.start_time_utc)).any():raise ValueError('Not pregame')
     if outcomes.duplicated(v2.KEYS).any():raise ValueError('Duplicate official result')
-    required=v2.KEYS+['status','buts','source','observed_at_utc']
-    if set(required)-set(outcomes):raise ValueError('Official outcome provenance required')
-    merged=rows.drop(columns='status').merge(outcomes[required],on=v2.KEYS,how='left',validate='one_to_one')
-    merged['settlement_status']='UNRESOLVED'
-    final=merged.status.isin(['OFF','FINAL']) & merged.buts.notna()
+    required=v2.KEYS+['status','buts','source','observed_at_utc','toi_min','team_player_match']
+    if set(required)-set(outcomes):raise ValueError('Official outcome provenance/participation required')
+    official=outcomes[required].rename(columns={'team_player_match':'official_team'})
+    merged=rows.drop(columns='status').merge(official,on=v2.KEYS,how='left',validate='one_to_one')
+    merged['settlement_status']='UNRESOLVED';merged['y']=np.nan
+    final=merged.status.isin(['OFF','FINAL']) & merged.buts.notna() & pd.to_numeric(merged.toi_min,errors='raise').gt(0)
     if final.any():
-        if merged.loc[final,'source'].isna().any():raise ValueError('Missing official source')
-        sources=merged.loc[final,'source'].astype(str)
-        if not sources.str.startswith('https://api-web.nhle.com/').all():raise ValueError('Official NHL source required')
+        if not merged.loc[final,'official_team'].eq(merged.loc[final,'team_player_match']).all():raise ValueError('Official team mismatch')
+        for _,row in merged.loc[final].iterrows():
+            expected=f"https://api-web.nhle.com/v1/gamecenter/{int(row.id_match)}/boxscore"
+            if row.source!=expected:raise ValueError('Official NHL game source required')
         observed=utc(merged.loc[final,'observed_at_utc'])
-        if (observed<utc(merged.loc[final,'start_time_utc'])).any():raise ValueError('Outcome predates game')
+        if (observed<utc(merged.loc[final,'start_time_utc'])).any() or (observed>pd.Timestamp.now(tz='UTC')).any():raise ValueError('Invalid outcome observation time')
         merged.loc[final,'y']=v2.goal_labels(merged.loc[final]).to_numpy()
         merged.loc[final,'settlement_status']=np.where(merged.loc[final,'y'].eq(1),'WIN','LOSS')
-    valid=merged.loc[final].copy()
-    result=dict(n=len(rows),settled=len(valid),unresolved=int((~final).sum()),roi=None,
-                note='Shadow CANONICAL only; no real bets, no postgame reconstructed predictions')
-    if len(valid):
-        reference=valid.copy();reference['probability']=reference.v1_probability
-        result.update(v1=metrics(reference),v2=metrics(valid),paired=paired(reference,valid))
-    priced=valid[valid.odds_decimal.notna()].copy()
-    if len(priced):
-        priced['implied_probability']=1/priced.odds_decimal
-        priced['v2_edge']=priced.probability-priced.implied_probability
-        priced['unit_return']=priced.y*priced.odds_decimal-1
-        daily=priced.groupby('date_match').agg(total=('unit_return','sum'),n=('y','size'))
-        rng=np.random.default_rng(v2.config()['seed'])
-        n=len(daily);starts=rng.integers(0,n,size=(2000,(n+6)//7))
-        sample=((starts[:,:,None]+np.arange(7))%n).reshape(2000,-1)[:,:n]
-        draws=daily.total.to_numpy()[sample].sum(axis=1)/daily.n.to_numpy()[sample].sum(axis=1)
-        result['roi']=dict(n=len(priced),dates=n,simulation_only=True,mean=float(priced.unit_return.mean()),
-                          ci95=np.quantile(draws,[.025,.975]).tolist(),
-                          warning='All priced shadow rows, not placed bets; low date counts give unreliable uncertainty',
-                          mean_v2_edge=float(priced.v2_edge.mean()),implied_is_not_devigged=True)
+    from henachel.but_v2_prospective import summarize
+    result=summarize(merged)
     output=Path(output);output.mkdir(parents=True,exist_ok=False)
     merged.to_csv(output/'settlement.csv',index=False);write(output/'report.json',result)
+    from henachel.but_v2_prospective import write_daily
+    write_daily(merged,result,output)
     return result

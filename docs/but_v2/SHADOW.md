@@ -68,3 +68,14 @@ les sources rafraîchies, sauvegarde durable, raccordement quotidien au
 workflow réutilisable, puis accumulation prospective. Le runtime shadow doit
 échouer indépendamment de POINT/V1. Retour arrière : désactiver l'appel shadow,
 conserver ses archives, retirer la nouvelle implémentation si souhaité.
+
+## Révision du 21 octobre 2026
+
+La préparation initiale est remplacée pour l'activation par
+[CONTROLLED_INTEGRATION.md](CONTROLLED_INTEGRATION.md) et le
+[protocole prospectif](PROSPECTIVE_PROTOCOL.md). Le workflow est désormais
+alimenté par un artefact du run global vérifié et reste désactivé par variable.
+Les commandes capture/report autonomes restent disponibles; les résultats
+exigent désormais `toi_min` et `team_player_match`. Le Top10 est figé avant
+settlement. La CLI finale `scripts/assess_but_v2_prospective.py` n'autorise aucune
+promotion et refuse un bilan avant la fin de la fenêtre fixe.

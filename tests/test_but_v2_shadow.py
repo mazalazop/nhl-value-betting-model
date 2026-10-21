@@ -20,6 +20,7 @@ def test_shadow_capture_report_and_immutability(tmp_path):
     result=s[['id_match','id_joueur']].iloc[:2].copy()
     result['buts']=[0,1];result['status']='OFF'
     result['source']='https://api-web.nhle.com/v1/gamecenter/50/boxscore'
+    result['toi_min']=15.;result['team_player_match']='A'
     result['observed_at_utc']='2024-02-21T03:00Z'
     summary=report(path,result,tmp_path/'report')
     assert summary['settled']==2 and summary['unresolved']==2 and summary['roi'] is None
@@ -45,8 +46,22 @@ def test_archived_odds_simulation_and_reject_post_capture_quote(tmp_path):
     result=s[['id_match','id_joueur']].copy()
     result['buts']=[0,1,0,1];result['status']='OFF'
     result['source']='https://api-web.nhle.com/v1/gamecenter/50/boxscore'
+    result['toi_min']=15.;result['team_player_match']='A'
     result['observed_at_utc']='2024-02-21T03:00Z'
     summary=report(path,result,tmp_path/'report')
     assert summary['roi']['mean']==.5 and summary['roi']['simulation_only']
     r['odds_captured_at_utc']='2024-02-20T14:00Z'
     with pytest.raises(ValueError,match='odds'):capture(h,s,r,tmp_path/'bad',{},now='2024-02-20T13:00Z')
+
+def test_extra_v1_players_are_not_silently_dropped(tmp_path):
+    h,s,r=inputs();extra=r.iloc[:1].copy();extra['id_joueur']=999
+    with pytest.raises(ValueError,match='universes'):capture(h,s,pd.concat([r,extra]),tmp_path/'bad',{},now='2024-02-20T13:00Z')
+
+def test_zero_toi_and_missing_outcomes_never_lose(tmp_path):
+    h,s,r=inputs();path=tmp_path/'capture'
+    capture(h,s,r,path,{},now='2024-02-20T13:00Z')
+    result=s[['id_match','id_joueur']].copy();result['buts']=0;result['status']='OFF'
+    result['source']='https://api-web.nhle.com/v1/gamecenter/50/boxscore'
+    result['observed_at_utc']='2024-02-21T03:00Z';result['toi_min']=0;result['team_player_match']='A'
+    summary=report(path,result,tmp_path/'report')
+    assert summary['settled']==0 and summary['top10']['v2']['unresolved']==4
