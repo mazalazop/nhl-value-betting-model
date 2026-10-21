@@ -1,11 +1,12 @@
 {
-  "through_date": "2026-10-19",
+  "through_date": "2026-10-20",
   "archive_dates": [
     "2026-10-17",
     "2026-10-18",
-    "2026-10-19"
+    "2026-10-19",
+    "2026-10-20"
   ],
-  "coverage_days": 3,
+  "coverage_days": 4,
   "notes": [
     "Group CLASSEUR and EXTRA never combined for a headline win rate.",
     "Missing or absent skaters never classified as losers.",
@@ -98,25 +99,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 12,
-          "settled": 12,
-          "wins": 8,
+          "number": 15,
+          "settled": 15,
+          "wins": 7,
           "unresolved": 0,
-          "hit_rate": 0.6667,
+          "hit_rate": 0.4667,
           "hit_rate_wilson95": {
-            "low": 0.3906,
-            "high": 0.8619
+            "low": 0.2481,
+            "high": 0.6988
           },
-          "mean_shots": 2.0,
-          "mean_attempts": 4.583,
-          "failed_with_activity": 2,
-          "failed_with_low_activity": 2,
+          "mean_shots": 3.133,
+          "mean_attempts": 7.4,
+          "failed_with_activity": 7,
+          "failed_with_low_activity": 1,
           "missing_shot_data": 0,
-          "calibrated_n": 12,
-          "brier": 0.205056,
-          "log_loss": 0.599793,
-          "priced_pregame_n": 12,
-          "unit_stake_simulated_roi": -0.0242,
+          "calibrated_n": 15,
+          "brier": 0.268213,
+          "log_loss": 0.730359,
+          "priced_pregame_n": 15,
+          "unit_stake_simulated_roi": -0.3167,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -235,25 +236,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 33,
-          "settled": 32,
-          "wins": 15,
+          "number": 48,
+          "settled": 47,
+          "wins": 22,
           "unresolved": 1,
-          "hit_rate": 0.4688,
+          "hit_rate": 0.4681,
           "hit_rate_wilson95": {
-            "low": 0.3087,
-            "high": 0.6355
+            "low": 0.3333,
+            "high": 0.6077
           },
-          "mean_shots": 2.094,
-          "mean_attempts": 4.688,
-          "failed_with_activity": 7,
-          "failed_with_low_activity": 10,
+          "mean_shots": 2.426,
+          "mean_attempts": 5.553,
+          "failed_with_activity": 14,
+          "failed_with_low_activity": 11,
           "missing_shot_data": 0,
-          "calibrated_n": 32,
-          "brier": 0.265851,
-          "log_loss": 0.72661,
-          "priced_pregame_n": 32,
-          "unit_stake_simulated_roi": -0.2894,
+          "calibrated_n": 47,
+          "brier": 0.266605,
+          "log_loss": 0.727806,
+          "priced_pregame_n": 47,
+          "unit_stake_simulated_roi": -0.2981,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -372,25 +373,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 33,
-          "settled": 32,
-          "wins": 15,
+          "number": 48,
+          "settled": 47,
+          "wins": 22,
           "unresolved": 1,
-          "hit_rate": 0.4688,
+          "hit_rate": 0.4681,
           "hit_rate_wilson95": {
-            "low": 0.3087,
-            "high": 0.6355
+            "low": 0.3333,
+            "high": 0.6077
           },
-          "mean_shots": 2.094,
-          "mean_attempts": 4.688,
-          "failed_with_activity": 7,
-          "failed_with_low_activity": 10,
+          "mean_shots": 2.426,
+          "mean_attempts": 5.553,
+          "failed_with_activity": 14,
+          "failed_with_low_activity": 11,
           "missing_shot_data": 0,
-          "calibrated_n": 32,
-          "brier": 0.265851,
-          "log_loss": 0.72661,
-          "priced_pregame_n": 32,
-          "unit_stake_simulated_roi": -0.2894,
+          "calibrated_n": 47,
+          "brier": 0.266605,
+          "log_loss": 0.727806,
+          "priced_pregame_n": 47,
+          "unit_stake_simulated_roi": -0.2981,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
