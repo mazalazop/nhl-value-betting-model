@@ -114,6 +114,18 @@ class Store:
             return json.loads(raw)
         return None
 
+    def by_release_id(self, release_id, expected_index_sha256=None):
+        release = self.get(f'releases/{int(release_id)}').json()
+        if not release.get('draft') or not release['tag_name'].startswith(self.prefix):
+            raise ValueError('Untrusted durable release identity')
+        assets = self.assets(release)
+        raw = self.download(assets['index.json']['id'])
+        receipt = json.loads(self.download(assets['verified.json']['id']))
+        if digest(raw) != receipt['index_sha256'] or (expected_index_sha256 is not None
+                and digest(raw) != expected_index_sha256):
+            raise ValueError('Direct backup index checksum mismatch')
+        return json.loads(raw)
+
     def snapshot(self, state_hash):
         if len(state_hash) != 64 or any(c not in '0123456789abcdef' for c in state_hash):
             raise ValueError('Expected SHA256 snapshot')
@@ -268,11 +280,12 @@ if __name__ == '__main__':
     p.add_argument('--state', type=Path, required=True)
     p.add_argument('--prefix', default=PREFIX)
     p.add_argument('--snapshot', help='Optional SHA256 of a historical snapshot to restore')
+    p.add_argument('--release-id', type=int, help='Direct durable release ID from a verified receipt')
     args = p.parse_args(); store = authenticated_store(args.prefix)
     if args.action == 'backup':
         print(json.dumps(backup(store, args.state, os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'])))
     else:
-        index = store.snapshot(args.snapshot) if args.snapshot else store.latest()
+        index = store.by_release_id(args.release_id) if args.release_id else (store.snapshot(args.snapshot) if args.snapshot else store.latest())
         if index is None:
             raise ValueError('No durable backup')
         restored = restore(store, index, args.state)

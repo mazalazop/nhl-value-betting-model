@@ -101,3 +101,14 @@ par un artefact temporaire d'un jour; `shadow` conserve contents:read et ne peut
 pas publier ni écrire dans le dépôt. `backup` ne démarre que si un registre a
 réellement été téléversé. Ce changement de permissions opérationnelles ne modifie
 aucun des fichiers du candidat ou protocole gelés à T0.
+
+Découverte résiliente : le run automatique `39801360938` a observé une liste de
+drafts vide malgré contents:write; sa relance avec le même code a retrouvé les
+copies. La cause interne GitHub n'est pas établie. Si la liste est vide alors
+qu'un registre Actions existe, le staging retrouve le reçu du même run main
+validé, puis lit **directement** l'ID de release indiqué. SHA256 de l'index,
+marqueur de restauration, identité du run et tous les fichiers restent vérifiés.
+Le reçu ne remplace pas la sauvegarde durable. Sans reçu valide ou accès direct,
+arrêt protecteur, jamais initialisation vide. Après expiration des artefacts,
+un opérateur peut utiliser l'ID durable conservé dans le rapport :
+`python scripts/backup_but_v2_state.py restore --state restored --release-id <ID>`.

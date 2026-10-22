@@ -110,3 +110,26 @@ def test_pre_t0_registration_matches_frozen_files_and_features():
     assert not registration['promotion_authorized']
     for name,digest in registration['file_sha256'].items():
         assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest,name
+
+
+def test_empty_draft_listing_uses_verified_receipt_pointer(tmp_path,monkeypatch):
+    import json
+    class Store:
+        def latest(self):return None
+        def by_release_id(self,release_id,index_hash):
+            assert release_id==12 and index_hash=='verified-index'
+            return dict(workflow_run_id='20',files={})
+    def api(path):
+        if path.endswith('/artifacts?per_page=100'):
+            return {'artifacts':[dict(name='but-v2-backup-receipt',expired=False)]}
+        return dict(head_branch='main',path='.github/workflows/but-v2-shadow.yml')
+    def download(command,check):
+        assert command[command.index('--name')+1]=='but-v2-backup-receipt'
+        d=Path(command[-1]);d.mkdir();(d/'backup-receipt.json').write_text(json.dumps(dict(
+            release_id=12,index_sha256='verified-index',remote_restore_verified=True)))
+    monkeypatch.setattr(stage,'api',api);monkeypatch.setattr(stage.subprocess,'run',download)
+    prior=[dict(created_at='2026-10-22',workflow_run={'id':20})]
+    assert stage.discover_durable(Store(),prior,tmp_path)['workflow_run_id']=='20'
+    monkeypatch.setattr(stage,'api',lambda path:dict(head_branch='untrusted',path='bad.yml'))
+    with pytest.raises(ValueError,match='Untrusted'):
+        stage.discover_durable(Store(),prior,tmp_path)
