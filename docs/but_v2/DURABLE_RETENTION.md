@@ -31,8 +31,8 @@ marqueurs de validation. Un snapshot incomplet bloque la reprise; aucun retour
 silencieux à une ancienne version. Un artefact Actions plus récent que la copie
 durable bloque aussi la capture jusqu'à réparation de sa sauvegarde.
 
-Le job de calcul conserve contents:read/actions:read. Seul le job `backup`, après
-calcul et upload du registre, possède contents:write pour les assets draft.
+Le job de calcul conserve contents:read/actions:read. Les seuls jobs `restore` et `backup` possèdent contents:write pour accéder aux
+assets draft; aucun de ces jobs ne calcule les probabilités.
 La concurrence couvre l'ensemble du workflow (calcul ET sauvegarde).
 
 Restauration manuelle, avec GH_TOKEN en environnement et répertoire inexistant :
@@ -89,3 +89,15 @@ par `compactions/`. Aucun fichier source distant n'est effacé.
 
 Cette correction est exclusivement opérationnelle : aucun fichier du candidat,
 du calcul des probabilités, des métriques ou du protocole gelé n'est modifié.
+
+
+Incident de reprise réel du 22 octobre, run `39772335823` : le jeton
+contents:read ne voyait aucune release draft, d'où arrêt protecteur avant tout
+calcul. La première capture et sa sauvegarde sont intactes. L'[API GitHub](https://docs.github.com/en/rest/releases/releases)
+ne liste les drafts que pour les accès disposant du droit de push. La restauration
+est donc isolée dans `restore`, qui possède contents:write mais effectue seulement
+les lectures et vérifications du staging. Les entrées passent au job `shadow`
+par un artefact temporaire d'un jour; `shadow` conserve contents:read et ne peut
+pas publier ni écrire dans le dépôt. `backup` ne démarre que si un registre a
+réellement été téléversé. Ce changement de permissions opérationnelles ne modifie
+aucun des fichiers du candidat ou protocole gelés à T0.

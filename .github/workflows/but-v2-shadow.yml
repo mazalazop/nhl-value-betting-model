@@ -52,9 +52,48 @@ jobs:
             echo 'Expected exactly one fresh model artifact' >&2
             exit 1
           fi
-  shadow:
+  restore:
     needs: source
     if: needs.source.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # GitHub hides draft releases from tokens without push access. No model runs here.
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INPUT_RUN_ID: ${{ github.event.workflow_run.id || inputs.input_run_id }}
+      INITIALIZE: ${{ inputs.initialize }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests==2.32.3
+      - name: Validate source and restore verified shadow state
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [ "$INITIALIZE" = 'true' ]; then ARGS+=(--initialize); fi
+          python scripts/stage_but_v2_shadow.py --run-id "$INPUT_RUN_ID" --root shadow-work "${ARGS[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: but-v2-shadow-staged-inputs
+          path: shadow-work/
+          if-no-files-found: error
+          retention-days: 1
+  shadow:
+    needs: restore
+    outputs:
+      state_available: ${{ steps.archive.outcome }}
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -73,17 +112,16 @@ jobs:
           cache: pip
       - run: python -m pip install -r requirements.lock
       - run: python -m pytest tests/test_but_v2.py tests/test_but_v2_validation.py tests/test_but_v2_shadow.py tests/test_but_v2_daily.py tests/test_but_v2_backup.py -q -W error
-      - name: Validate source and restore verified shadow state
+      - name: Receive verified inputs from the isolated restore job
         id: stage
-        shell: bash
-        run: |
-          set -euo pipefail
-          ARGS=()
-          if [ "$INITIALIZE" = 'true' ]; then ARGS+=(--initialize); fi
-          python scripts/stage_but_v2_shadow.py --run-id "$INPUT_RUN_ID" --root shadow-work "${ARGS[@]}"
+        uses: actions/download-artifact@v4
+        with:
+          name: but-v2-shadow-staged-inputs
+          path: shadow-work
       - name: Capture once before puck drop and report all archived pairs
         run: python scripts/run_but_v2_shadow_daily.py --root shadow-work
       - name: Preserve state even when a new capture fails
+        id: archive
         if: ${{ always() && steps.stage.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
@@ -107,7 +145,7 @@ jobs:
 
   backup:
     needs: shadow
-    if: ${{ always() && needs.shadow.result != 'skipped' }}
+    if: ${{ always() && needs.shadow.outputs.state_available == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
