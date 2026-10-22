@@ -112,3 +112,18 @@ Le reçu ne remplace pas la sauvegarde durable. Sans reçu valide ou accès dire
 arrêt protecteur, jamais initialisation vide. Après expiration des artefacts,
 un opérateur peut utiliser l'ID durable conservé dans le rapport :
 `python scripts/backup_but_v2_state.py restore --state restored --release-id <ID>`.
+
+Repli quotidien indépendant : le run V1 `39805484632` lancé par le dispatcher
+(bot) a terminé à 16:08:55 UTC sans événement shadow observé à 16:19. La cause
+interne n'est pas affirmée; la chaîne ne doit pas dépendre uniquement de la
+propagation de `workflow_run`. Le shadow conserve ce déclencheur et ajoute
+06:30, 10:30, 12:30 et 16:30 UTC. Le sélecteur recherche parmi les 50 derniers
+runs réussis sur main le dernier contenant réellement l'artefact modèle, en
+ignorant les mises à jour contextuelles et les runs non fiables. Un dispatch
+sans ID utilise exactement cette découverte, sans relancer V1.
+
+Les contrôles temporels du candidat restent inchangés. Un ancien run peut servir
+à mettre à jour les résultats d'une capture existante, jamais à fabriquer une
+nouvelle prédiction rétroactive. Chaque date conserve sa première paire et son
+Top10; aucune nouvelle source contextuelle ne modifie le candidat. Les jobs de
+production POINT/V1 et leurs horaires ne sont pas modifiés.

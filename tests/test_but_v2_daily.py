@@ -61,7 +61,7 @@ def test_workflow_is_disabled_without_explicit_repository_variable():
     assert "needs.shadow.outputs.state_available == 'success'" in text
     assert 'contents: write' in text.split('  backup:')[1]
     assert 'group: but-v2-shadow-state' in text and 'cancel-in-progress: false' in text
-    assert 'schedule:' not in text
+    assert 'schedule:' in text and 'scripts/select_but_v2_source.py' in text
 
 def test_daily_pipeline_freezes_first_capture_and_reports_unresolved(tmp_path,monkeypatch):
     import json
