@@ -64,7 +64,7 @@ def test_no_unsealed_state_path_traversal_or_oversize(tmp_path, monkeypatch):
     (root / 'file').write_text('tampered')
     with pytest.raises(ValueError, match='integrity'):
         b.backup(MemoryStore(), root, 'commit', '1')
-    seal(root); monkeypatch.setattr(b, 'BUNDLE_LIMIT', 1)
+    seal(root); monkeypatch.setattr(b, 'MAX_FILE_SIZE', 1)
     with pytest.raises(ValueError, match='budget'):
         b.backup(MemoryStore(), root, 'commit', '1')
     for name in ['../escape', '/absolute', 'a/../../escape']:
@@ -76,17 +76,23 @@ def test_compaction_keeps_latest_sources_and_remote_old_views(tmp_path):
     root = tmp_path / 'state'; root.mkdir()
     for name in ['batches/1/cumulative/report.json', 'batches/1/reports/day/settlement.csv',
                  'batches/1/capture_status.json', 'batches/1/inputs/v1.csv',
-                 'batches/2/cumulative/report.json', 'captures/day/predictions.csv']:
+                 'batches/2/cumulative/report.json', 'captures/day/predictions.csv',
+                 'training_sources/old.csv.gz', 'training_sources/current.csv.gz']:
         p = root / name; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(name)
     (root / 'latest_batch.json').write_text(json.dumps(dict(path='batches/2')))
+    ref=root / 'batches/2/inputs/history_reference.json'; ref.parent.mkdir(exist_ok=True)
+    ref.write_text(json.dumps(dict(path='training_sources/current.csv.gz')))
     seal(root); store = MemoryStore(); b.backup(store, root, 'commit', '2'); index = store.index
     removed = b.compact_verified_state(root, index)
-    assert len(removed) == 2
+    assert len(removed) == 3
+    assert not (root / 'training_sources/old.csv.gz').exists()
+    assert (root / 'training_sources/current.csv.gz').exists()
     assert (root / 'captures/day/predictions.csv').exists()
     assert (root / 'batches/1/inputs/v1.csv').exists()
     assert (root / 'batches/2/cumulative/report.json').exists()
     b.validate_state(root)
     b.restore(store, index, tmp_path / 'historical')
     assert (tmp_path / 'historical/batches/1/cumulative/report.json').exists()
+    assert (tmp_path / 'historical/training_sources/old.csv.gz').exists()
     with pytest.raises(ValueError, match='exact verified'):
         b.compact_verified_state(root, index)
