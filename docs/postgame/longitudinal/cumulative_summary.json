@@ -1,12 +1,13 @@
 {
-  "through_date": "2026-10-20",
+  "through_date": "2026-10-21",
   "archive_dates": [
     "2026-10-17",
     "2026-10-18",
     "2026-10-19",
-    "2026-10-20"
+    "2026-10-20",
+    "2026-10-21"
   ],
-  "coverage_days": 4,
+  "coverage_days": 5,
   "notes": [
     "Group CLASSEUR and EXTRA never combined for a headline win rate.",
     "Missing or absent skaters never classified as losers.",
@@ -99,25 +100,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 15,
-          "settled": 15,
-          "wins": 7,
+          "number": 10,
+          "settled": 10,
+          "wins": 5,
           "unresolved": 0,
-          "hit_rate": 0.4667,
+          "hit_rate": 0.5,
           "hit_rate_wilson95": {
-            "low": 0.2481,
-            "high": 0.6988
+            "low": 0.2366,
+            "high": 0.7634
           },
-          "mean_shots": 3.133,
-          "mean_attempts": 7.4,
-          "failed_with_activity": 7,
-          "failed_with_low_activity": 1,
+          "mean_shots": 2.7,
+          "mean_attempts": 4.6,
+          "failed_with_activity": 2,
+          "failed_with_low_activity": 3,
           "missing_shot_data": 0,
-          "calibrated_n": 15,
-          "brier": 0.268213,
-          "log_loss": 0.730359,
-          "priced_pregame_n": 15,
-          "unit_stake_simulated_roi": -0.3167,
+          "calibrated_n": 10,
+          "brier": 0.255054,
+          "log_loss": 0.703439,
+          "priced_pregame_n": 10,
+          "unit_stake_simulated_roi": -0.161,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -236,25 +237,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 48,
-          "settled": 47,
-          "wins": 22,
+          "number": 58,
+          "settled": 57,
+          "wins": 27,
           "unresolved": 1,
-          "hit_rate": 0.4681,
+          "hit_rate": 0.4737,
           "hit_rate_wilson95": {
-            "low": 0.3333,
-            "high": 0.6077
+            "low": 0.3499,
+            "high": 0.6008
           },
-          "mean_shots": 2.426,
-          "mean_attempts": 5.553,
-          "failed_with_activity": 14,
-          "failed_with_low_activity": 11,
+          "mean_shots": 2.491,
+          "mean_attempts": 5.386,
+          "failed_with_activity": 16,
+          "failed_with_low_activity": 14,
           "missing_shot_data": 0,
-          "calibrated_n": 47,
-          "brier": 0.266605,
-          "log_loss": 0.727806,
-          "priced_pregame_n": 47,
-          "unit_stake_simulated_roi": -0.2981,
+          "calibrated_n": 57,
+          "brier": 0.264578,
+          "log_loss": 0.723531,
+          "priced_pregame_n": 57,
+          "unit_stake_simulated_roi": -0.274,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -373,25 +374,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 48,
-          "settled": 47,
-          "wins": 22,
+          "number": 58,
+          "settled": 57,
+          "wins": 27,
           "unresolved": 1,
-          "hit_rate": 0.4681,
+          "hit_rate": 0.4737,
           "hit_rate_wilson95": {
-            "low": 0.3333,
-            "high": 0.6077
+            "low": 0.3499,
+            "high": 0.6008
           },
-          "mean_shots": 2.426,
-          "mean_attempts": 5.553,
-          "failed_with_activity": 14,
-          "failed_with_low_activity": 11,
+          "mean_shots": 2.491,
+          "mean_attempts": 5.386,
+          "failed_with_activity": 16,
+          "failed_with_low_activity": 14,
           "missing_shot_data": 0,
-          "calibrated_n": 47,
-          "brier": 0.266605,
-          "log_loss": 0.727806,
-          "priced_pregame_n": 47,
-          "unit_stake_simulated_roi": -0.2981,
+          "calibrated_n": 57,
+          "brier": 0.264578,
+          "log_loss": 0.723531,
+          "priced_pregame_n": 57,
+          "unit_stake_simulated_roi": -0.274,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
