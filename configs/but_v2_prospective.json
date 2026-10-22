@@ -22,6 +22,8 @@
     "model/henachel/but_v2_inputs.py",
     "model/henachel/but_v2_daily.py",
     "model/henachel/but_v2_prospective.py",
-    "configs/but_v2_prospective.json"
+    "configs/but_v2_prospective.json",
+    "model/henachel/but_v2_validation.py",
+    "docs/but_v2/PROSPECTIVE_PROTOCOL.md"
   ]
 }

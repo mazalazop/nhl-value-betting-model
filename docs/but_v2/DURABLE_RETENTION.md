@@ -1,0 +1,67 @@
+# Conservation durable — 22 octobre 2026
+
+Le registre Actions (90 jours) est une copie de travail. La copie durable utilise
+les releases GitHub **draft**, préfixe `henachel-but-v2-state-`, séparées du registre
+POINT/V1. Aucune publication, aucun abonnement ni écriture dans les picks.
+Chaque snapshot possède un index complet et des bundles immuables des seuls
+fichiers modifiés. Les index référencent les bundles des snapshots précédents :
+**conserver toutes ces releases**, pas seulement la dernière.
+
+Rétention prescrite : pendant toute l'étude et au moins 365 jours après sa clôture.
+Pas d'expiration programmée ni suppression automatisée. Un administrateur GitHub
+peut néanmoins supprimer ces données : ce n'est pas une garantie WORM ni une
+copie indépendante du compte GitHub. Une copie hors compte peut être obtenue
+avec la commande de restauration ci-dessous, sans nouveau service.
+
+Limites [documentées par GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) :
+1000 assets par release, chacun <2 GiB, pas de plafond global documenté pour les
+releases. Notre budget est 128 MiB par bundle non compressé, au plus 990 bundles
+par snapshot; un fichier individuel >128 MiB arrête la sauvegarde et exige une
+rotation explicite, sans perte silencieuse. Les sources de training sont déjà
+compressées et dédupliquées. Enveloppe de planification sur 180 jours : plusieurs
+Go de sources quotidiennes et des rapports cumulatifs croissants; pas de copie
+intégrale répétée à chaque run. Les reçus `verified.json` donnent le nombre de
+fichiers et les octets réels à surveiller quotidiennement. Aucune limite GitHub
+ne doit être interprétée comme une garantie de capacité infinie.
+
+Avant de valider chaque snapshot, téléchargement et restauration **complète**
+dans un répertoire temporaire, contrôle SHA256 de tous les bundles/fichiers et
+égalité avec `archive_manifest.json`. `index.json` puis `verified.json` sont les
+marqueurs de validation. Un snapshot incomplet bloque la reprise; aucun retour
+silencieux à une ancienne version. Un artefact Actions plus récent que la copie
+durable bloque aussi la capture jusqu'à réparation de sa sauvegarde.
+
+Le job de calcul conserve contents:read/actions:read. Seul le job `backup`, après
+calcul et upload du registre, possède contents:write pour les assets draft.
+La concurrence couvre l'ensemble du workflow (calcul ET sauvegarde).
+
+Restauration manuelle, avec GH_TOKEN en environnement et répertoire inexistant :
+
+```sh
+python scripts/backup_but_v2_state.py restore --state restored-shadow
+```
+
+Réparer une sauvegarde interrompue : télécharger l'artefact le plus récent,
+relancer `backup --state <répertoire>` avec GITHUB_SHA/GITHUB_RUN_ID d'origine,
+vérifier le reçu, puis reprendre. Ne pas effacer de snapshot pour contourner
+un contrôle. Le dernier index complet est autonome en métadonnées, mais dépend
+des bundles immuables qu'il référence dans les releases précédentes.
+
+Test distant réel préalable : release draft `420617845`, préfixe distinct
+`henachel-but-v2-restore-probe-`, deux fichiers techniques, 186 octets; restauration
+indépendante effectuée le 22 octobre. SHA256 de l'index :
+`2feeed4248c5e281f2dc2855d6e9c5ef8282a4bf84b23e71e9c7b4e41b3ae9fd`.
+Ce test n'est ni une prédiction ni T0. Les tests automatisés couvrent aussi les
+versions anciennes, la déduplication, les corruptions, les chemins dangereux,
+les budgets et les reprises idempotentes.
+
+Capacité de la copie de travail : après restauration intégralement vérifiée,
+les anciennes vues `batches/*/{reports,cumulative,outcomes.csv}` sont retirées
+**uniquement de la copie de travail**, sauf le dernier bilan. Elles restent
+restaurables par leur index de snapshot immuable; `compactions/` enregistre ce
+lien et chaque chemin. Captures, historiques, sources officielles, entrées,
+journaux de capture et dernier bilan restent présents. Cela évite la croissance
+quadratique des rapports quotidiens dans le runner. Une restauration manuelle
+d'un index ancien permet de retrouver exactement la vue précédente. Les copies
+durables ne sont jamais purgées. Le stockage total distant des vues reste
+croissant : suivre les reçus, et ne jamais supprimer les bundles référencés.

@@ -46,7 +46,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: python -m pip install -r requirements.lock
-      - run: python -m pytest tests/test_but_v2.py tests/test_but_v2_validation.py tests/test_but_v2_shadow.py tests/test_but_v2_daily.py -q -W error
+      - run: python -m pytest tests/test_but_v2.py tests/test_but_v2_validation.py tests/test_but_v2_shadow.py tests/test_but_v2_daily.py tests/test_but_v2_backup.py -q -W error
       - name: Validate source and restore verified shadow state
         id: stage
         shell: bash
@@ -78,3 +78,34 @@ jobs:
           if p.exists():
               with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write(p.read_text())
           PY
+
+  backup:
+    needs: shadow
+    if: ${{ always() && needs.shadow.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests==2.32.3
+      - uses: actions/download-artifact@v4
+        with:
+          name: but-v2-shadow-state
+          path: shadow-state
+      - name: Append durable backup and verify full remote restoration
+        shell: bash
+        run: python scripts/backup_but_v2_state.py backup --state shadow-state | tee backup-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: but-v2-backup-receipt
+          path: backup-receipt.json
+          retention-days: 90

@@ -1,4 +1,4 @@
-# Protocole prospectif BUT V2 — proposé avant activation
+# Protocole prospectif BUT V2 — validé avant activation
 
 Version `BUT_V2_PROSPECTIVE_1`, configuration `configs/but_v2_prospective.json`.
 T0 sera la première journée NHL capturée après autorisation; aucune date passée
@@ -47,8 +47,8 @@ sur les jours rencontrés; il ne remplace pas cet audit externe.
 
 Ces nombres sont des planchers opérationnels, pas une preuve de puissance.
 Le replay n'a pas démontré de gain global et ses intervalles restent larges.
-Ne pas promettre une promotion à J180. Avant activation, confirmer le gain
-minimal utile (.001 log-loss et .0003 Brier, fixés ici) et le budget de durée;
+Ne pas promettre une promotion à J180. Le 22 octobre 2026, l’utilisateur a validé le gain
+minimal utile (.001 log-loss et .0003 Brier, fixés ici) et la fenêtre de 180 jours;
 si une analyse de puissance indépendante impose davantage d'observations,
 modifier le protocole **avant T0**, jamais en fonction des gains prospectifs.
 
@@ -85,3 +85,22 @@ simulé; pas de prix reconstruit après match, pas de filtre value optimisé apr
 Pas d'IC journalier artificiellement précis : pas d'intervalle de blocs avant
 14 dates. Le rapport cumulatif fournit Brier, log-loss, calibration, classement,
 coverage et différences appariées; les décisions restent manuelles.
+
+## Enregistrement avant T0 — 22 octobre 2026
+
+Autorisation utilisateur : intégration et activation shadow seulement. Le candidat
+reste la logistique complète d'origine, sans sélection fondée sur le replay.
+Les variables brutes temps PP historiques font déjà partie du candidat; aucun
+nouveau temps PP projeté, gardien, PP1 ni xG n'est ajouté. La calibration est
+sélectionnée chronologiquement à chaque refit selon l'algorithme gelé.
+Les fichiers et variables sont inscrits dans `PRE_T0_REGISTRATION.json`.
+
+Top10 quotidien pour chaque modèle : probabilité décroissante, puis identifiant
+match croissant et identifiant joueur croissant pour départager les égalités.
+La référence V1 est la probabilité GOAL17 du même artefact, jamais recalculée.
+Le décalage entre les émissions est conservé; l'âge V1 est vérifié au début du fit
+et l'ensemble des matchs doit encore être futur à la fin du fit V2.
+Ni exclusion d'un joueur peu probable ni remplacement après observation du résultat.
+La calibration utilise les dix intervalles fixes [0,.1), …, [.9,1].
+La mise simulée est une unité pour chaque membre coté du Top10 figé, sans
+filtre de value; les non-cotés et non-résolus restent comptabilisés séparément.

@@ -53,7 +53,9 @@ def test_adapter_exact_schedule_and_odds_contract(tmp_path):
 def test_workflow_is_disabled_without_explicit_repository_variable():
     text=(ROOT/'.github/workflows/but-v2-shadow.yml').read_text()
     assert "vars.HENACHEL_BUT_V2_SHADOW_ENABLED == 'true'" in text
-    assert 'contents: read' in text and 'actions: read' in text and 'contents: write' not in text
+    assert 'contents: read' in text and 'actions: read' in text
+    assert 'contents: write' not in text.split('  backup:')[0]
+    assert 'contents: write' in text.split('  backup:')[1]
     assert 'group: but-v2-shadow-state' in text and 'cancel-in-progress: false' in text
     assert 'schedule:' not in text
 

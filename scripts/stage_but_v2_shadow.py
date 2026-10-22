@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Read-only GitHub staging. Called only by the explicitly enabled shadow job."""
 import argparse,json,subprocess
+import sys
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
+from backup_but_v2_state import authenticated_store, restore, compact_verified_state
 from pathlib import Path
 
 REPO='mazalazop/nhl-value-betting-model'
@@ -24,7 +27,14 @@ def stage(run_id,root,initialize=False):
     subprocess.run(['gh','run','download',str(run_id),'--repo',REPO,'--name',candidates[0]['name'],'--dir',str(root/'upstream')],check=True)
     # Fixed name across runs; API returns newest first. Never fall back to a clean empty archive.
     prior=api('actions/artifacts?name=but-v2-shadow-state&per_page=100')['artifacts']
-    if prior:
+    store=authenticated_store()
+    durable=store.latest()
+    if durable is not None:
+        if prior and max(int(a['workflow_run']['id']) for a in prior)>int(durable['workflow_run_id']):
+            raise ValueError('Newer Actions state has no durable backup; repair it before capture')
+        restore(store,durable,root/'state')
+        compact_verified_state(root/'state',durable)
+    elif prior:
         latest=max(prior,key=lambda a:a['created_at'])
         if latest['expired']:raise ValueError('Latest shadow archive expired: restore durable backup; do not reset')
         previous=api(f"actions/runs/{latest['workflow_run']['id']}")
