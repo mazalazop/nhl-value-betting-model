@@ -17,6 +17,7 @@ import requests
 
 PREFIX = 'henachel-but-v2-state-'
 BUNDLE_LIMIT = 128 * 1024 * 1024
+MAX_FILE_SIZE = 512 * 1024 * 1024
 
 
 def digest(data):
@@ -171,7 +172,8 @@ def compact_verified_state(root, index):
     """Drop only reproducible old views from working copy, after durable restoration.
 
     Every removed byte remains in the immutable snapshot named in the receipt.
-    Captures, source data, status logs and latest reports are never removed.
+    Captures, official sources, status logs and latest reports remain local.
+    Older training snapshots remain restorable from the durable index.
     """
     root = Path(root)
     actual = validate_state(root)
@@ -181,12 +183,19 @@ def compact_verified_state(root, index):
     if not pointer.exists():
         return []
     latest = json.loads(pointer.read_text())['path']
+    history_reference = root / latest / 'inputs/history_reference.json'
+    latest_history = json.loads(history_reference.read_text())['path'] if history_reference.exists() else None
+    if latest_history is not None and latest_history not in actual:
+        raise ValueError('Latest training snapshot missing before compaction')
     removed = []
     for name in actual:
         parts = PurePosixPath(name).parts
         if (len(parts) >= 3 and parts[0] == 'batches'
             and '/'.join(parts[:2]) != latest
             and parts[2] in {'reports', 'cumulative', 'outcomes.csv'}):
+            (root / name).unlink(); removed.append(name)
+        elif (len(parts) == 2 and parts[0] == 'training_sources' and name.endswith('.csv.gz')
+              and latest_history is not None and name != latest_history):
             (root / name).unlink(); removed.append(name)
     if removed:
         receipt = root / 'compactions' / (index['state_sha256'] + '.json')
@@ -212,8 +221,8 @@ def backup(store, root, commit, run_id):
     for name in changed:
         safe_path(name)
         n = (root / name).stat().st_size
-        if n > BUNDLE_LIMIT:
-            raise ValueError('Individual file exceeds 128 MiB budget; archive rotation required')
+        if n > MAX_FILE_SIZE:
+            raise ValueError('Individual file exceeds 512 MiB budget; archive rotation required')
         if size + n > BUNDLE_LIMIT and group:
             groups.append(group); group = []; size = 0
         group.append(name); size += n

@@ -15,8 +15,8 @@ avec la commande de restauration ci-dessous, sans nouveau service.
 
 Limites [documentées par GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) :
 1000 assets par release, chacun <2 GiB, pas de plafond global documenté pour les
-releases. Notre budget est 128 MiB par bundle non compressé, au plus 990 bundles
-par snapshot; un fichier individuel >128 MiB arrête la sauvegarde et exige une
+releases. Notre budget est 128 MiB cible par bundle non compressé (un fichier plus gros est isolé), au plus 990 bundles
+par snapshot; un fichier individuel >512 MiB arrête la sauvegarde et exige une
 rotation explicite, sans perte silencieuse. Les sources de training sont déjà
 compressées et dédupliquées. Enveloppe de planification sur 180 jours : plusieurs
 Go de sources quotidiennes et des rapports cumulatifs croissants; pas de copie
@@ -61,7 +61,7 @@ Capacité de la copie de travail : après restauration intégralement vérifiée
 les anciennes vues `batches/*/{reports,cumulative,outcomes.csv}` sont retirées
 **uniquement de la copie de travail**, sauf le dernier bilan. Elles restent
 restaurables par leur index de snapshot immuable; `compactions/` enregistre ce
-lien et chaque chemin. Captures, historiques, sources officielles, entrées,
+lien et chaque chemin. Captures, dernier historique, sources officielles, entrées,
 journaux de capture et dernier bilan restent présents. Cela évite la croissance
 quadratique des rapports quotidiens dans le runner. Une restauration manuelle
 d'un index ancien permet de retrouver exactement la vue précédente. Les copies
@@ -73,3 +73,19 @@ contextuelles (pas de nouvel artefact de prédiction). Un dispatch manuel sans
 artefact V1 reste une erreur. Toute copie Actions préexistante sans sauvegarde
 durable validée bloque également le démarrage; `initialize` ne contourne pas
 ce contrôle.
+
+
+Mesure de capacité réelle du 22 octobre : historique source du 20 octobre,
+249 861 571 octets bruts, 75 027 069 octets gzip niveau 1. Soit environ 13,5 Go
+pour 180 versions quotidiennes, hors croissance. Cette mesure sert seulement
+au dimensionnement, pas à une observation prospective. Ces 180 versions ne
+peuvent pas toutes rester dans le runner standard. La compaction conserve donc
+seulement la source training référencée par le dernier batch dans la copie de
+travail; les versions antérieures restent **intégralement** dans les snapshots
+immuables, avec leur chemin, hash et reçu de compaction. Au redémarrage, un
+historique antérieur et le nouvel historique peuvent coexister temporairement.
+Les références historiques restent auditables en restaurant le snapshot indiqué
+par `compactions/`. Aucun fichier source distant n'est effacé.
+
+Cette correction est exclusivement opérationnelle : aucun fichier du candidat,
+du calcul des probabilités, des métriques ou du protocole gelé n'est modifié.
