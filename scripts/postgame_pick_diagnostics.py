@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Postgame diagnostic of archived HENACHEL picks. Research only, not a model update."""
-import argparse,csv,datetime,json,math,pathlib,re,time,unicodedata
+import argparse,csv,datetime,hashlib,json,math,pathlib,re,time,unicodedata
 from collections import Counter
 from urllib.request import Request,urlopen
 
@@ -29,13 +29,18 @@ def minute(x):
         a,b=str(x).split(":",1);return round(int(a)+int(b)/60,3)
     try:return round(float(x),3)
     except: return None
-def lookup_player(box,team,player):
+def lookup_player(box,team,player,player_id=None):
     for side in ["home","away"]:
         meta=box.get(side+"Team") or {}
         abbr=str(meta.get("abbrev") or meta.get("triCode") or "").upper()
         if abbr!=team.upper():continue
         squad=box.get("playerByGameStats",{}).get(side+"Team") or {}
         rows=sum((squad.get(k) or [] for k in ["forwards","defense","defensemen"]),[])
+        if player_id:
+            identified=[x for x in rows if str(x.get("playerId"))==str(player_id)]
+            if len(identified)==1:return identified[0],"NHL_ID"
+            return None,"PLAYER_ID_NOT_IN_TEAM_BOXSCORE"
+        if not str(player).strip():return None,"ABSENT_OR_NAME_MISMATCH"
         exact=[x for x in rows if norm(nm(x))==norm(player)]
         if len(exact)==1:return exact[0],"EXACT"
         # NHL boxscores abbreviate first names. Disambiguate siblings and
@@ -44,14 +49,13 @@ def lookup_player(box,team,player):
         surname=norm(player.split()[-1])
         initial_matches=[x for x in rows if norm(nm(x))==first+surname]
         if len(initial_matches)==1:return initial_matches[0],"INITIAL_SURNAME"
-        # Team-unique surname is allowed only when unambiguous.
-        loose=[x for x in rows if norm(nm(x)).endswith(surname)]
-        if len(loose)==1:return loose[0],"TEAM_SURNAME"
+        # Never substitute a different first name or a suffix-matching surname.
         return None,"ABSENT_OR_NAME_MISMATCH"
     return None,"TEAM_NOT_IN_BOXSCORE"
 def extract_attempts(pbp,pid):
     r=[]
     for play in pbp.get("plays",[]):
+        if (play.get("periodDescriptor") or {}).get("periodType")=="SO":continue
         typ=play.get("typeDescKey")
         if typ not in ["shot-on-goal","missed-shot","blocked-shot","goal"]:continue
         d=play.get("details") or {}
@@ -74,12 +78,16 @@ def collect(day,input_csv,outdir,archive_id=""):
             if team:team_to_game[str(team).upper()]=g
     with open(input_csv,encoding="utf-8-sig",newline="") as source:
         picks=list(csv.DictReader(source))
+    identities=[(p.get("archive_group"),p.get("market"),p.get("bet_id") or
+                 (p.get("id_match"),p.get("id_joueur") or norm(p.get("player")),p.get("team"))) for p in picks]
+    if len(identities)!=len(set(identities)):raise ValueError("Duplicate pick identity")
+    captured=datetime.datetime.now(datetime.timezone.utc).isoformat()
     cache={};out=[]
     for pick in picks:
         if pick["date"]!=day:continue
         row=dict(pick)
         row.setdefault("archive_provenance","RETROSPECTIVE_RECONSTRUCTION")
-        row.update(status="UNRESOLVED",official_win="",goals="",assists="",points="",shots="",toi_min="",pp_toi_min="",
+        row.update(postgame_captured_at_utc=captured,settlement_status="UNRESOLVED",status="UNRESOLVED",official_win="",goals="",assists="",points="",shots="",toi_min="",pp_toi_min="",
                    missed_attempts="",blocked_attempts="",attempts_pbp="",close_20ft_proxy="",close_40ft_proxy="",
                    xg_individual="NOT_AVAILABLE",disallowed_goal="NOT_VERIFIED",evidence="",source="")
         g=team_to_game.get(row["team"].upper())
@@ -99,9 +107,14 @@ def collect(day,input_csv,outdir,archive_id=""):
             except Exception as exc:pbp={"plays":[],"source_error":str(exc)}
             cache[gid]=(box,pbp)
         box,pbp=cache[gid]
-        player,method=lookup_player(box,row["team"],row["player"])
+        if (box.get("id") is not None and str(box["id"])!=str(gid)) or (box.get("gameState") is not None and box["gameState"] not in {"OFF","FINAL"}):
+            row["status"]="BOXSCORE_ID_OR_STATE_MISMATCH";out.append(row);continue
+        player,method=lookup_player(box,row["team"],row["player"],str(row.get("id_joueur") or "").strip())
         if player is None:
             row["status"]=method;out.append(row);continue
+        observed_toi=minute(player.get("toi") or player.get("timeOnIce"))
+        if observed_toi is not None and observed_toi<=0:
+            row["status"]="NO_ICE_TIME";out.append(row);continue
         if any(player.get(k) is None for k in ("goals","assists")):
             row["status"]="MISSING_OFFICIAL_OUTCOME";out.append(row);continue
         supplied_id=str(row.get("id_joueur") or "").strip()
@@ -119,25 +132,45 @@ def collect(day,input_csv,outdir,archive_id=""):
         points=int(player.get("points") if player.get("points") is not None else goals+assists)
         row["goals"]=goals;row["assists"]=assists;row["points"]=points
         row["official_win"]=int(goals>=1 if row["market"]=="GOAL" else points>=1)
-        row["shots"]=int(player.get("sog") if player.get("sog") is not None else (player.get("shots") or 0))
+        row["settlement_status"]="WIN" if row["official_win"] else "LOSS"
+        shots=player.get("sog") if player.get("sog") is not None else player.get("shots")
+        row["shots"]=int(shots) if shots is not None else ""
         row["toi_min"]=minute(player.get("toi") or player.get("timeOnIce"))
         row["pp_toi_min"]=minute(player.get("powerPlayToi") or player.get("ppTimeOnIce") or player.get("powerPlayTimeOnIce"))
+        row["boxscore_source"]=f"{API}/gamecenter/{gid}/boxscore"
+        row["pbp_source"]=f"{API}/gamecenter/{gid}/play-by-play"
+        if pbp.get("source_error") or not pbp.get("plays"):
+            row["pbp_error"]=pbp.get("source_error") or "EMPTY_OR_MISSING_PLAYS"
+            out.append(row);continue
         ev=extract_attempts(pbp,player.get("playerId"))
+        if row["shots"]!="" and sum(e["type"] in {"shot-on-goal","goal"} for e in ev)!=row["shots"]:
+            row["pbp_error"]="SHOT_COUNT_MISMATCH";out.append(row);continue
         row["attempts_pbp"]=len(ev)
         row["missed_attempts"]=sum(e["type"]=="missed-shot" for e in ev)
         row["blocked_attempts"]=sum(e["type"]=="blocked-shot" for e in ev)
-        row["close_20ft_proxy"]=sum(e["dist_ft_proxy"] is not None and e["dist_ft_proxy"]<=20 for e in ev)
-        row["close_40ft_proxy"]=sum(e["dist_ft_proxy"] is not None and e["dist_ft_proxy"]<=40 for e in ev)
+        row["close_20ft_proxy"]=sum(e["dist_ft_proxy"]<=20 for e in ev) if all(e["dist_ft_proxy"] is not None for e in ev) else ""
+        row["close_40ft_proxy"]=sum(e["dist_ft_proxy"]<=40 for e in ev) if all(e["dist_ft_proxy"] is not None for e in ev) else ""
         row["evidence"]=json.dumps(ev,separators=(",",":"))
         out.append(row)
     if not out:raise ValueError("No archived picks for target day")
     outdir.mkdir(parents=True,exist_ok=True)
-    fields=list(dict.fromkeys(k for row in out for k in row))
     filename=day+(("-"+archive_id) if archive_id else "")+"-picks.csv"
+    # Keep every previous materialized result and raw source response by content hash.
+    # Longitudinal glob is non-recursive: these snapshots never count twice.
+    revisions=outdir/"revisions";revisions.mkdir(exist_ok=True)
+    for existing in (outdir/filename,outdir/filename.replace("-picks.csv","-summary.json")):
+        if existing.exists():
+            payload=existing.read_bytes();backup=revisions/(hashlib.sha256(payload).hexdigest()+"-"+existing.name)
+            if not backup.exists():backup.write_bytes(payload)
+    raw=json.dumps(dict(slate=slate,game_responses=cache),sort_keys=True).encode()
+    rawpath=revisions/(hashlib.sha256(raw).hexdigest()+"-sources.json")
+    if not rawpath.exists():rawpath.write_bytes(raw)
+    for row in out:row["source_snapshot_sha256"]=hashlib.sha256(raw).hexdigest()
+    fields=list(dict.fromkeys(k for row in out for k in row))
     with (outdir/filename).open("w",newline="",encoding="utf-8") as f:
         writer=csv.DictWriter(f,fieldnames=fields);writer.writeheader();writer.writerows(out)
     overview={}
-    for group in ["CLASSEUR","EXTRA"]:
+    for group in ["CLASSEUR","EXTRA","CANONICAL"]:
         overview[group]={}
         for market in ["POINT","GOAL"]:
             subset=[x for x in out if x["archive_group"]==group and x["market"]==market]
