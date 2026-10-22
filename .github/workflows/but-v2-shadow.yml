@@ -1,0 +1,137 @@
+name: BUT V2 isolated shadow
+on:
+  workflow_run:
+    workflows: [henachel-points-global]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      input_run_id:
+        description: 'Run global réussi sur main à comparer, sans le relancer'
+        required: true
+        type: string
+      initialize:
+        description: 'Initialiser le registre vide après autorisation explicite (premier démarrage seulement)'
+        default: false
+        type: boolean
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: but-v2-shadow-state
+  cancel-in-progress: false
+jobs:
+  source:
+    if: >-
+      vars.HENACHEL_BUT_V2_SHADOW_ENABLED == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.probe.outputs.eligible }}
+    steps:
+      - name: Ignore context-only completions without a new prediction artifact
+        id: probe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          INPUT_RUN_ID: ${{ github.event.workflow_run.id || inputs.input_run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$INPUT_RUN_ID" =~ ^[0-9]+$ ]]
+          COUNT=$(gh api "repos/$GH_REPO/actions/runs/$INPUT_RUN_ID/artifacts?per_page=100" --jq '[.artifacts[] | select((.name | startswith("henachel-model-outputs-")) and (.expired == false))] | length')
+          if [ "$COUNT" = 1 ]; then
+            echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          elif [ "$COUNT" = 0 ] && [ "$EVENT_NAME" = workflow_run ]; then
+            echo 'eligible=false' >> "$GITHUB_OUTPUT"
+            echo 'No new model artifact: context-only completion, no shadow capture attempted.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Expected exactly one fresh model artifact' >&2
+            exit 1
+          fi
+  shadow:
+    needs: source
+    if: needs.source.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      GH_TOKEN: ${{ github.token }}
+      INPUT_RUN_ID: ${{ github.event.workflow_run.id || inputs.input_run_id }}
+      INITIALIZE: ${{ inputs.initialize }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pytest tests/test_but_v2.py tests/test_but_v2_validation.py tests/test_but_v2_shadow.py tests/test_but_v2_daily.py tests/test_but_v2_backup.py -q -W error
+      - name: Validate source and restore verified shadow state
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [ "$INITIALIZE" = 'true' ]; then ARGS+=(--initialize); fi
+          python scripts/stage_but_v2_shadow.py --run-id "$INPUT_RUN_ID" --root shadow-work "${ARGS[@]}"
+      - name: Capture once before puck drop and report all archived pairs
+        run: python scripts/run_but_v2_shadow_daily.py --root shadow-work
+      - name: Preserve state even when a new capture fails
+        if: ${{ always() && steps.stage.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: but-v2-shadow-state
+          path: shadow-work/state/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Add daily comparison to run summary
+        if: ${{ always() && steps.stage.outcome == 'success' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          state=Path('shadow-work/state')
+          pointer=state/'latest_batch.json'
+          p=state/json.loads(pointer.read_text())['path']/'cumulative/README.md' if pointer.exists() else state/'missing'
+          if p.exists():
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write(p.read_text())
+          PY
+
+  backup:
+    needs: shadow
+    if: ${{ always() && needs.shadow.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests==2.32.3
+      - uses: actions/download-artifact@v4
+        with:
+          name: but-v2-shadow-state
+          path: shadow-state
+      - name: Append durable backup and verify full remote restoration
+        shell: bash
+        run: python scripts/backup_but_v2_state.py backup --state shadow-state | tee backup-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: but-v2-backup-receipt
+          path: backup-receipt.json
+          retention-days: 90

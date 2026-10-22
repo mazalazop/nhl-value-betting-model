@@ -1,0 +1,29 @@
+{
+  "version": "BUT_V2_PROSPECTIVE_1",
+  "first_review_calendar_day": 30,
+  "final_calendar_day": 180,
+  "min_dates": 90,
+  "min_rows": 20000,
+  "min_positive_outcomes": 2000,
+  "min_settlement_coverage": 0.98,
+  "min_eligible_day_capture_coverage": 0.95,
+  "minimum_log_loss_gain": 0.001,
+  "minimum_brier_gain": 0.0003,
+  "v1_config_sha": "3a0b589a0e79fcf47e64314c1184fcb5ea06bad92e89edd224cea83ed7273eae",
+  "promotion_allowed": false,
+  "selection": "first complete pregame pair per NHL date; no replacements or backfill",
+  "locked_files": [
+    "model/henachel/but_v2.py",
+    "model/henachel/goal.py",
+    "model/henachel/calibration.py",
+    "configs/but_v2.json",
+    "requirements.lock",
+    "model/henachel/but_v2_shadow.py",
+    "model/henachel/but_v2_inputs.py",
+    "model/henachel/but_v2_daily.py",
+    "model/henachel/but_v2_prospective.py",
+    "configs/but_v2_prospective.json",
+    "model/henachel/but_v2_validation.py",
+    "docs/but_v2/PROSPECTIVE_PROTOCOL.md"
+  ]
+}
