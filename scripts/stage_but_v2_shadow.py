@@ -17,6 +17,29 @@ def validate_run(run):
         or run['event'] not in {'schedule','workflow_dispatch','push'}):
         raise ValueError('Upstream must be a successful main production workflow, never a PR')
 
+
+def discover_durable(store, prior, root):
+    durable=store.latest()
+    if durable is not None or not prior:return durable
+    # A receipt is a discovery pointer only. All data still comes from the verified
+    # durable release, never from an unchecked/expired Actions state snapshot.
+    latest=max(prior,key=lambda a:a['created_at'])
+    run_id=latest['workflow_run']['id'];previous=api(f'actions/runs/{run_id}')
+    if previous['head_branch']!='main' or previous['path']!='.github/workflows/but-v2-shadow.yml':
+        raise ValueError('Untrusted backup receipt workflow')
+    artifacts=api(f'actions/runs/{run_id}/artifacts?per_page=100')['artifacts']
+    receipts=[a for a in artifacts if a['name']=='but-v2-backup-receipt' and not a['expired']]
+    if len(receipts)!=1:raise ValueError('No unique verified receipt to discover missing draft listing')
+    destination=Path(root)/'recovery-receipt'
+    subprocess.run(['gh','run','download',str(run_id),'--repo',REPO,'--name','but-v2-backup-receipt',
+                    '--dir',str(destination)],check=True)
+    receipt=json.loads((destination/'backup-receipt.json').read_text())
+    if receipt.get('remote_restore_verified') is not True:raise ValueError('Unverified backup receipt')
+    durable=store.by_release_id(receipt['release_id'],receipt['index_sha256'])
+    if str(durable['workflow_run_id'])!=str(run_id):raise ValueError('Backup receipt/run mismatch')
+    return durable
+
+
 def stage(run_id,root,initialize=False):
     if not str(run_id).isdigit():raise ValueError('Numeric run ID required')
     run=api(f'actions/runs/{run_id}');validate_run(run)
@@ -28,7 +51,7 @@ def stage(run_id,root,initialize=False):
     # Fixed name across runs; API returns newest first. Never fall back to a clean empty archive.
     prior=api('actions/artifacts?name=but-v2-shadow-state&per_page=100')['artifacts']
     store=authenticated_store()
-    durable=store.latest()
+    durable=discover_durable(store,prior,root)
     if durable is not None:
         if prior and max(int(a['workflow_run']['id']) for a in prior)>int(durable['workflow_run_id']):
             raise ValueError('Newer Actions state has no durable backup; repair it before capture')

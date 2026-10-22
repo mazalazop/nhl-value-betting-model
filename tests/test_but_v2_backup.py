@@ -96,3 +96,18 @@ def test_compaction_keeps_latest_sources_and_remote_old_views(tmp_path):
     assert (tmp_path / 'historical/training_sources/old.csv.gz').exists()
     with pytest.raises(ValueError, match='exact verified'):
         b.compact_verified_state(root, index)
+
+
+def test_direct_release_discovery_checks_identity_and_receipt_hash():
+    class Response:
+        def json(self): return dict(id=12,draft=True,tag_name=b.PREFIX+'snapshot')
+    class Direct(b.Store):
+        def get(self,path,**kwargs): return Response()
+        def assets(self,release): return {'index.json':{'id':1},'verified.json':{'id':2}}
+        def download(self,asset_id):
+            raw=b'{"workflow_run_id":"1","files":{}}'
+            return raw if asset_id==1 else json.dumps(dict(index_sha256=b.digest(raw))).encode()
+    store=Direct(None,'repo')
+    assert store.by_release_id(12)['workflow_run_id']=='1'
+    with pytest.raises(ValueError,match='checksum'):
+        store.by_release_id(12,'wrong-receipt-hash')
