@@ -1,6 +1,10 @@
 name: Henachel dispatch POINT and GOAL
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/henachel-dispatch.yml'
   schedule:
     - cron: '30 12 * * *'
       timezone: 'Europe/Paris'
