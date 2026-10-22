@@ -35,16 +35,7 @@ def stage(run_id,root,initialize=False):
         restore(store,durable,root/'state')
         compact_verified_state(root/'state',durable)
     elif prior:
-        latest=max(prior,key=lambda a:a['created_at'])
-        if latest['expired']:raise ValueError('Latest shadow archive expired: restore durable backup; do not reset')
-        previous=api(f"actions/runs/{latest['workflow_run']['id']}")
-        if previous['head_branch']!='main' or previous['path']!='.github/workflows/but-v2-shadow.yml':raise ValueError('Untrusted shadow state artifact')
-        subprocess.run(['gh','run','download',str(latest['workflow_run']['id']),'--repo',REPO,'--name','but-v2-shadow-state','--dir',str(root/'state')],check=True)
-        if not (root/'state/archive_manifest.json').exists():raise ValueError('Restored archive has no integrity manifest')
-        manifest=json.loads((root/'state/archive_manifest.json').read_text())
-        import hashlib
-        actual={str(p.relative_to(root/'state')):hashlib.sha256(p.read_bytes()).hexdigest() for p in (root/'state').rglob('*') if p.is_file() and p.name!='archive_manifest.json'}
-        if actual!=manifest['files']:raise ValueError('Restored archive hash/coverage mismatch')
+        raise ValueError('Actions state exists without a verified durable backup; repair before capture')
     elif not initialize:raise ValueError('No archive: first start needs explicit initialize approval')
     else:(root/'state').mkdir()
     (root/'upstream_run.json').write_text(json.dumps(run,indent=2))

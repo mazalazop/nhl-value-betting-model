@@ -113,6 +113,19 @@ class Store:
             return json.loads(raw)
         return None
 
+    def snapshot(self, state_hash):
+        if len(state_hash) != 64 or any(c not in '0123456789abcdef' for c in state_hash):
+            raise ValueError('Expected SHA256 snapshot')
+        matches = [r for r in self.releases() if r['tag_name'] == self.prefix + state_hash]
+        if len(matches) != 1:
+            raise ValueError('Snapshot not found or ambiguous')
+        assets = self.assets(matches[0])
+        raw = self.download(assets['index.json']['id'])
+        receipt = json.loads(self.download(assets['verified.json']['id']))
+        if digest(raw) != receipt['index_sha256']:
+            raise ValueError('Snapshot index checksum mismatch')
+        return json.loads(raw)
+
     def create(self, tag, commit):
         matching = [r for r in self.releases() if r['tag_name'] == tag]
         if matching:
@@ -245,11 +258,12 @@ if __name__ == '__main__':
     p.add_argument('action', choices=['backup', 'restore'])
     p.add_argument('--state', type=Path, required=True)
     p.add_argument('--prefix', default=PREFIX)
+    p.add_argument('--snapshot', help='Optional SHA256 of a historical snapshot to restore')
     args = p.parse_args(); store = authenticated_store(args.prefix)
     if args.action == 'backup':
         print(json.dumps(backup(store, args.state, os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'])))
     else:
-        index = store.latest()
+        index = store.snapshot(args.snapshot) if args.snapshot else store.latest()
         if index is None:
             raise ValueError('No durable backup')
         restored = restore(store, index, args.state)

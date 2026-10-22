@@ -21,14 +21,40 @@ concurrency:
   group: but-v2-shadow-state
   cancel-in-progress: false
 jobs:
-  shadow:
-    # Missing/false variable means NO execution, including manual dispatch.
-    # This PR never sets the variable. Enabling it requires explicit approval.
+  source:
     if: >-
       vars.HENACHEL_BUT_V2_SHADOW_ENABLED == 'true' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.probe.outputs.eligible }}
+    steps:
+      - name: Ignore context-only completions without a new prediction artifact
+        id: probe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          INPUT_RUN_ID: ${{ github.event.workflow_run.id || inputs.input_run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$INPUT_RUN_ID" =~ ^[0-9]+$ ]]
+          COUNT=$(gh api "repos/$GH_REPO/actions/runs/$INPUT_RUN_ID/artifacts?per_page=100" --jq '[.artifacts[] | select((.name | startswith("henachel-model-outputs-")) and (.expired == false))] | length')
+          if [ "$COUNT" = 1 ]; then
+            echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          elif [ "$COUNT" = 0 ] && [ "$EVENT_NAME" = workflow_run ]; then
+            echo 'eligible=false' >> "$GITHUB_OUTPUT"
+            echo 'No new model artifact: context-only completion, no shadow capture attempted.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Expected exactly one fresh model artifact' >&2
+            exit 1
+          fi
+  shadow:
+    needs: source
+    if: needs.source.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

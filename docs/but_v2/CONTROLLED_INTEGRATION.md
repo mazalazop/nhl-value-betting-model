@@ -1,3 +1,10 @@
+> État historique de la revue du 21 octobre. L'utilisateur a autorisé les fusions
+> et l'activation le 22 octobre. Le protocole est désormais validé et enregistré
+> dans PRE_T0_REGISTRATION.json; la conservation durable et les nouvelles
+> permissions du seul job backup sont décrites dans DURABLE_RETENTION.md.
+> Le bilan d'exécution du 22 octobre remplace les mentions « non fusionné » et
+> « non activé » ci-dessous dès que les opérations distantes sont vérifiées.
+
 # Revue et intégration contrôlée — 21 octobre 2026
 
 Ce document complète et remplace les instructions d'activation initiales de

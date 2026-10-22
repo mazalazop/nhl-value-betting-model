@@ -39,6 +39,8 @@ Restauration manuelle, avec GH_TOKEN en environnement et répertoire inexistant 
 
 ```sh
 python scripts/backup_but_v2_state.py restore --state restored-shadow
+# Une vue antérieure référencée par compactions/ :
+python scripts/backup_but_v2_state.py restore --state restored-old --snapshot <SHA256>
 ```
 
 Réparer une sauvegarde interrompue : télécharger l'artefact le plus récent,
@@ -65,3 +67,9 @@ quadratique des rapports quotidiens dans le runner. Une restauration manuelle
 d'un index ancien permet de retrouver exactement la vue précédente. Les copies
 durables ne sont jamais purgées. Le stockage total distant des vues reste
 croissant : suivre les reçus, et ne jamais supprimer les bundles référencés.
+
+Le job `source` ignore les fins de runs horaires ne contenant que des annotations
+contextuelles (pas de nouvel artefact de prédiction). Un dispatch manuel sans
+artefact V1 reste une erreur. Toute copie Actions préexistante sans sauvegarde
+durable validée bloque également le démarrage; `initialize` ne contourne pas
+ce contrôle.

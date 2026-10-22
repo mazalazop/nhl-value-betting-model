@@ -96,3 +96,13 @@ def test_final_assessment_cannot_promote_or_run_early():
     with pytest.raises(ValueError,match='window'):final_assessment(rows,protocol,'2026-01-31')
     result=final_assessment(rows,protocol,'2026-08-01')
     assert not result['promotion_authorized'] and not result['sample_floors_met'] and not result['score_gate']
+
+
+def test_pre_t0_registration_matches_frozen_files_and_features():
+    import hashlib,json
+    from henachel.but_v2 import FEATURES
+    registration=json.loads((ROOT/'docs/but_v2/PRE_T0_REGISTRATION.json').read_text())
+    assert registration['features']==FEATURES
+    assert not registration['promotion_authorized']
+    for name,digest in registration['file_sha256'].items():
+        assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest,name
