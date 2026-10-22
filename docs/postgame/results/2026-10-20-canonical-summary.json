@@ -31,6 +31,20 @@
         "wins": 0,
         "unresolved": 0
       }
+    },
+    "CANONICAL": {
+      "POINT": {
+        "original": 15,
+        "settled": 15,
+        "wins": 7,
+        "unresolved": 0
+      },
+      "GOAL": {
+        "original": 0,
+        "settled": 0,
+        "wins": 0,
+        "unresolved": 0
+      }
     }
   },
   "limitations": [
