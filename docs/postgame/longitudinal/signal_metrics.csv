@@ -1,5 +1,5 @@
 archive_group,market,signal,number,settled,wins,unresolved,hit_rate,hit_rate_wilson95,mean_shots,mean_attempts,failed_with_activity,failed_with_low_activity,missing_shot_data,calibrated_n,brier,log_loss,priced_pregame_n,unit_stake_simulated_roi,sample_warning
-CANONICAL,POINT,CANONICAL_PREGAME,58,58,28,0,0.4828,"{""low"": 0.3593, ""high"": 0.6084}",2.483,5.362,16,14,0,58,0.263567,0.721482,58,-0.26,EXPLORATORY_LOW_N
+CANONICAL,POINT,CANONICAL_PREGAME,69,69,33,0,0.4783,"{""low"": 0.3647, ""high"": 0.5941}",2.391,5.203,19,17,0,69,0.265846,0.725955,69,-0.273,EXPLORATORY_LOW_N
 CLASSEUR,GOAL,CONVERGENCE,8,8,4,0,0.5,"{""low"": 0.2152, ""high"": 0.7848}",2.5,4.125,1,3,0,0,,,0,,EXPLORATORY_LOW_N
 CLASSEUR,GOAL,MODELE,2,2,1,0,0.5,"{""low"": 0.0945, ""high"": 0.9055}",0.5,1.0,0,1,0,0,,,0,,EXPLORATORY_LOW_N
 CLASSEUR,GOAL,REBONd,7,6,2,1,0.3333,"{""low"": 0.0968, ""high"": 0.7}",2.833,6.167,3,1,0,0,,,0,,EXPLORATORY_LOW_N
