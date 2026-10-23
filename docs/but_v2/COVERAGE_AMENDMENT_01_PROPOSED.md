@@ -1,6 +1,8 @@
-# Amendement de couverture A01 — proposition non appliquée
+# Amendement de couverture A01 — historique de la proposition initiale
 
-Version : A01-DRAFT-1, 23 octobre 2026. Statut : **EN ATTENTE DE VALIDATION HUMAINE**.
+Version historique : A01-DRAFT-1, 23 octobre 2026. Le principe a depuis été approuvé.
+La préparation concrète révisable est [A01_PROTOCOL_PREPARATION_1.md](A01_PROTOCOL_PREPARATION_1.md).
+Son activation reste **EN ATTENTE DE VALIDATION HUMAINE** ; ce texte initial est conservé pour traçabilité.
 Aucun fichier gelé, seuil, dénominateur officiel, résultat ni sélection ne change.
 Ce texte n'est ni une nouvelle préinscription effective ni une autorisation de promotion.
 
