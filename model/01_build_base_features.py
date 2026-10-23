@@ -1,5 +1,6 @@
 """Historical feature CLI; shared definitions also used by script 05."""
 from henachel.features import *
+from henachel.point_return_patch import repair_point_returns
 import argparse
 
 def main() -> None:
@@ -15,6 +16,7 @@ def main() -> None:
     base_canonique = build_base_canonique(df_source)
     base_features = creer_features_temporelles_v2(base_canonique)
     base_features_context = enrichir_contexte_v2(base_features, standings=standings_df, config={})
+    base_features_context = repair_point_returns(base_features_context)
     standings_runtime_summary = base_features_context.attrs.get("standings_summary", {})
 
     base_canonique.to_csv(OUTPUT_BASE_CANONIQUE, index=False)

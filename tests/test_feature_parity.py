@@ -3,15 +3,16 @@ import pandas as pd
 import pytest
 from conftest import load_script
 from fixtures import games_fixture, standings_fixture
+from henachel.point_return_patch import repair_point_returns
 
 historical = load_script('01_build_base_features')
 future = load_script('05_predict_upcoming_games')
 
 
 def build(raw, standings=None):
-    return historical.enrichir_contexte_v2(
+    return repair_point_returns(historical.enrichir_contexte_v2(
         historical.creer_features_temporelles_v2(historical.build_base_canonique(raw)),
-        standings=standings)
+        standings=standings))
 
 
 def differences(index, with_standings):
@@ -116,7 +117,8 @@ def test_empty_history_source_concat_preserves_first_game_features():
     date=raw.date_match.min();today=raw[raw.date_match.eq(date)]
     matches=today.drop_duplicates('id_match')[['id_match','date_match','saison','id_equipe_domicile','id_equipe_exterieur']]
     players=today[['id_joueur','team_player_match','nom','position']]
-    actual=build_future_features(raw,matches,players)
+    empty_history=build(raw).iloc[:0].copy()
+    actual=future.build_upcoming_universe(matches,empty_history,raw.drop_duplicates('id_match'),players,{})
     expected=build(raw);expected=expected[expected.date_match.eq(pd.Timestamp(date))]
     assert len(actual)==len(today)
     for col in future.FEATURE_WHITELIST:

@@ -40,6 +40,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from henachel.features import build_future_features
+from henachel.point_return_patch import repair_point_returns
 from henachel.calibration import select_calibrator
 from henachel.data import final_mask
 
@@ -568,7 +569,37 @@ def build_recent_player_pool(history, joueurs_lookup, target_date, slate_teams,
 
 def build_upcoming_universe(future_matches, history, matchs_all, player_pool, standings_by_team):
     standings = pd.concat(list(standings_by_team.values()), ignore_index=True) if standings_by_team else None
-    return build_future_features(history, future_matches, player_pool, standings)
+    future = build_future_features(history, future_matches, player_pool, standings)
+    if future.empty:
+        return future
+    # Recreate the finite return phase across the *complete pregame history*.
+    # Applying the repair only to the scored row would lose episode boundaries.
+    # No GOAL-locked shared feature source is edited or imported differently.
+    fields = [
+        "id_joueur", "id_match", "date_match", "season_source",
+        "absence_longue_flag", "toi_moy_10", "pp_moy_5", "temps_de_glace", "temps_pp",
+        "point_hit_rate_season_pre", "point_hit_rate_prev_season",
+        "points_per_game_season_pre", "points_per_game_prev_season",
+        "point_hit_rate_last_10", "point_hit_rate_last_20",
+    ]
+    hist_subset = history.reindex(columns=fields)
+    future_subset = future.reindex(columns=fields)
+    patched = repair_point_returns(
+        pd.concat([hist_subset, future_subset], ignore_index=True)
+    ).tail(len(future)).reset_index(drop=True)
+    output = future.reset_index(drop=True).copy()
+    for field in [
+        "retour_episode", "matchs_depuis_retour_avant_match",
+        "toi_pre_absence_ref", "pp_pre_absence_ref",
+        "toi_moy_retour_3_avant_match", "pp_moy_retour_3_avant_match",
+        "ratio_toi_retour_vs_pre_absence", "ratio_pp_retour_vs_pre_absence",
+        "return_from_absence_flag", "return_stabilized_flag",
+        "historical_current_weight", "historical_prev_weight",
+        "point_hit_rate_weighted_pre", "points_per_game_weighted_pre",
+        "recent_vs_expected_gap",
+    ]:
+        output[field] = patched[field].to_numpy()
+    return output
 
 
 def build_temporal_fit_and_calib_splits(
