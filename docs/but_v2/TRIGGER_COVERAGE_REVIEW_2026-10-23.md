@@ -115,3 +115,23 @@ des empreintes pré-T0. Les 32 tests du run schedule ont réussi sur la révisio
 réellement exécutée. Cette livraison ajoute uniquement deux documents ; aucun
 fichier de code, configuration gelée ou workflow n'est modifié. La proposition
 méthodologique demeure une demande de revue, jamais une règle active.
+
+## Actualisation à 15:32 UTC
+
+Toujours un seul événement schedule shadow visible : celui de 11:54. Le créneau
+12:30 n'a pas de run identifiable ; 16:30 reste futur.
+
+Deux événements workflow_run supplémentaires sont réellement observés :
+- [39962108582](https://github.com/mazalazop/nhl-value-betting-model/actions/runs/39962108582)
+  à 13:32:48 : source success, restore/shadow/backup skipped (context-only).
+- [39971868349](https://github.com/mazalazop/nhl-value-betting-model/actions/runs/39971868349)
+  à 14:42:05 : **source, restore, shadow, backup tous success**. V1 source
+  39966909002, événement schedule, vrai pipeline modèle exécuté. Nouvelle sauvegarde
+  draft 421959083, 180 fichiers / 85 351 721 octets, restauration intégrale vérifiée,
+  snapshot 71c361bad231cf6eb48f9ef0abcaaf14775112a420acab2454fd91f7fe63cfa4.
+
+La chaîne native schedule V1 → workflow_run shadow fonctionne donc réellement.
+Le problème observé de livraison aval est circonscrit aux exemples de V1 dispatchés
+par GITHUB_TOKEN, sans prétendre prouver une cause interne non exposée par GitHub.
+Aucun changement de déclenchement n'est appliqué sans anomalie de configuration
+établie ; les deux voies automatiques existantes ont maintenant été exécutées.
