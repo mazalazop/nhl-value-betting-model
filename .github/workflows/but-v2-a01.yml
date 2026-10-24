@@ -1,0 +1,129 @@
+name: BUT V2 A01 isolated evaluation
+on:
+  workflow_run:
+    workflows: [BUT V2 isolated shadow]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '45 7,11,13,17 * * *'
+  workflow_dispatch:
+    inputs:
+      exploratory:
+        description: 'Explicit technical/exploratory replay; never starts prospective A01'
+        type: boolean
+        default: true
+      initialize:
+        description: 'First separate registry only; never reset existing data'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: but-v2-a01-registry
+  cancel-in-progress: false
+jobs:
+  restore:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.exploratory == true) ||
+       (vars.HENACHEL_BUT_V2_A01_ENABLED == 'true' &&
+        (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.lock
+      - id: mode
+        env:
+          EXPLORATORY: ${{ github.event_name == 'workflow_dispatch' && inputs.exploratory == true }}
+        run: |
+          if [ "$EXPLORATORY" = true ]; then echo 'mode=EXPLORATORY' >> "$GITHUB_OUTPUT"; else echo 'mode=PROSPECTIVE' >> "$GITHUB_OUTPUT"; fi
+      - name: Restore separate registries from verified durable backups
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INITIALIZE: ${{ inputs.initialize }}
+        shell: bash
+        run: |
+          ARGS=()
+          if [ "$INITIALIZE" = true ]; then ARGS+=(--initialize); fi
+          python scripts/run_but_v2_a01.py stage --root a01-work --mode '${{ steps.mode.outputs.mode }}' "${ARGS[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: a01-staged
+          path: a01-work/
+          retention-days: 1
+          if-no-files-found: error
+  evaluate:
+    needs: restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      state_available: ${{ steps.state.outcome }}
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pytest tests/test_but_v2_a01_registry.py tests/test_but_v2_participation_a01.py -q -W error
+      - uses: actions/download-artifact@v4
+        with:
+          name: a01-staged
+          path: a01-work
+      - run: python scripts/run_but_v2_a01.py evaluate --root a01-work --mode '${{ needs.restore.outputs.mode }}'
+      - uses: actions/upload-artifact@v4
+        id: state
+        if: always()
+        with:
+          name: a01-state-${{ needs.restore.outputs.mode }}
+          path: a01-work/a01-state/
+          retention-days: 90
+          if-no-files-found: error
+  backup:
+    needs: [restore, evaluate]
+    if: ${{ always() && needs.evaluate.outputs.state_available == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.lock
+      - uses: actions/download-artifact@v4
+        with:
+          name: a01-state-${{ needs.restore.outputs.mode }}
+          path: a01-work/a01-state
+      - name: Backup and verify complete remote restoration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: python scripts/run_but_v2_a01.py backup --root a01-work --mode '${{ needs.restore.outputs.mode }}' | tee a01-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: a01-backup-receipt
+          path: a01-receipt.json
+          retention-days: 90

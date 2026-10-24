@@ -1,5 +1,11 @@
 # A01 — protocole de préparation 1, non activé
 
+Mise à jour du 24 octobre : définitions et seuils approuvés ; raccordement terminé
+dans [A01_STARTUP.md](A01_STARTUP.md). Les limitations de raccordement décrites
+ci-dessous décrivent la préparation initiale ; la procédure de démarrage courante
+et la revue exécutable des corrections sont celles du document A01_STARTUP.
+Aucun démarrage effectif n’est autorisé ni enregistré.
+
 Statut : PR révisable ; **enabled=false, t0_utc=null**. Approbation du principe
 reçue le 23 octobre 2026, autorisation d'activation non reçue. Le CLI livré est
 exclusivement exploratoire et refuse une configuration qui prétend activer l'étude.
