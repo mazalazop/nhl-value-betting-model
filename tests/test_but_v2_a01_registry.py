@@ -138,3 +138,14 @@ def test_first_confirmatory_assessment_is_immutable(tmp_path):
     assert (state/'confirmatory/assessment.json').read_bytes()==fixed
     assert not result['confirmatory']['promotion_authorized']
     assert 'post_closure_revision_note' in result
+
+
+def test_incomplete_attempt_is_retained_not_silently_reused(tmp_path):
+    src=original(tmp_path);state=tmp_path/'a01'
+    m.cycle(src,state,{'123':sources()},ASOF,'one')
+    (state/'batches/one/complete.json').unlink();m.seal(state)
+    with pytest.raises(ValueError,match='Incomplete'):
+        m.cycle(src,state,{'123':sources()},ASOF,'one')
+    result=m.cycle(src,state,{'123':sources()},ASOF,'recovery')
+    assert result['comparison']['n']==2
+    assert (state/'batches/one/report.json').exists()

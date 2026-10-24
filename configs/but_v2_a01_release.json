@@ -14,7 +14,7 @@
     "model/henachel/but_v2_validation.py": "2a7bf82b9f137a3237c352c0befb29baa112b538f4f3143689cd35c7257b3fb4",
     "docs/but_v2/PROSPECTIVE_PROTOCOL.md": "73cb7e66b0dc3df354d728b2997519990b7c01ffb03a8bda7366a966f646fa48",
     "model/henachel/but_v2_participation_a01.py": "4ce75b111e8caf82235822298070a41d7db1d26327522ad2b97cc602bb0a06a9",
-    "model/henachel/but_v2_a01_registry.py": "761aac0e5aa5d53d640754fb09bb54cbf2614878e0d2927f4db194288b806168",
+    "model/henachel/but_v2_a01_registry.py": "a7d30c5fcbfd59de83950cdd82cc4934b6034359a6663b91b1225148c2fd3435",
     "scripts/run_but_v2_a01.py": "7b1e07f7c04be9c1f0961ded098b5f98d9435bae96139fbc9ab4d84c718dc35c",
     "scripts/backup_but_v2_state.py": "f6abe1ba377de2213c90c6e0ebe6fc74b4aaff3c61a6f7b40787d6dbb515b56a",
     "configs/but_v2_a01_proposed.json": "bc129612981b1bf901adaaab6578052d2f4ddc2e2ce13b7851c0e77de338cbc3",

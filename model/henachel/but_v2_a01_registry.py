@@ -98,6 +98,7 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
     if release and mode=='PROSPECTIVE':write(state/'release.json',release)
     batch=state/'batches'/str(run_id)
     if batch.exists():
+        if not (batch/'complete.json').exists():raise ValueError('Incomplete prior attempt: retain it and retry with a new run ID')
         old=json.loads((batch/'request.json').read_text())
         request=dict(evidence=part.digest(evidence),as_of=as_of,original_manifest=original_hash,decisions=part.digest(decisions or []))
         if old!=request:raise ValueError('Run ID reused for different request')
@@ -129,7 +130,7 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
         write(batch/'imports.json',dict(excluded_dates=excluded,original_manifest_sha256=original_hash))
         if not imported:
             result=dict(mode=mode,n=0,status='NO_ADMISSIBLE_CAPTURE',promotion_authorized=False)
-            write(batch/'report.json',result);return result
+            write(batch/'report.json',result);write(batch/'complete.json',dict(complete=True));return result
         rows=pd.concat(imported,ignore_index=True)
         if rows.duplicated(['id_match','id_joueur']).any():raise ValueError('Duplicate registry identity')
         protocol=json.loads(Path('configs/but_v2_a01_proposed.json').read_text())
@@ -210,6 +211,7 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
         baseline_path.write_text(json.dumps(baselines,sort_keys=True))
         (state/'latest_batch.json').write_text(json.dumps(dict(path=str(batch.relative_to(state)))))
         if sha(original/'archive_manifest.json')!=original_hash:raise ValueError('Original registry was modified')
+        write(batch/'complete.json',dict(complete=True))
         return result
     finally:
         seal(state)
