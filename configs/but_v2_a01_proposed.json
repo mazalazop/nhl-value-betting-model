@@ -1,0 +1,29 @@
+{
+  "version": "BUT_V2_A01_PREPARATION_1",
+  "status": "DRAFT_NOT_ACTIVATED",
+  "enabled": false,
+  "t0_utc": null,
+  "original_study_version": "BUT_V2_PROSPECTIVE_1",
+  "min_information_coverage": 0.98,
+  "min_participant_result_availability": 0.98,
+  "maturity_hours": 12,
+  "max_source_skew_minutes": 15,
+  "final_closure_include_all_captured": true,
+  "confirmation_window_requires_new_t0": true,
+  "observed_data_use": "EXPLORATORY_ONLY",
+  "promotion_allowed": false,
+  "inherited_original_requirements": {
+    "version": "BUT_V2_PROSPECTIVE_1",
+    "first_review_calendar_day": 30,
+    "final_calendar_day": 180,
+    "min_dates": 90,
+    "min_rows": 20000,
+    "min_positive_outcomes": 2000,
+    "min_eligible_day_capture_coverage": 0.95,
+    "minimum_log_loss_gain": 0.001,
+    "minimum_brier_gain": 0.0003,
+    "v1_config_sha": "3a0b589a0e79fcf47e64314c1184fcb5ea06bad92e89edd224cea83ed7273eae",
+    "promotion_allowed": false,
+    "selection": "first complete pregame pair per NHL date; no replacements or backfill"
+  }
+}

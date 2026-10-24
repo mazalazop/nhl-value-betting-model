@@ -1,0 +1,26 @@
+{
+  "version": "A01_RELEASE_1",
+  "files": {
+    "model/henachel/but_v2.py": "c1eec5214f96511deea3f1898048867f719bf68281539916b95da39ac75729f9",
+    "model/henachel/goal.py": "3be24894840dca736b3bdba7e36e6ebff83f2680d67e2b744c15752c2d61a9dd",
+    "model/henachel/calibration.py": "1e53de8aa1de400010d8a7e6995112b2ba86f2030a80bef674cf7d77564ea49c",
+    "configs/but_v2.json": "e7cf01b61f2f7da8e21347caec4913655e95f4c39c8a2193c403b0acdf6a1507",
+    "requirements.lock": "ba7ef7eb519a437acdcd630e82eccdb3a6f4a598346bbfcac2e497c0f95e4edd",
+    "model/henachel/but_v2_shadow.py": "b79db6c3fed14d3ff7ea49dc4ce93ba67e1165ecf66abcc94f645047d91fe8a7",
+    "model/henachel/but_v2_inputs.py": "f74526cebc7c21fa02a9307de5d3c90cdf717a4500dac7ddad0c87de37e22e24",
+    "model/henachel/but_v2_daily.py": "bbf2cfd61255ded2c68f8ad0ce9ba6c44c296cb7efca1e87d2dceedbd8da0d9e",
+    "model/henachel/but_v2_prospective.py": "6722ce50c32524d9977ea2276cf4d932cce4fbd39b7ca93d571d06b31f95fbf8",
+    "configs/but_v2_prospective.json": "ab295e418703a6e5a2bf106762b377243a92fcc7460d17e16f06394cc2a04fee",
+    "model/henachel/but_v2_validation.py": "2a7bf82b9f137a3237c352c0befb29baa112b538f4f3143689cd35c7257b3fb4",
+    "docs/but_v2/PROSPECTIVE_PROTOCOL.md": "73cb7e66b0dc3df354d728b2997519990b7c01ffb03a8bda7366a966f646fa48",
+    "model/henachel/but_v2_participation_a01.py": "4ce75b111e8caf82235822298070a41d7db1d26327522ad2b97cc602bb0a06a9",
+    "model/henachel/but_v2_a01_registry.py": "35748f080f9d43394de466d6975d751b269c9aaa3b15a31861088f5319616db9",
+    "scripts/run_but_v2_a01.py": "7b1e07f7c04be9c1f0961ded098b5f98d9435bae96139fbc9ab4d84c718dc35c",
+    "scripts/backup_but_v2_state.py": "f6abe1ba377de2213c90c6e0ebe6fc74b4aaff3c61a6f7b40787d6dbb515b56a",
+    "configs/but_v2_a01_proposed.json": "bc129612981b1bf901adaaab6578052d2f4ddc2e2ce13b7851c0e77de338cbc3",
+    "docs/but_v2/A01_STARTUP.md": "47cb61c39aee273746ee380b1a23df0ee8290b6462ce5e7052756553aef4b85d",
+    "docs/but_v2/A01_PROTOCOL_PREPARATION_1.md": "5a05cb5e5758b1bf722499191780d0fea1db4e5cd78f88bc7b2274116930b2ce",
+    ".github/workflows/but-v2-a01.yml": "319f614942d53b09aae35c4f6bb547569de32228c00f5dfbc3f92cba70c8f61c"
+  },
+  "promotion_allowed": false
+}

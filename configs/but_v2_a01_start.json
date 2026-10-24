@@ -1,0 +1,12 @@
+{
+  "enabled": false,
+  "mode": "PROSPECTIVE",
+  "study_id": null,
+  "registered_at_utc": null,
+  "t0_utc": null,
+  "first_nhl_date": null,
+  "excluded_through_nhl_date": null,
+  "approved_by": null,
+  "approval_reference": null,
+  "release_sha256": null
+}
