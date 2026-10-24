@@ -19,6 +19,12 @@ les deux endpoints officiels et écrit une nouvelle révision de rapport ; backu
 publie des bundles immuables dans des releases draft et restaure intégralement
 chaque sauvegarde avant son marqueur verified. Les erreurs de collecte sont archivées.
 Les registres sont interdits dans des chemins imbriqués l'un dans l'autre.
+Les matchs futurs ne sont pas collectés avant leur début. Les finals sont recollectés
+pendant sept jours, puis réutilisés depuis leurs preuves archivées. Le champ manuel
+refresh_official=true force une revue des finals plus anciens (correction tardive).
+Les erreurs d'une recollecte restent explicites ; elles ne sont pas masquées par
+une réponse finale en cache. Le cache n'est qu'un index, les versions précédentes
+restent dans evidence/ et les rapports précédents restent immuables.
 
 Un lancement manuel **exploratory=true** est un test explicite, pas une activation :
 registre A01_EXPLORATORY, namespace durable `henachel-but-v2-a01-exploratory-`.
