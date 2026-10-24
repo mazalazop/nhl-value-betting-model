@@ -163,3 +163,30 @@ def test_review_applies_to_same_documents_recollected_after_review(tmp_path):
            reviewed_at_utc='2026-10-23T08:15:00Z',review_reference='fixture://review')
     result=m.cycle(src,state,changed,ASOF,'three',decisions=[d])
     assert result['comparison']['v2']['hit_rate']==1
+
+
+def test_official_cache_bounds_requests_and_refresh_is_explicit(tmp_path):
+    import importlib.util
+    scripts=Path(__file__).resolve().parents[1]/'scripts'
+    sys.path.insert(0,str(scripts))
+    spec=importlib.util.spec_from_file_location('a01_runtime_cache',scripts/'run_but_v2_a01.py')
+    runtime=importlib.util.module_from_spec(spec);spec.loader.exec_module(runtime)
+    src=original(tmp_path);state=tmp_path/'a01';m.cycle(src,state,{'123':sources()},ASOF,'one')
+    cache=state/'official-cache';cache.mkdir();(cache/'123.json').write_text(json.dumps(sources()));m.seal(state)
+    class Session:
+        calls=[]
+        def get(self,url,**kw):
+            self.calls.append(url)
+            endpoint=url.rsplit('/',1)[-1]
+            class Response:
+                def raise_for_status(self):pass
+                def json(self):return sources()[endpoint]['document']
+            return Response()
+    session=Session()
+    data,errors=runtime.collect(src,state,session,'EXPLORATORY',{},pd.Timestamp('2026-11-02T00:00:00Z'))
+    assert not session.calls and data['123']==sources() and not errors
+    runtime.collect(src,state,session,'EXPLORATORY',{},pd.Timestamp('2026-11-02T00:00:00Z'),refresh=True)
+    assert len(session.calls)==2
+    session.calls=[]
+    data,_=runtime.collect(src,state,session,'EXPLORATORY',{},pd.Timestamp('2026-10-22T00:00:00Z'))
+    assert not session.calls and data['123']=={}

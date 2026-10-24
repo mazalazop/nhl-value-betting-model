@@ -15,12 +15,12 @@
     "docs/but_v2/PROSPECTIVE_PROTOCOL.md": "73cb7e66b0dc3df354d728b2997519990b7c01ffb03a8bda7366a966f646fa48",
     "model/henachel/but_v2_participation_a01.py": "4ce75b111e8caf82235822298070a41d7db1d26327522ad2b97cc602bb0a06a9",
     "model/henachel/but_v2_a01_registry.py": "35748f080f9d43394de466d6975d751b269c9aaa3b15a31861088f5319616db9",
-    "scripts/run_but_v2_a01.py": "7b1e07f7c04be9c1f0961ded098b5f98d9435bae96139fbc9ab4d84c718dc35c",
+    "scripts/run_but_v2_a01.py": "4c32c9451e9ce2bb822f463200288ac4d2b6bed3393a8e5ab6c93cb8a25234fd",
     "scripts/backup_but_v2_state.py": "f6abe1ba377de2213c90c6e0ebe6fc74b4aaff3c61a6f7b40787d6dbb515b56a",
     "configs/but_v2_a01_proposed.json": "bc129612981b1bf901adaaab6578052d2f4ddc2e2ce13b7851c0e77de338cbc3",
-    "docs/but_v2/A01_STARTUP.md": "47cb61c39aee273746ee380b1a23df0ee8290b6462ce5e7052756553aef4b85d",
+    "docs/but_v2/A01_STARTUP.md": "d7ce1d8f9037675f5c0be7f20bf8a2290749633ec1f96fc4864b1033d9ac4cb6",
     "docs/but_v2/A01_PROTOCOL_PREPARATION_1.md": "5a05cb5e5758b1bf722499191780d0fea1db4e5cd78f88bc7b2274116930b2ce",
-    ".github/workflows/but-v2-a01.yml": "319f614942d53b09aae35c4f6bb547569de32228c00f5dfbc3f92cba70c8f61c"
+    ".github/workflows/but-v2-a01.yml": "b090750855224e8bd7423681d327eb8d2dcdeffe18c8697cf532415bbf1a3224"
   },
   "promotion_allowed": false
 }

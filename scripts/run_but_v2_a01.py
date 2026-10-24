@@ -9,7 +9,8 @@ from datetime import datetime, timezone
 import pandas as pd
 import requests
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'model'))
-from henachel.but_v2_a01_registry import cycle, validate_start, write
+from henachel.but_v2_a01_registry import cycle, validate_start, write, eligible, verify
+from henachel import but_v2_participation_a01 as participation
 from backup_but_v2_state import authenticated_store, restore, backup
 
 
@@ -27,12 +28,44 @@ def prefix(mode,start):
     return 'henachel-but-v2-a01-'+study+'-'
 
 
+def collect(original, state, session, mode, start, now, refresh=False):
+    evidence={};errors=[];games={};teams={}
+    if state.exists():verify(state)
+    for cap in (original/'captures').glob('*/predictions.csv'):
+        rows=pd.read_csv(cap)
+        if not eligible(rows, start if mode=='PROSPECTIVE' else dict(mode='EXPLORATORY')):continue
+        for gid,group in rows.groupby('id_match'):
+            games[int(gid)]=pd.to_datetime(group.start_time_utc,utc=True).min()
+            teams[int(gid)]=group.team_player_match.iloc[0]
+    for gid,kickoff in sorted(games.items()):
+        cache=state/'official-cache'/f'{gid}.json'
+        cached=json.loads(cache.read_text()) if cache.exists() else {}
+        if kickoff>=now:
+            evidence[str(gid)]={};continue
+        certificate=participation.classify(dict(id_match=gid,id_joueur=0,team_player_match=teams[gid],
+                                               start_time_utc=kickoff.isoformat()),cached,now.isoformat())
+        final=certificate['category']==participation.ABSENT  # sentinel only certifies complete, coherent final sources
+        if final and now-kickoff>=pd.Timedelta(days=7) and not refresh:
+            evidence[str(gid)]=cached;continue
+        # Failed fresh requests remain unknown, rather than hiding the outage behind cached final data.
+        evidence[str(gid)]={}
+        for endpoint in ['boxscore','play-by-play']:
+            url=f'https://api-web.nhle.com/v1/gamecenter/{gid}/{endpoint}'
+            try:
+                response=session.get(url,timeout=35);response.raise_for_status()
+                evidence[str(gid)][endpoint]=dict(source=url,document=response.json(),observed_at_utc=datetime.now(timezone.utc).isoformat())
+            except (requests.RequestException,ValueError) as exc:
+                errors.append(dict(source=url,error=str(exc),observed_at_utc=datetime.now(timezone.utc).isoformat()))
+    return evidence,errors
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['stage','evaluate','backup'])
     p.add_argument('--root',type=Path,required=True)
     p.add_argument('--mode',choices=['EXPLORATORY','PROSPECTIVE'],required=True)
     p.add_argument('--decisions',type=Path)
+    p.add_argument('--refresh-official',action='store_true',help='Explicitly recheck older official finals')
     p.add_argument('--initialize',action='store_true',help='First registry only; never recovery')
     args=p.parse_args();start,release=configuration(args.mode)
     root=args.root;root.mkdir(parents=True,exist_ok=True)
@@ -67,19 +100,7 @@ def main():
     elif args.action=='evaluate':
         with (root/'a01.lock').open('a') as lock:
             fcntl.flock(lock,fcntl.LOCK_EX)
-            evidence={};errors=[]
-            gids=set()
-            for cap in (original/'captures').glob('*/predictions.csv'):
-                gids.update(int(g) for g in pd.read_csv(cap).id_match.unique())
-            for gid in sorted(gids):
-                evidence[str(gid)]={}
-                for endpoint in ['boxscore','play-by-play']:
-                    url=f'https://api-web.nhle.com/v1/gamecenter/{gid}/{endpoint}'
-                    try:
-                        response=requests.get(url,timeout=35);response.raise_for_status()
-                        evidence[str(gid)][endpoint]=dict(source=url,document=response.json(),observed_at_utc=datetime.now(timezone.utc).isoformat())
-                    except (requests.RequestException,ValueError) as exc:
-                        errors.append(dict(source=url,error=str(exc),observed_at_utc=datetime.now(timezone.utc).isoformat()))
+            evidence,errors=collect(original,state,requests.Session(),args.mode,start,pd.Timestamp.now(tz='UTC'),args.refresh_official)
             as_of=datetime.now(timezone.utc).isoformat()
             run_id=os.environ.get('GITHUB_RUN_ID',datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S'))+'-'+os.environ.get('GITHUB_RUN_ATTEMPT','1')
             review_path=args.decisions or Path('configs/but_v2_a01_reviews.json')
@@ -93,6 +114,10 @@ def main():
             # Errors remain evidence, outside NHL document maps, and are backed up after sealing.
             result=cycle(original,state,evidence,as_of,run_id,args.mode,start,release,decisions)
             write(state/'collection-errors'/(run_id+'.json'),errors)
+            cache=state/'official-cache';cache.mkdir(exist_ok=True)
+            for gid,snapshot in evidence.items():
+                # All versions were archived by cycle; these files are only replaceable lookup pointers.
+                (cache/(gid+'.json')).write_text(json.dumps(snapshot,sort_keys=True))
             from henachel.but_v2_a01_registry import seal
             seal(state)
             print(json.dumps(result,indent=2))

@@ -16,6 +16,10 @@ on:
         description: 'First separate registry only; never reset existing data'
         type: boolean
         default: false
+      refresh_official:
+        description: 'Explicitly recheck finals older than seven days'
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -88,7 +92,15 @@ jobs:
         with:
           name: a01-staged
           path: a01-work
-      - run: python scripts/run_but_v2_a01.py evaluate --root a01-work --mode '${{ needs.restore.outputs.mode }}'
+      - name: Evaluate isolated registry
+        env:
+          REFRESH: ${{ inputs.refresh_official }}
+        shell: bash
+        run: |
+          ARGS=()
+          if [ "$REFRESH" = true ]; then ARGS+=(--refresh-official); fi
+          python scripts/run_but_v2_a01.py evaluate --root a01-work --mode '${{ needs.restore.outputs.mode }}' "${ARGS[@]}"
+
       - uses: actions/upload-artifact@v4
         id: state
         if: always()
