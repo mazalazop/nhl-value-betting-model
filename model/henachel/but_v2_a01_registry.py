@@ -161,9 +161,13 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
                 c['case_id']=case_id
                 if case_id in decision_map:
                     d=decision_map[case_id]
-                    if any(part.utc(v['observed_at_utc'])>part.utc(d['reviewed_at_utc']) for v in current.values()):
-                        # Later polls of the same semantic document are allowed only for an already recorded decision.
-                        if not (state/'decisions'/(case_id+'.json')).exists():raise ValueError('Review predates evidence')
+                    reviewed=part.utc(d['reviewed_at_utc']);reviewable=False
+                    for proof_path in (state/'cases'/case_id).glob('*.json'):
+                        proof=json.loads(proof_path.read_text())['classification']
+                        reviewed_evidence=part.read_evidence(state/'evidence'/(proof['evidence_sha256']+'.json'))
+                        if all(part.utc(v['observed_at_utc'])<=reviewed for v in reviewed_evidence.values()):
+                            reviewable=True;break
+                    if not reviewable:raise ValueError('Review predates recorded case evidence')
                     write(state/'decisions'/(case_id+'.json'),d);used.add(case_id)
                     selected=c['proposed_classification'] if d['choice']=='ACCEPT_CURRENT' else c['previous_classification']
                     c=dict(selected,review_decision=case_id,reason='REVIEWED_'+d['choice'])

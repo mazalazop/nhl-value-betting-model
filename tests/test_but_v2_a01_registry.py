@@ -149,3 +149,17 @@ def test_incomplete_attempt_is_retained_not_silently_reused(tmp_path):
     result=m.cycle(src,state,{'123':sources()},ASOF,'recovery')
     assert result['comparison']['n']==2
     assert (state/'batches/one/report.json').exists()
+
+
+def test_review_applies_to_same_documents_recollected_after_review(tmp_path):
+    src=original(tmp_path);state=tmp_path/'a01';e={'123':sources()}
+    m.cycle(src,state,e,ASOF,'one')
+    changed=copy.deepcopy(e);player(changed['123'])['goals']=1
+    m.cycle(src,state,changed,ASOF,'two')
+    classes=json.loads((state/'batches/two/classifications.json').read_text())
+    case=next(c['case_id'] for c in classes if 'case_id' in c)
+    for envelope in changed['123'].values():envelope['observed_at_utc']='2026-10-23T08:30:00Z'
+    d=dict(case_id=case,choice='ACCEPT_CURRENT',reviewer='fixture',rationale='Reviewed 08:00 version',
+           reviewed_at_utc='2026-10-23T08:15:00Z',review_reference='fixture://review')
+    result=m.cycle(src,state,changed,ASOF,'three',decisions=[d])
+    assert result['comparison']['v2']['hit_rate']==1
