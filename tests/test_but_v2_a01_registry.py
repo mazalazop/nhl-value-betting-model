@@ -85,10 +85,16 @@ def test_mode_switch_tamper_and_duplicate_rejected(tmp_path):
     with pytest.raises(ValueError,match='integrity'):m.cycle(src,state,{},ASOF,'two')
 
 
-def test_workflow_disabled_and_start_unset():
+def test_workflow_gate_and_preregistration_contract():
     root=Path(__file__).resolve().parents[1]
     start=json.loads((root/'configs/but_v2_a01_start.json').read_text())
-    assert not start['enabled'] and start['t0_utc'] is None
+    if start['enabled']:
+        release=json.loads((root/'configs/but_v2_a01_release.json').read_text())
+        m.validate_start(start,release,start['t0_utc'])
+        assert start['approval_reference'] and start['approved_by']
+        assert start['first_nhl_date']>start['excluded_through_nhl_date']
+    else:
+        assert start['t0_utc'] is None
     workflow=(root/'.github/workflows/but-v2-a01.yml').read_text()
     assert "vars.HENACHEL_BUT_V2_A01_ENABLED == 'true'" in workflow
     assert 'cancel-in-progress: false' in workflow
