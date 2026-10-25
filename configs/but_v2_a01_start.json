@@ -1,12 +1,12 @@
 {
-  "enabled": false,
+  "enabled": true,
   "mode": "PROSPECTIVE",
-  "study_id": null,
-  "registered_at_utc": null,
-  "t0_utc": null,
-  "first_nhl_date": null,
-  "excluded_through_nhl_date": null,
-  "approved_by": null,
-  "approval_reference": null,
-  "release_sha256": null
+  "study_id": "A01-20261026-01",
+  "registered_at_utc": "2026-10-25T09:45:45.885419+00:00",
+  "t0_utc": "2026-10-25T10:00:00+00:00",
+  "first_nhl_date": "2026-10-26",
+  "excluded_through_nhl_date": "2026-10-25",
+  "approved_by": "mazalazop (explicit user authorization, 2026-10-25)",
+  "approval_reference": "docs/but_v2/A01_AUTHORIZATION_2026-10-25.md",
+  "release_sha256": "b4200f6577cce493267ebdf33487550a3ed1b550ccdc08844d43d47ff4e50f6b"
 }
