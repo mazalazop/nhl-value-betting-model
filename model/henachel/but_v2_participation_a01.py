@@ -1,4 +1,4 @@
-"""Read-only, exploratory A01 audit. Never imported by the frozen study/workflows."""
+"""A01 official participation classification; observations and corrections stay distinct."""
 import hashlib
 import json
 import math
@@ -105,7 +105,7 @@ def classify(row, evidence, as_of, closure=False):
             if evidence.get(endpoint):
                 docs[endpoint], observed = source_document(evidence[endpoint], gid, endpoint, start, as_of)
                 times.append(observed)
-    except (ValueError, KeyError, TypeError) as exc:
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
         result['reason'] = 'INVALID_EVIDENCE: ' + str(exc)
         return result
     box, play = docs.get('boxscore', {}), docs.get('play-by-play', {})
@@ -192,9 +192,14 @@ def classify(row, evidence, as_of, closure=False):
             result.update(category=ABSENT, reason='ABSENT_FROM_BOTH_COMPLETE_FINAL_SOURCES')
         else:
             result['reason'] = 'INCOMPLETE_OFFICIAL_ROSTERS'
-    except (KeyError, ValueError, TypeError) as exc:
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
         result.update(category=UNKNOWN, reason='CONTRADICTORY_OR_INVALID_DATA: ' + str(exc), goals=None)
     return result
+
+
+def complete_final(row, evidence, as_of):
+    """Use an impossible player ID only to certify both complete final rosters."""
+    return classify(dict(row, id_joueur=-1), evidence, as_of)['category'] == ABSENT
 
 
 def audit(rows, current, as_of, previous=None, closure=False):
@@ -209,19 +214,27 @@ def audit(rows, current, as_of, previous=None, closure=False):
         item = classify(row, evidence, as_of, closure)
         if previous and gid in previous:
             old = classify(row, previous[gid], as_of, closure)
-            older = any(evidence.get(e) and previous[gid].get(e) and
-                        utc(evidence[e]['observed_at_utc']) < utc(previous[gid][e]['observed_at_utc'])
-                        for e in ['boxscore', 'play-by-play'])
+            try:
+                older = any(evidence.get(e) and previous[gid].get(e) and
+                            utc(evidence[e]['observed_at_utc']) < utc(previous[gid][e]['observed_at_utc'])
+                            for e in ['boxscore', 'play-by-play'])
+            except (KeyError, ValueError, TypeError):
+                older = False  # Invalid provenance is already classified as uncertain.
             if older:
                 item.update(category=UNKNOWN, reason='EVIDENCE_TIME_ROLLBACK', goals=None,
                             previous_evidence_sha256=old['evidence_sha256'])
                 output.append(item)
                 continue
-            # Only previously evaluable final evidence can be an official correction.
-            old_final = all(previous[gid].get(e, {}).get('document', {}).get('gameState') in FINAL
-                            for e in ['boxscore', 'play-by-play'])
+            # A missing/partial fetch is not a contradictory official result.
+            old_reliable = complete_final(row, previous[gid], as_of) and old['category'] in {KNOWN, ABSENT}
+            new_reliable = complete_final(row, evidence, as_of) and item['category'] in {KNOWN, ABSENT}
             changed = (old['category'], old['goals']) != (item['category'], item['goals'])
-            if old_final and changed:
+            old_confirmed = old['category'] in {KNOWN, ABSENT}
+            if old_confirmed and (not new_reliable or (changed and not old_reliable)):
+                attempt = dict(item)
+                item = dict(old, reason='LAST_CONFIRMED_OFFICIAL_RESULT', retained_previous=True,
+                            last_collection=attempt)
+            elif old_reliable and new_reliable and changed:
                 item.update(category=UNKNOWN, reason='OFFICIAL_REVISION_REQUIRES_REVIEW', goals=None,
                             previous_evidence_sha256=old['evidence_sha256'],
                             previous_classification=old, proposed_classification=dict(item))

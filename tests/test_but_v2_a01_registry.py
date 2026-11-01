@@ -125,7 +125,7 @@ def test_release_hashes_and_frozen_files_match():
     root=Path(__file__).resolve().parents[1]
     release=json.loads((root/'configs/but_v2_a01_release.json').read_text())
     original=json.loads((root/'docs/but_v2/PRE_T0_REGISTRATION.json').read_text())['file_sha256']
-    for name,digest in release['files'].items():assert m.sha(root/name)==digest,name
+    m.validate_operational_files(release)
     for name,digest in original.items():assert release['files'][name]==digest
     script=(root/'scripts/run_but_v2_a01.py').read_text()
     assert "Registration commit is not before T0" in script

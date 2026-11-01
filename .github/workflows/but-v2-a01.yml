@@ -40,6 +40,7 @@ jobs:
       actions: read
     outputs:
       mode: ${{ steps.mode.outputs.mode }}
+      evaluate: ${{ steps.stage.outputs.evaluate }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,6 +56,7 @@ jobs:
         run: |
           if [ "$EXPLORATORY" = true ]; then echo 'mode=EXPLORATORY' >> "$GITHUB_OUTPUT"; else echo 'mode=PROSPECTIVE' >> "$GITHUB_OUTPUT"; fi
       - name: Restore separate registries from verified durable backups
+        id: stage
         env:
           GH_TOKEN: ${{ github.token }}
           INITIALIZE: ${{ inputs.initialize }}
@@ -71,6 +73,7 @@ jobs:
           if-no-files-found: error
   evaluate:
     needs: restore
+    if: needs.restore.outputs.evaluate == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -87,7 +90,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: python -m pip install -r requirements.lock
-      - run: python -m pytest tests/test_but_v2_a01_registry.py tests/test_but_v2_participation_a01.py -q -W error
+      - run: python -m pytest tests/test_but_v2_a01_registry.py tests/test_but_v2_participation_a01.py tests/test_but_v2_a01_operations.py -q -W error
       - uses: actions/download-artifact@v4
         with:
           name: a01-staged
