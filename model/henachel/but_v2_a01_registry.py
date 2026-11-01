@@ -46,8 +46,41 @@ def validate_start(start, release, as_of):
     if pd.Timestamp(start['first_nhl_date']).date()<t0.astimezone(__import__('zoneinfo').ZoneInfo('America/New_York')).date():
         raise ValueError('First NHL date predates T0')
     if start['release_sha256']!=part.digest(release):raise ValueError('Release not preregistered')
-    for name,digest in release['files'].items():
-        if sha(name)!=digest:raise ValueError('Code/protocol drift: '+name)
+    validate_operational_files(release)
+
+
+# Operational errata are additive to the original, immutable preregistration.
+OPERATIONAL_FILES = {
+    'model/henachel/but_v2_participation_a01.py',
+    'model/henachel/but_v2_a01_registry.py',
+    'scripts/run_but_v2_a01.py', '.github/workflows/but-v2-a01.yml',
+}
+PATCH_PATH = Path('configs/but_v2_a01_operational_patch.json')
+
+
+def validate_operational_files(release):
+    patch = json.loads(PATCH_PATH.read_text()) if PATCH_PATH.exists() and release.get('version') == 'A01_RELEASE_1' else None
+    changes = patch['files'] if patch else {}
+    if patch:
+        if patch['base_release_sha256'] != part.digest(release) or set(changes) != OPERATIONAL_FILES:
+            raise ValueError('Unauthorized operational patch scope')
+        if not patch.get('authorization_reference') or patch['version'] != 'A01_OPERATIONAL_FIX_1':
+            raise ValueError('Missing operational authorization')
+    for name, digest in release['files'].items():
+        change = changes.get(name)
+        if change and change['before_sha256'] != digest:
+            raise ValueError('Operational patch base mismatch')
+        expected = change['after_sha256'] if change else digest
+        if sha(name) != expected:raise ValueError('Code/protocol drift: '+name)
+    return patch
+
+
+def stable_proof(value):
+    """Evaluation clock is batch metadata, never part of a case proof identity."""
+    if isinstance(value, dict):
+        return {k: stable_proof(v) for k,v in value.items() if k != 'as_of_utc'}
+    if isinstance(value, list):return [stable_proof(v) for v in value]
+    return value
 
 
 def eligible(rows, start):
@@ -59,6 +92,30 @@ def eligible(rows, start):
 
 def semantic(evidence):
     return part.digest({k:dict(source=v.get('source'),document=v.get('document')) for k,v in evidence.items()})
+
+
+def pending_cases(state, rows, baselines, as_of):
+    """Reconstruct genuine unresolved revisions, including proofs from interrupted batches.
+
+    Legacy empty/partial-fetch cases remain archived but are not official contradictions.
+    A recorded human decision or a different accepted baseline supersedes that case.
+    """
+    row_map={f"{r['id_match']}-{r['id_joueur']}":r for r in rows.to_dict('records')}
+    pending={};cache={}
+    def evidence(key):
+        if key not in cache:cache[key]=part.read_evidence(state/'evidence'/(key+'.json'))
+        return cache[key]
+    for path in sorted((state/'cases').glob('*/*.json')):
+        proof=json.loads(path.read_text());c=proof['classification'];case_id=proof['case_id']
+        key=f"{c['id_match']}-{c['id_joueur']}"
+        if key not in row_map or key not in baselines or (state/'decisions'/(case_id+'.json')).exists():continue
+        old=c.get('previous_classification',{});new=c.get('proposed_classification',{})
+        if old.get('category') not in {part.KNOWN,part.ABSENT} or new.get('category') not in {part.KNOWN,part.ABSENT}:continue
+        before=evidence(c['previous_evidence_sha256']);after=evidence(c['evidence_sha256'])
+        if semantic(before)!=semantic(evidence(baselines[key])):continue
+        if part.complete_final(row_map[key],before,as_of) and part.complete_final(row_map[key],after,as_of):
+            pending[key]=proof
+    return pending
 
 
 def final_report(rows, coverage, protocol, as_of, first_date):
@@ -108,6 +165,11 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
     try:
         batch.mkdir(parents=True)
         if release:write(batch/'release.json',release)
+        if mode=='PROSPECTIVE':
+            patch=validate_operational_files(release)
+            if patch:
+                write(state/'operational-patches'/(part.digest(patch)+'.json'),patch)
+                write(batch/'operational-patch.json',patch)
         write(batch/'request.json',dict(evidence=part.digest(evidence),as_of=as_of,original_manifest=original_hash,decisions=part.digest(decisions or [])))
         imported=[];excluded=[]
         for cap in sorted((original/'captures').iterdir()):
@@ -146,6 +208,7 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
             if part.utc(d['reviewed_at_utc'])>part.utc(as_of):raise ValueError('Future review')
             if d['case_id'] in decision_map and decision_map[d['case_id']]!=d:raise ValueError('Decision cannot be overwritten')
             decision_map[d['case_id']]=d
+        pending=pending_cases(state,rows,baselines,as_of)
         classifications=[];used=set();evidence_hashes={};previous_cache={}
         for row in rows.to_dict('records'):
             key=f"{row['id_match']}-{row['id_joueur']}";gid=str(row['id_match']);current=evidence.get(gid,{})
@@ -155,9 +218,16 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
                 previous_cache[baselines[key]]=part.read_evidence(state/'evidence'/(baselines[key]+'.json'))
             previous=previous_cache[baselines[key]] if key in baselines else None
             c=part.audit([row],{gid:current},as_of,{gid:previous} if previous else None,closure=closed)[0]
+            if c['reason']!='OFFICIAL_REVISION_REQUIRES_REVIEW' and key in pending:
+                attempt=c.get('last_collection',c)
+                c=dict(pending[key]['classification'],as_of_utc=as_of,last_collection=attempt)
+                current_hash=c['evidence_sha256']
+                current=part.read_evidence(state/'evidence'/(current_hash+'.json'))
+                previous=part.read_evidence(state/'evidence'/(c['previous_evidence_sha256']+'.json'))
             if c['reason']=='OFFICIAL_REVISION_REQUIRES_REVIEW':
                 case_id=part.digest(dict(key=key,previous=semantic(previous),current=semantic(current)))
-                write(state/'cases'/case_id/(current_hash+'.json'),dict(case_id=case_id,classification=c))
+                proof=dict(case_id=case_id,format_version=2,classification=stable_proof({k:v for k,v in c.items() if k!='last_collection'}))
+                write(state/'cases'/case_id/('proof-v2-'+part.digest(proof)+'.json'),proof)
                 c['case_id']=case_id
                 if case_id in decision_map:
                     d=decision_map[case_id]
@@ -172,7 +242,7 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
                     selected=c['proposed_classification'] if d['choice']=='ACCEPT_CURRENT' else c['previous_classification']
                     c=dict(selected,review_decision=case_id,reason='REVIEWED_'+d['choice'])
                     if d['choice']=='ACCEPT_CURRENT':baselines[key]=current_hash
-            elif c['category'] not in {part.UNKNOWN,part.PENDING}:
+            elif c['category'] not in {part.UNKNOWN,part.PENDING} and not c.get('retained_previous'):
                 baselines[key]=current_hash
             classifications.append(c)
         if any(d['case_id'] not in used for d in decisions or []):raise ValueError('Decision does not match a pending case')
@@ -186,6 +256,9 @@ def cycle(original, state, evidence, as_of, run_id, mode='EXPLORATORY', start=No
         merged['settlement_status']=np.where(merged.y.isna(),'UNRESOLVED',np.where(merged.y.eq(1),'WIN','LOSS'))
         original_global_settled=int(official.settlement_status.isin(['WIN','LOSS']).sum())
         result=dict(mode=mode,study_id=start['study_id'],coverage=coverage,comparison=compare(merged),promotion_authorized=False,
+                    collection_diagnostics=dict(retained_confirmed_results=sum(bool(c.get('retained_previous')) for c in classifications),
+                        latest_attempt_categories={category:sum(c.get('last_collection',c)['category']==category for c in classifications)
+                            for category in [part.KNOWN,part.ABSENT,part.MISSING,part.UNKNOWN,part.PENDING]}),
                     original_study=dict(n=len(official),settled=original_global_settled,
                                         coverage=original_global_settled/len(official) if len(official) else None),
                     by_date={str(day):compare(group) for day,group in merged.groupby('date_match')},

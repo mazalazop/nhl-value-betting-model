@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 from datetime import datetime, timezone
 import pandas as pd
 import requests
@@ -28,8 +29,72 @@ def prefix(mode,start):
     return 'henachel-but-v2-a01-'+study+'-'
 
 
+def fetch_official(session, url, gid, sleep=time.sleep, deadline=None):
+    """Three bounded attempts; raw successful JSON remains evidence, including partial docs."""
+    attempts=[]
+    for attempt in range(1,4):
+        retry=False;delay=2**(attempt-1)
+        remaining=deadline-time.monotonic() if deadline is not None else 35
+        if remaining<=0:
+            attempts.append(dict(source=url,attempt=attempt,error='COLLECTION_TIME_BUDGET_EXHAUSTED',
+                                 observed_at_utc=datetime.now(timezone.utc).isoformat()))
+            break
+        try:
+            response=session.get(url,timeout=min(35,remaining))
+            status=getattr(response,'status_code',200)
+            retry=status in {429,500,502,503,504}
+            if retry:
+                try:delay=min(30,max(delay,float(response.headers.get('Retry-After',0))))
+                except (ValueError,AttributeError):pass
+            response.raise_for_status()
+            document=response.json()
+            if not isinstance(document,dict) or document.get('id')!=gid or not document.get('gameState'):
+                raise ValueError('Empty, non-object or wrong-game official response')
+            observed=datetime.now(timezone.utc).isoformat()
+            return dict(source=url,document=document,observed_at_utc=observed),attempts
+        except (requests.RequestException,ValueError) as exc:
+            retry=retry or isinstance(exc,(requests.Timeout,requests.ConnectionError,ValueError))
+            attempts.append(dict(source=url,attempt=attempt,error=str(exc),
+                                 observed_at_utc=datetime.now(timezone.utc).isoformat()))
+            if not retry or attempt==3:break
+            if deadline is not None:delay=min(delay,max(0,deadline-time.monotonic()))
+            sleep(delay)
+    return None,attempts
+
+
+def new_capture_available(original_index, prior_index, mode, start):
+    """Only new admissible immutable captures trigger event-driven evaluations.
+
+    Periodic/manual evaluations bypass this gate and always poll official results.
+    """
+    prior_files=(prior_index or {}).get('files',{})
+    prior_run=str((prior_index or {}).get('workflow_run_id',''))
+    if prior_run:
+        attempts={name.split('/')[1] for name in prior_files
+                  if name.startswith('batches/'+prior_run+'-') and name.endswith('/request.json')}
+        attempts.update(Path(name).stem for name in prior_files
+                        if name.startswith('collection-attempts/'+prior_run+'-'))
+        if any('batches/'+attempt+'/complete.json' not in prior_files for attempt in attempts):return True
+    for name,entry in original_index['files'].items():
+        parts=name.split('/')
+        if len(parts)!=3 or parts[0]!='captures' or parts[2]!='predictions.csv':continue
+        if mode=='PROSPECTIVE' and (parts[1]<start['first_nhl_date'] or parts[1]<=start['excluded_through_nhl_date']):continue
+        if name not in prior_files or prior_files[name]['sha256']!=entry['sha256']:return True
+    return False
+
+
+def record_attempt(state, evidence, errors, run_id, as_of):
+    if state.exists():verify(state)
+    state.mkdir(parents=True,exist_ok=True)
+    hashes={gid:participation.archive_evidence(state/'evidence',value) for gid,value in evidence.items()}
+    write(state/'collection-attempts'/(run_id+'.json'),dict(as_of_utc=as_of,evidence=hashes,errors=errors))
+    from henachel.but_v2_a01_registry import seal
+    seal(state)
+
+
 def collect(original, state, session, mode, start, now, refresh=False):
     evidence={};errors=[];games={};teams={}
+    deadline=time.monotonic()+600  # Finish and preserve evidence even during a league-wide outage.
     if state.exists():verify(state)
     for cap in (original/'captures').glob('*/predictions.csv'):
         rows=pd.read_csv(cap)
@@ -51,11 +116,14 @@ def collect(original, state, session, mode, start, now, refresh=False):
         evidence[str(gid)]={}
         for endpoint in ['boxscore','play-by-play']:
             url=f'https://api-web.nhle.com/v1/gamecenter/{gid}/{endpoint}'
-            try:
-                response=session.get(url,timeout=35);response.raise_for_status()
-                evidence[str(gid)][endpoint]=dict(source=url,document=response.json(),observed_at_utc=datetime.now(timezone.utc).isoformat())
-            except (requests.RequestException,ValueError) as exc:
-                errors.append(dict(source=url,error=str(exc),observed_at_utc=datetime.now(timezone.utc).isoformat()))
+            envelope,attempts=fetch_official(session,url,gid,deadline=deadline)
+            errors.extend(attempts)
+            if envelope is not None:evidence[str(gid)][endpoint]=envelope
+        checked=participation.complete_final(dict(id_match=gid,team_player_match=teams[gid],
+                    start_time_utc=kickoff.isoformat()),evidence[str(gid)],datetime.now(timezone.utc).isoformat())
+        if not checked:
+            errors.append(dict(game_id=gid,reason='NO_COMPLETE_COHERENT_FINAL_PAIR',
+                               observed_at_utc=datetime.now(timezone.utc).isoformat()))
     return evidence,errors
 
 
@@ -81,9 +149,17 @@ def main():
             write(root/'preregistration-receipt.json',dict(commit=commits[0]['sha'],committed_at=committed,start=start))
         idx=store.latest()
         if idx is None:raise ValueError('No original durable registry')
+        a01=authenticated_store(prefix(args.mode,start));prior=a01.latest()
+        should_evaluate=(os.environ.get('GITHUB_EVENT_NAME')!='workflow_run' or
+                         new_capture_available(idx,prior,args.mode,start))
+        write(root/'trigger-decision.json',dict(event=os.environ.get('GITHUB_EVENT_NAME','local'),
+              evaluate=should_evaluate,reason='NEW_CAPTURE_OR_PERIODIC_MANUAL' if should_evaluate else 'NO_NEW_ADMISSIBLE_CAPTURE',
+              original_snapshot=idx['state_sha256'],a01_snapshot=prior['state_sha256'] if prior else None))
+        if os.environ.get('GITHUB_OUTPUT'):
+            with open(os.environ['GITHUB_OUTPUT'],'a') as output:output.write('evaluate='+str(should_evaluate).lower()+'\n')
+        if not should_evaluate:return
         restore(store,idx,original)
         write(root/'original-receipt.json',dict(snapshot=idx['state_sha256'],workflow_run_id=idx['workflow_run_id']))
-        a01=authenticated_store(prefix(args.mode,start));prior=a01.latest()
         if prior:
             restore(a01,prior,state)
         else:
@@ -112,12 +188,16 @@ def main():
                 pending.append(decision)
             decisions=pending
             # Errors remain evidence, outside NHL document maps, and are backed up after sealing.
+            record_attempt(state,evidence,errors,run_id,as_of)
             result=cycle(original,state,evidence,as_of,run_id,args.mode,start,release,decisions)
             write(state/'collection-errors'/(run_id+'.json'),errors)
             cache=state/'official-cache';cache.mkdir(exist_ok=True)
             for gid,snapshot in evidence.items():
-                # All versions were archived by cycle; these files are only replaceable lookup pointers.
-                (cache/(gid+'.json')).write_text(json.dumps(snapshot,sort_keys=True))
+                # Preserve the last complete final separately from the last collection attempt.
+                row=next((r for cap in (state/'captures').glob('*/predictions.csv')
+                          for r in pd.read_csv(cap).to_dict('records') if str(r['id_match'])==gid),None)
+                if row and participation.complete_final(row,snapshot,as_of):
+                    (cache/(gid+'.json')).write_text(json.dumps(snapshot,sort_keys=True))
             from henachel.but_v2_a01_registry import seal
             seal(state)
             print(json.dumps(result,indent=2))

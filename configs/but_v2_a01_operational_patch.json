@@ -1,0 +1,23 @@
+{
+  "version": "A01_OPERATIONAL_FIX_1",
+  "base_release_sha256": "b4200f6577cce493267ebdf33487550a3ed1b550ccdc08844d43d47ff4e50f6b",
+  "authorization_reference": "docs/but_v2/A01_OPERATIONAL_FIX_1.md",
+  "files": {
+    "model/henachel/but_v2_participation_a01.py": {
+      "before_sha256": "4ce75b111e8caf82235822298070a41d7db1d26327522ad2b97cc602bb0a06a9",
+      "after_sha256": "717b7f055a71bc3e6dd9ec0a02b5a213b95028008263cc208717e0231df0a6b7"
+    },
+    "model/henachel/but_v2_a01_registry.py": {
+      "before_sha256": "35748f080f9d43394de466d6975d751b269c9aaa3b15a31861088f5319616db9",
+      "after_sha256": "8fdacfaa96fcd62aac495388f91f02e4129695f59b1b1190773ff8cf2a84b3fd"
+    },
+    "scripts/run_but_v2_a01.py": {
+      "before_sha256": "4c32c9451e9ce2bb822f463200288ac4d2b6bed3393a8e5ab6c93cb8a25234fd",
+      "after_sha256": "a14b60f28d58ed654e14cb96c9dfa64c38c7ae446091749bf216b5d8a45b10e4"
+    },
+    ".github/workflows/but-v2-a01.yml": {
+      "before_sha256": "b090750855224e8bd7423681d327eb8d2dcdeffe18c8697cf532415bbf1a3224",
+      "after_sha256": "7844d950524ec3a2df037b1f1016fea7878991d9a7a8e779516c4edb220236c7"
+    }
+  }
+}
