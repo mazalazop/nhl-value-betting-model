@@ -60,7 +60,7 @@ def main():
   folds.append(meta);save(a.output/'folds.json',folds)
   pd.concat(scored,ignore_index=True).to_csv(a.output/'predictions.partial.csv.gz',index=False)
  pred=pd.concat(scored,ignore_index=True);pred.to_csv(a.output/'predictions.csv.gz',index=False)
- results={};comparison_count=2*(pred.variant.nunique()-1)
+ results={};comparison_count=cfg['simultaneous_family_size']
  for market,group in pred.groupby('market'):
   ref=group[group.variant.eq('reference')];full=group[group.variant.eq('full_sigmoid')]
   result=dict(metrics={},vs_reference={},ablation_vs_full={},power_sensitivity={})

@@ -1,0 +1,13 @@
+# Collecte proposée — désactivée
+
+Priorité 1 : archiver **tout l'univers candidat et toutes les cotes éligibles**, pas seulement les picks finalement recommandés. Sans les non-sélectionnés, il est impossible d'évaluer honnêtement une nouvelle politique de value. Préserver le seuil 1,40. Privilégier Unibet ; FDJ seulement pour le même marché, règlement et horaire documentés. Une cote absente reste nulle au sens JSON (`null`), jamais une cote inventée.
+
+Chaque snapshot doit porter : étude/version/configuration et leurs empreintes ; identifiant NHL joueur-match ; équipe/adversaire ; horaire prévu et capture UTC ; variables décalées et date de disponibilité ; probabilités POINT/BUT ; cote décimale/bookmaker/heure de vérification ; edge et règle de classement ; sources et empreintes. Conserver TOI/PP passés, tentatives, géométrie, xG seulement si licence et modèle source admissibles, composition et gardien avec statut/ancienneté/confiance. Séparer valeur inconnue et valeur réellement nulle.
+
+Priorité 2 : capture tôt dans la journée puis seconde capture contextuelle. Ce sont deux versions horodatées, jamais une réécriture de la première. Chaque cohorte utilise son heure de décision préenregistrée. Les compositions du dernier match sont `PROJECTED_LAST_GAME` avec ancienneté ; une promotion supposée en PP1 ou un gardien prévu ne devient pas `CONFIRMED` sans source datée. Le temps PP ne suffit pas à inférer PP1.
+
+Priorité 3 : données officielles de tirs passés, puis PK/pénalités et gardiens. Vérifier contrat d'accès, synchronisation et disponibilité pré-match ; tester leur valeur marginale avant toute inclusion dans un candidat. Les xG demandent en plus une licence compatible et une version du modèle connue.
+
+`snapshots.py` fournit des primitives locales testées : écriture par empreinte, garde temporelle et normalisation CLASSEUR. Ce n'est pas un workflow quotidien activé. Un raccordement futur doit ajouter collecte authentifiée, manifeste source, registre séparé, sérialisation, sauvegarde durable et restauration vérifiée, dans une PR autorisée. Les fichiers des études existantes restent intacts.
+
+Les résultats post-match résident dans des observations distinctes : participant connu, absence corroborée, résultat manquant, participation inconnue, match en attente. Toute correction officielle conserve la version et la preuve précédentes, avec revue tracée ; aucune absence n'est une défaite. Top10 figés avant match, sans remplacement après coup. Dédupliquer les picks entre Top10 et deux joueurs par match tout en conservant les appartenances à chaque catégorie ; ne jamais convertir CLASSEUR en CANONICAL.

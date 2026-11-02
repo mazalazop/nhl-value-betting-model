@@ -54,6 +54,14 @@ def features(d,quality=None):
     if d.at[i,source]>0:n0=0;n1+=1
     else:n0+=1;n1=0
   d[label+'_drought']=drought;d[label+'_hot']=hot
+ # Historical conversion residual, not xG: earlier individual shooting rate excludes the recent ten games.
+ past_goals=g.buts.transform(lambda s:s.shift().expanding().sum())
+ past_shots=g.tirs.transform(lambda s:s.shift().expanding().sum())
+ recent_goals=g.buts.transform(lambda s:s.shift().rolling(10,min_periods=10).sum())
+ recent_shots=g.tirs.transform(lambda s:s.shift().rolling(10,min_periods=10).sum())
+ earlier_shots=past_shots-recent_shots
+ earlier_rate=(past_goals-recent_goals)/earlier_shots.where(earlier_shots>=50)
+ d['conversion_gap']=recent_goals-recent_shots*earlier_rate
  d['shots60_10']=60*d.shots_10/d.toi_10.where(d.toi_10>0)
  d['toi_change']=d.toi_3-d.toi_10;d['pp_change']=d.pp_3-d.pp_10
  d['rest_days']=g.date_match.diff().dt.days;d['home']=d.is_home_player
@@ -94,11 +102,17 @@ def paired(a,b,family_size=1,replicates=4000):
  ba,la=losses(a.y,a.probability);bb,lb=losses(b.y,b.probability)
  daily=pd.DataFrame({'brier':bb-ba,'log_loss':lb-la,'n':1},index=a.index.get_level_values(0)).groupby(level=0).sum()
  n=len(daily);rng=np.random.default_rng(20261101)
- ix=((rng.integers(0,n,(replicates,(n+6)//7))[:,:,None]+np.arange(7))%n).reshape(replicates,-1)[:,:n]
- out=dict(n=len(a),dates=n,method='paired circular blocks of 7 dates; entire games kept inside dates',family_size=family_size)
+ # Bounded-memory blocks; retain entire date slates and their nested games.
+ draws={name:[] for name in ['brier','log_loss']}
+ for start in range(0,replicates,500):
+  batch=min(500,replicates-start)
+  ix=((rng.integers(0,n,(batch,(n+6)//7))[:,:,None]+np.arange(7))%n).reshape(batch,-1)[:,:n]
+  denom=daily.n.to_numpy()[ix].sum(1)
+  for name in draws:draws[name].append(daily[name].to_numpy()[ix].sum(1)/denom)
+ out=dict(n=len(a),dates=n,method='paired circular blocks of 7 dates; entire games kept inside dates',family_size=family_size,replicates=replicates)
  for name in ['brier','log_loss']:
-  draws=daily[name].to_numpy()[ix].sum(1)/daily.n.to_numpy()[ix].sum(1)
-  out[name]=dict(delta=float(daily[name].sum()/daily.n.sum()),ci95=np.quantile(draws,[.025,.975]).tolist(),simultaneous_ci=np.quantile(draws,[.025/family_size,1-.025/family_size]).tolist(),bootstrap_se=float(draws.std(ddof=1)))
+  values=np.concatenate(draws[name])
+  out[name]=dict(delta=float(daily[name].sum()/daily.n.sum()),ci95=np.quantile(values,[.025,.975]).tolist(),simultaneous_ci=np.quantile(values,[.025/family_size,1-.025/family_size]).tolist(),bootstrap_se=float(values.std(ddof=1)))
  return out
 
 def fit_logistic(train,columns,y):

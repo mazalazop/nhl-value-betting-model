@@ -1,0 +1,34 @@
+{
+  "version": "V3_PROSPECTIVE_PROPOSAL_1",
+  "enabled": false,
+  "t0": null,
+  "first_admissible_date": null,
+  "market": "BUT",
+  "candidate": "volume_quality",
+  "reference": "Operational BUT V1 version to freeze before T0",
+  "fit_once_before_t0": true,
+  "minimum_dates": 244,
+  "minimum_paired_participants": 51612,
+  "maximum_seasons": 3,
+  "primary": [
+    "brier",
+    "log_loss"
+  ],
+  "minimum_useful_gain": {
+    "brier": 0.001,
+    "log_loss": 0.003
+  },
+  "alpha_per_endpoint": 0.025,
+  "bootstrap_replicates": 50000,
+  "block_dates": 7,
+  "maximum_ece_increase": 0.01,
+  "maximum_segment_log_loss_increase": 0.01,
+  "segment_min_n": 500,
+  "minimum_prediction_coverage": 0.98,
+  "minimum_information_coverage": 0.98,
+  "minimum_participant_result_availability": 0.98,
+  "odds_floor": 1.4,
+  "unit_stake": 1,
+  "promotion_automatic": false,
+  "approval_required": true
+}
