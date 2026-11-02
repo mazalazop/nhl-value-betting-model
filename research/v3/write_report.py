@@ -77,5 +77,5 @@ Conserver les modèles actuels. Priorité à une collecte exhaustive des probabi
 
 Les résultats par fenêtre, saison, domicile/extérieur et toutes les ablations sont disponibles dans les JSON ; `comparisons.csv`, `contrasts.csv` et `fold_metrics.csv` permettent leur réanalyse. Les figures `main_calibration.svg` et `quality_calibration.svg` affichent les intervalles contenant au moins 30 observations. Les intervalles vides ne sont pas assimilés à une bonne calibration.
 ''')
- (R/'STATISTICAL_RESULTS.md').write_text('\n\n'.join(sections)+'\n')
+ (R/'STATISTICAL_RESULTS.md').write_text('\n\n'.join(sections).rstrip()+'\n')
 if __name__=='__main__':main()

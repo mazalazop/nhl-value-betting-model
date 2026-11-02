@@ -108,4 +108,3 @@ Six dates A01 et dix dates originales ne permettent pas une conclusion de supér
 Conserver les modèles actuels. Priorité à une collecte exhaustive des probabilités/cotes et à la validation d'une politique value indépendante. Le candidat enrichi de tirs est une piste expérimentale BUT raisonnable, sans supériorité démontrée ; son gain marginal face au logit simple ne suffit pas à le promouvoir. POINT ne justifie pas aujourd'hui le remplacement de son prédicteur. Aucun résultat n'autorise un bonus de disette, un malus de série ou une nouvelle règle PP1.
 
 Les résultats par fenêtre, saison, domicile/extérieur et toutes les ablations sont disponibles dans les JSON ; `comparisons.csv`, `contrasts.csv` et `fold_metrics.csv` permettent leur réanalyse. Les figures `main_calibration.svg` et `quality_calibration.svg` affichent les intervalles contenant au moins 30 observations. Les intervalles vides ne sont pas assimilés à une bonne calibration.
-

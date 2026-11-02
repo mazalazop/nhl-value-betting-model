@@ -57,6 +57,8 @@ def main():
     ax.plot([b['predicted'] for b in bins],[b['observed'] for b in bins],'o-',label=name)
    ax.plot([0,1],[0,1],'k--',linewidth=.7);ax.set(title=market,xlabel='Probabilité moyenne',ylabel='Fréquence observée',xlim=(0,1),ylim=(0,1));ax.legend(fontsize=8)
   fig.suptitle('Exploration historique — intervalles avec au moins 30 observations');fig.tight_layout();fig.savefig(a.output/(experiment+'_calibration.svg'),metadata={'Date':None});plt.close(fig)
+ for svg in a.output.glob('*.svg'):
+  svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines())+'\n')
  save(a.output/'evidence_manifest.json',dict(inputs=evidence,classification='EXPLORATORY_REUSED_PERIODS',active_models_changed=False,raw_data_redistributed=False,files={p.name:sha(p) for p in a.output.iterdir() if p.is_file() and p.name!='evidence_manifest.json'}))
  print('Published aggregate evidence')
 if __name__=='__main__':main()
