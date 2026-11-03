@@ -10,7 +10,7 @@ import argparse,csv,datetime,json,math,pathlib
 from collections import defaultdict
 
 UTC=datetime.timezone.utc
-START=datetime.date(2026,10,17)
+START=datetime.date(2026,10,3)
 def parse_utc(value):
     if not value or str(value).strip().lower() in {"nan","none","nat"}:return None
     try:t=datetime.datetime.fromisoformat(str(value).replace("Z","+00:00"))
