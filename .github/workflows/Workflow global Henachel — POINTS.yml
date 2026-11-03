@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "30 11 * * *"
     - cron: "17 * * * *"
 
 concurrency:
@@ -53,7 +53,7 @@ permissions:
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
-  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true') }}
+  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || (github.event_name == 'schedule' && github.event.schedule == '30 11 * * *') }}
 
 jobs:
   scrape_points:
