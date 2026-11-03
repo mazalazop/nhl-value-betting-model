@@ -2,7 +2,9 @@ name: henachel-points-global
 
 on:
   push:
-    branches: [astra/audit-remediation]
+    branches: [astra/audit-remediation, main]
+    paths:
+      - '.github/workflows/Workflow global Henachel — POINTS.yml'
   workflow_dispatch:
     inputs:
       migrate_history_schema:
@@ -53,7 +55,7 @@ permissions:
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
-  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || (github.event_name == 'schedule' && github.event.schedule == '30 11 * * *') }}
+  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || ((github.event_name == 'schedule' && github.event.schedule == '30 11 * * *') || (github.event_name == 'push' && github.ref == 'refs/heads/main')) }}
 
 jobs:
   scrape_points:
