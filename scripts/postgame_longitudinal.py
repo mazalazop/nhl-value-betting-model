@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse,csv,datetime,json,math,pathlib,statistics
 from collections import defaultdict
 
-START=datetime.date(2026,10,17)
+START=datetime.date(2026,10,3)
 COLS=["date","archive_group","market","signal","number","settled","wins",
       "unresolved","hit_rate","mean_shots","mean_attempts","failed_with_activity",
       "failed_with_low_activity","missing_shot_data","sample_warning"]
@@ -118,7 +118,8 @@ def report(rows):
     datasets={
        "last_date":[r for r in rows if r["date"]==dates[-1]],
        "last_7_calendar_days":[r for r in rows if r["date"]>=week_start.isoformat()],
-       "since_2026_10_17":rows,
+       "since_2026_10_03":rows,
+       "since_2026_10_17":[r for r in rows if r["date"]>="2026-10-17"],
     }
     summary={"through_date":dates[-1],"archive_dates":dates,"coverage_days":len(dates),
              "notes":["Group CLASSEUR and EXTRA never combined for a headline win rate.",
