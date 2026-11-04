@@ -1,4 +1,5 @@
 name: henachel-points-global
+# Manual production refresh requested 2026-11-04; push runs POINT and experimental GOAL.
 
 on:
   push:
