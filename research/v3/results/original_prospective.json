@@ -1,0 +1,211 @@
+{
+  "n": 3295,
+  "settled": 2605,
+  "unresolved": 690,
+  "coverage": 0.7905918057663126,
+  "note": "CANONICAL shadow only. Top10 frozen before outcomes; no replacement of unresolved players.",
+  "roi": {
+    "n": 2024,
+    "simulation_only": true,
+    "mean": -0.15170454545454543,
+    "policy": "all priced rows; identical universe for both models, not a selection comparison",
+    "ci95": null
+  },
+  "top10": {
+    "v1": {
+      "selected": 100,
+      "settled": 94,
+      "unresolved": 6,
+      "wins": 33,
+      "hit_rate": 0.35106382978723405,
+      "priced_n": 75,
+      "roi_simulated": -0.19106666666666663
+    },
+    "v2": {
+      "selected": 100,
+      "settled": 94,
+      "unresolved": 6,
+      "wins": 26,
+      "hit_rate": 0.2765957446808511,
+      "priced_n": 72,
+      "roi_simulated": -0.30694444444444446
+    }
+  },
+  "v1": {
+    "n": 2605,
+    "dates": 10,
+    "games": 73,
+    "brier": 0.1263399121691636,
+    "log_loss": 0.40955520104466264,
+    "hit_rate": 0.1616122840690979,
+    "precision_at_05": null,
+    "recall_at_05": 0.0,
+    "calibration": [
+      {
+        "lower": 0.0,
+        "upper": 0.1,
+        "count": 919,
+        "mean_probability": 0.06644258595652441,
+        "observed_rate": 0.07181719260065289
+      },
+      {
+        "lower": 0.1,
+        "upper": 0.2,
+        "count": 941,
+        "mean_probability": 0.1446146645127165,
+        "observed_rate": 0.14452709883103082
+      },
+      {
+        "lower": 0.2,
+        "upper": 0.3,
+        "count": 512,
+        "mean_probability": 0.24461982651255382,
+        "observed_rate": 0.25
+      },
+      {
+        "lower": 0.3,
+        "upper": 0.4,
+        "count": 226,
+        "mean_probability": 0.33523580713724915,
+        "observed_rate": 0.3893805309734513
+      },
+      {
+        "lower": 0.4,
+        "upper": 0.5,
+        "count": 7,
+        "mean_probability": 0.42464330648605475,
+        "observed_rate": 0.42857142857142855
+      },
+      {
+        "lower": 0.5,
+        "upper": 0.6,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.6,
+        "upper": 0.7,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.7,
+        "upper": 0.8,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.8,
+        "upper": 0.9,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.9,
+        "upper": 1.0,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      }
+    ]
+  },
+  "v2": {
+    "n": 2605,
+    "dates": 10,
+    "games": 73,
+    "brier": 0.12782079786540912,
+    "log_loss": 0.4155028015684867,
+    "hit_rate": 0.1616122840690979,
+    "precision_at_05": null,
+    "recall_at_05": 0.0,
+    "calibration": [
+      {
+        "lower": 0.0,
+        "upper": 0.1,
+        "count": 894,
+        "mean_probability": 0.06874081639177858,
+        "observed_rate": 0.08501118568232663
+      },
+      {
+        "lower": 0.1,
+        "upper": 0.2,
+        "count": 919,
+        "mean_probability": 0.14690540674320282,
+        "observed_rate": 0.13166485310119697
+      },
+      {
+        "lower": 0.2,
+        "upper": 0.3,
+        "count": 609,
+        "mean_probability": 0.25102964691544205,
+        "observed_rate": 0.2660098522167488
+      },
+      {
+        "lower": 0.3,
+        "upper": 0.4,
+        "count": 182,
+        "mean_probability": 0.3337432790695334,
+        "observed_rate": 0.34065934065934067
+      },
+      {
+        "lower": 0.4,
+        "upper": 0.5,
+        "count": 1,
+        "mean_probability": 0.4017094017094017,
+        "observed_rate": 0.0
+      },
+      {
+        "lower": 0.5,
+        "upper": 0.6,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.6,
+        "upper": 0.7,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.7,
+        "upper": 0.8,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.8,
+        "upper": 0.9,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      },
+      {
+        "lower": 0.9,
+        "upper": 1.0,
+        "count": 0,
+        "mean_probability": null,
+        "observed_rate": null
+      }
+    ]
+  },
+  "paired": {
+    "ll": {
+      "delta": 0.00594760052382397,
+      "ci95": null,
+      "family_adjusted_ci": null
+    },
+    "br": {
+      "delta": 0.0014808856962454974,
+      "ci95": null,
+      "family_adjusted_ci": null
+    }
+  },
+  "uncertainty": "INSUFFICIENT_DATES_FOR_BLOCK_INTERVAL"
+}

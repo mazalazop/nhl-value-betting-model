@@ -1,0 +1,57 @@
+{
+  "captured_at_utc": "2026-11-01T15:58:16.156127+00:00",
+  "git_sha": "5d7d44937aad7fc85e57c12073fcecea0ada4cad",
+  "source": "outputs/v3/durable-source/history.csv.gz",
+  "sha256": "bfcedf2876dbc81f4ef73fe4d09297095dc5256918f1d99b5c2928da4f33f826",
+  "rows": 259465,
+  "games": 7209,
+  "players": 1511,
+  "start": "2021-10-12",
+  "end": "2026-10-30",
+  "duplicates": 0,
+  "historical_point_in_time_verified": false,
+  "seasons": {
+    "20212022": {
+      "rows": 50415,
+      "games": 1401,
+      "players": 1006,
+      "start": "2021-10-12",
+      "end": "2022-06-26"
+    },
+    "20222023": {
+      "rows": 50381,
+      "games": 1400,
+      "players": 953,
+      "start": "2022-10-07",
+      "end": "2023-06-13"
+    },
+    "20232024": {
+      "rows": 50389,
+      "games": 1400,
+      "players": 925,
+      "start": "2023-10-10",
+      "end": "2024-06-24"
+    },
+    "20242025": {
+      "rows": 50321,
+      "games": 1398,
+      "players": 924,
+      "start": "2024-10-04",
+      "end": "2025-06-17"
+    },
+    "20252026": {
+      "rows": 50183,
+      "games": 1394,
+      "players": 940,
+      "start": "2025-10-07",
+      "end": "2026-06-14"
+    },
+    "20262027": {
+      "rows": 7776,
+      "games": 216,
+      "players": 733,
+      "start": "2026-09-29",
+      "end": "2026-10-30"
+    }
+  }
+}

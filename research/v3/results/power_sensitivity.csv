@@ -1,0 +1,13 @@
+experiment,candidate,market,brier_gain,log_loss_gain,required_dates_brier,required_dates_log_loss,required_dates_joint,approximate_pairs,alpha_per_endpoint,power_per_endpoint,joint_power_lower_bound,assumption
+main,full_sigmoid,BUT,0.0005,0.0015,1422,1541,1541,343281.73992673995,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+main,full_sigmoid,BUT,0.001,0.003,356,386,386,85987.50915750916,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+main,full_sigmoid,BUT,0.002,0.006,89,97,97,21608.260073260073,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+main,full_sigmoid,POINT,0.0005,0.0015,3615,2391,3615,805297.5274725275,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+main,full_sigmoid,POINT,0.001,0.003,904,598,904,201380.07326007326,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+main,full_sigmoid,POINT,0.002,0.006,226,150,226,50345.018315018315,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,BUT,0.0005,0.0015,599,974,974,206024.02181818182,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,BUT,0.001,0.003,150,244,244,51611.76727272727,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,BUT,0.002,0.006,38,61,61,12902.941818181818,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,POINT,0.0005,0.0015,3241,1884,3241,685548.1054545455,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,POINT,0.001,0.003,811,471,811,171545.6690909091,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
+quality,volume_quality,POINT,0.002,0.006,203,118,203,42939.29818181818,0.025,0.9,0.8,"Historical paired 7-date-block variance; conditional on same composition, not a guarantee"
