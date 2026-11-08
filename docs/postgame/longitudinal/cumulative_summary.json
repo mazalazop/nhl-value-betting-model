@@ -1,5 +1,5 @@
 {
-  "through_date": "2026-11-06",
+  "through_date": "2026-11-07",
   "archive_dates": [
     "2026-10-03",
     "2026-10-04",
@@ -31,9 +31,10 @@
     "2026-11-03",
     "2026-11-04",
     "2026-11-05",
-    "2026-11-06"
+    "2026-11-06",
+    "2026-11-07"
   ],
-  "coverage_days": 31,
+  "coverage_days": 32,
   "notes": [
     "Group CLASSEUR and EXTRA never combined for a headline win rate.",
     "Missing or absent skaters never classified as losers.",
@@ -126,25 +127,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 10,
-          "settled": 10,
-          "wins": 10,
+          "number": 12,
+          "settled": 12,
+          "wins": 8,
           "unresolved": 0,
-          "hit_rate": 1.0,
+          "hit_rate": 0.6667,
           "hit_rate_wilson95": {
-            "low": 0.7225,
-            "high": 1
+            "low": 0.3906,
+            "high": 0.8619
           },
-          "mean_shots": 2.5,
-          "mean_attempts": 5.7,
+          "mean_shots": 1.75,
+          "mean_attempts": 4.583,
           "failed_with_activity": 0,
-          "failed_with_low_activity": 0,
+          "failed_with_low_activity": 4,
           "missing_shot_data": 0,
-          "calibrated_n": 10,
-          "brier": 0.179625,
-          "log_loss": 0.550819,
-          "priced_pregame_n": 10,
-          "unit_stake_simulated_roi": 0.534,
+          "calibrated_n": 12,
+          "brier": 0.217426,
+          "log_loss": 0.626122,
+          "priced_pregame_n": 12,
+          "unit_stake_simulated_roi": -0.0308,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -253,23 +254,23 @@
         "POINT": {
           "number": 63,
           "settled": 63,
-          "wins": 44,
+          "wins": 45,
           "unresolved": 0,
-          "hit_rate": 0.6984,
+          "hit_rate": 0.7143,
           "hit_rate_wilson95": {
-            "low": 0.5764,
-            "high": 0.7976
+            "low": 0.593,
+            "high": 0.811
           },
-          "mean_shots": 2.667,
-          "mean_attempts": 5.698,
-          "failed_with_activity": 9,
-          "failed_with_low_activity": 10,
+          "mean_shots": 2.317,
+          "mean_attempts": 5.19,
+          "failed_with_activity": 5,
+          "failed_with_low_activity": 13,
           "missing_shot_data": 0,
           "calibrated_n": 63,
-          "brier": 0.217744,
-          "log_loss": 0.627666,
+          "brier": 0.210505,
+          "log_loss": 0.612325,
           "priced_pregame_n": 63,
-          "unit_stake_simulated_roi": 0.0473,
+          "unit_stake_simulated_roi": 0.0668,
           "sample_warning": "EXPLORATORY_LOW_N"
         },
         "GOAL": {
@@ -388,25 +389,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 337,
-          "settled": 334,
-          "wins": 195,
+          "number": 349,
+          "settled": 346,
+          "wins": 203,
           "unresolved": 3,
-          "hit_rate": 0.5838,
+          "hit_rate": 0.5867,
           "hit_rate_wilson95": {
-            "low": 0.5303,
-            "high": 0.6355
+            "low": 0.5341,
+            "high": 0.6374
           },
-          "mean_shots": 2.455,
-          "mean_attempts": 5.135,
+          "mean_shots": 2.431,
+          "mean_attempts": 5.116,
           "failed_with_activity": 72,
-          "failed_with_low_activity": 67,
+          "failed_with_low_activity": 71,
           "missing_shot_data": 0,
-          "calibrated_n": 334,
-          "brier": 0.238308,
-          "log_loss": 0.669648,
-          "priced_pregame_n": 334,
-          "unit_stake_simulated_roi": -0.1034,
+          "calibrated_n": 346,
+          "brier": 0.237584,
+          "log_loss": 0.668139,
+          "priced_pregame_n": 346,
+          "unit_stake_simulated_roi": -0.1009,
           "sample_warning": ""
         },
         "GOAL": {
@@ -525,25 +526,25 @@
       },
       "CANONICAL": {
         "POINT": {
-          "number": 225,
-          "settled": 225,
-          "wins": 136,
+          "number": 237,
+          "settled": 237,
+          "wins": 144,
           "unresolved": 0,
-          "hit_rate": 0.6044,
+          "hit_rate": 0.6076,
           "hit_rate_wilson95": {
-            "low": 0.5393,
-            "high": 0.6661
+            "low": 0.5442,
+            "high": 0.6676
           },
-          "mean_shots": 2.547,
-          "mean_attempts": 5.321,
+          "mean_shots": 2.506,
+          "mean_attempts": 5.284,
           "failed_with_activity": 47,
-          "failed_with_low_activity": 42,
+          "failed_with_low_activity": 46,
           "missing_shot_data": 0,
-          "calibrated_n": 225,
-          "brier": 0.232994,
-          "log_loss": 0.658809,
-          "priced_pregame_n": 225,
-          "unit_stake_simulated_roi": -0.0836,
+          "calibrated_n": 237,
+          "brier": 0.232206,
+          "log_loss": 0.657154,
+          "priced_pregame_n": 237,
+          "unit_stake_simulated_roi": -0.0809,
           "sample_warning": ""
         },
         "GOAL": {
