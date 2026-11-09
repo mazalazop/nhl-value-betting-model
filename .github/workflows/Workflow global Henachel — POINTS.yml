@@ -1,8 +1,11 @@
 name: henachel-points-global
+# Manual production refresh requested 2026-11-04; push runs POINT and experimental GOAL.
 
 on:
   push:
-    branches: [astra/audit-remediation]
+    branches: [astra/audit-remediation, main]
+    paths:
+      - '.github/workflows/Workflow global Henachel — POINTS.yml'
   workflow_dispatch:
     inputs:
       migrate_history_schema:
@@ -39,7 +42,7 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "30 11 * * *"
     - cron: "17 * * * *"
 
 concurrency:
@@ -53,12 +56,12 @@ permissions:
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
-  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true') }}
+  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || ((github.event_name == 'schedule' && github.event.schedule == '30 11 * * *') || (github.event_name == 'push' && github.ref == 'refs/heads/main')) }}
 
 jobs:
   scrape_points:
     name: Resolve operational runtime
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       run_date: ${{ steps.resolve.outputs.run_date }}
       publish_to_sheet: ${{ steps.resolve.outputs.publish_to_sheet }}
@@ -76,7 +79,7 @@ jobs:
   history_schema_migration:
     name: Apply explicitly reviewed history schema migration
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.migrate_history_schema && github.ref == 'refs/heads/astra/audit-remediation' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,7 +106,7 @@ jobs:
     name: Validate Henachel read-only access
     needs: [history_schema_migration]
     if: ${{ always() && !cancelled() && github.ref == 'refs/heads/astra/audit-remediation' && (needs.history_schema_migration.result == 'success' || needs.history_schema_migration.result == 'skipped') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -130,7 +133,7 @@ jobs:
     name: Pipeline modèle POINTS
     needs: scrape_points
     if: ${{ always() && !cancelled() && inputs.context_only != true && github.event.schedule != '17 * * * *' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       RUN_DATE: ${{ needs.scrape_points.outputs.run_date }}
@@ -327,7 +330,7 @@ jobs:
     name: Preserve unpublished durable prospective backup
     needs: [model_points, context_update]
     if: ${{ always() && !cancelled() && (needs.context_update.result == 'success' || (needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true')))) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       actions: read
@@ -357,7 +360,7 @@ jobs:
   context_update:
     name: Intraday context only — no model or bookmaker execution
     if: ${{ inputs.context_only == true || (github.event.schedule == '17 * * * *' && vars.HENACHEL_CONTEXT_ENABLED == 'true') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

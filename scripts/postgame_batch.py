@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse,datetime,pathlib,re
 from postgame_pick_diagnostics import collect
 from postgame_longitudinal import build
-START=datetime.date(2026,10,17)
+START=datetime.date(2026,10,3)
+HISTORICAL_END=datetime.date(2026,10,16)
 PAT=re.compile(r"^(20\d\d-\d\d-\d\d)(?:-(canonical))?\.csv$")
-def run(inp,out,summary,cutoff,max_age_days=45):
+def run(inp,out,summary,cutoff,max_age_days=45,refresh_historical=False):
     files=sorted(inp.glob("*.csv"))
     selected=[];skipped=[]
     for path in files:
@@ -17,6 +18,11 @@ def run(inp,out,summary,cutoff,max_age_days=45):
         if d<START or d>cutoff:
             skipped.append(path.name+": out of date");continue
         result=out/(str(d)+("-canonical" if m.group(2) else "")+"-picks.csv")
+        # Archive older pre-17 Oct observations only once on first backfill; avoid
+        # re-fetching settled historical games at every daily scheduled run.
+        # A manual --refresh-historical can recheck late NHL corrections.
+        if d<=HISTORICAL_END and result.exists() and not refresh_historical:
+            skipped.append(path.name+": historical result already archived");continue
         if result.exists() and (cutoff-d).days>max_age_days:
             skipped.append(path.name+": frozen older audit");continue
         selected.append((d,path,m.group(2) or ""))
@@ -33,5 +39,6 @@ def main():
     p.add_argument("--results-dir",type=pathlib.Path,default=pathlib.Path("docs/postgame/results"))
     p.add_argument("--longitudinal-dir",type=pathlib.Path,default=pathlib.Path("docs/postgame/longitudinal"))
     p.add_argument("--as-of",type=datetime.date.fromisoformat,default=datetime.datetime.now(datetime.timezone.utc).date()-datetime.timedelta(days=1))
-    a=p.parse_args();run(a.input_dir,a.results_dir,a.longitudinal_dir,a.as_of)
+    p.add_argument("--refresh-historical",action="store_true",help="Explicit manual replay of early October; immutable prior evidence stays in revisions/")
+    a=p.parse_args();run(a.input_dir,a.results_dir,a.longitudinal_dir,a.as_of,refresh_historical=a.refresh_historical)
 if __name__=="__main__":main()

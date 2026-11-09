@@ -1,5 +1,5 @@
 name: Henachel dispatch POINT and GOAL
-# Manual full-run activation on 2026-10-30 at 12:30 Europe/Paris; daily schedule unchanged.
+# A push updating this dispatcher starts one full POINT + experimental GOAL run; daily schedule unchanged.
 on:
   workflow_dispatch:
   push:
