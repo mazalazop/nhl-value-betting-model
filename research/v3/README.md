@@ -7,6 +7,7 @@
 - [Collecte pré-match proposée](COLLECTION_PLAN.md)
 - [Proposition prospective distincte](PROSPECTIVE_PLAN.md)
 - [Reproduction et validations](REPRODUCE.md)
+- [Compatibilité avec main au 9 novembre](INTEGRATION_20261109.md)
 - [Tableau de tous les comparateurs](results/comparisons.csv), [différences appariées et incertitude](results/contrasts.csv), [fenêtres](results/fold_metrics.csv)
 
 ## Réponses aux dix questions

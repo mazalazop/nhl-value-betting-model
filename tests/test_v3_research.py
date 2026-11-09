@@ -80,13 +80,17 @@ def test_snapshot_identity_clock_and_immutability(tmp_path):
  with pytest.raises(ValueError,match='activation'):freeze(tmp_path,dict(r,enabled=True))
  with pytest.raises(ValueError,match='Future'):freeze(tmp_path,dict(r,sources=[dict(available_at_utc='2027-01-02T00:00:00Z')]))
 
-def test_protected_production_files_unchanged():
+def test_research_candidates_disabled_and_evidence_immutable():
  import hashlib
  root=Path(__file__).resolve().parents[1]
- manifest=json.loads((root/'research/v3/protected_files.json').read_text())
- for name,digest in manifest.items():
-  assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest
- assert not json.loads((root/'research/v3/protocol.json').read_text())['enabled']
+ results=root/'research/v3/results'
+ manifest=json.loads((results/'evidence_manifest.json').read_text())
+ for name,digest in manifest['files'].items():
+  assert hashlib.sha256((results/name).read_bytes()).hexdigest()==digest
+ for name in ['protocol.json','POINT_V3_RESEARCH.json','BUT_V3_RESEARCH.json','prospective_proposal.json']:
+  assert not json.loads((root/'research/v3'/name).read_text())['enabled']
+ # Current operational bytes are checked by verify_delivery.py at delivery time.
+ # The research test must not forbid independent future daily postgame updates.
 
 
 def test_conversion_gap_is_shifted_and_not_xg():

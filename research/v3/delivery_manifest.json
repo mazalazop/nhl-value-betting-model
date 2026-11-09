@@ -14,15 +14,17 @@
     "research/v3/BUT_V3_RESEARCH.json": "f215e1ceb2d44d0c137543b5463d86e3597792ac42f0c248568387048a2b480a",
     "research/v3/COLLECTION_PLAN.md": "26c8b8298ea0c2dc5c86dbabf38bde85ef0b60fd82583fd149c5fa8e4ebd4dac",
     "research/v3/DATA_AUDIT.md": "76ec0ef51696289e77b7bfc567c1ea3f6dfb581d6bda769174d0c47179272f07",
+    "research/v3/INTEGRATION_20261109.md": "b40efcac9099fb6f8e488bf550683947f2ea58f0321f5c2f0d23a51a5ef04990",
     "research/v3/POINT_V3_RESEARCH.json": "b56eb179bc5b1b394c067674ff95e5b449abb0791f4bce558d7c045a0cd3b0de",
     "research/v3/PROSPECTIVE_PLAN.md": "e40ae99c0757dad2addded10503c0cb0fa689aa1dde1b1fb13e329d1aa3d209a",
-    "research/v3/README.md": "16db230d7ca66ade56e8ff226fd6b66fff25caa13a969bd1915e0d87c11866f5",
-    "research/v3/REPRODUCE.md": "77353d12776a618f6f55904e0afc41e5cadfc6b6418174c360a17d499efdd575",
+    "research/v3/README.md": "4862dcbdf3ad9454081eb131e7b527011c00d0f50da644d410c24046c66dde25",
+    "research/v3/REPRODUCE.md": "c927efbf2ba6d5720206ccf47ba2f975385d79bf09e8a83dbf357f694618b595",
     "research/v3/STATISTICAL_RESULTS.md": "660c35b0d2d9cb91b51f2441397baaef1c7180e851c2d3f83b1e367837c2066e",
     "research/v3/audit.py": "1d5340852ec259ff919c833d6bbad1008083205bf03ae16c9a61742f9fff7bd0",
     "research/v3/collect_shots.py": "4eaad4f8000c8f6bb9333c504f44f2771307ff829e58be5fc77d9f35fc2ac23f",
     "research/v3/core.py": "fe18f6f963a7411ca1a0a0831c9090699291d3eb596a3a1384727fdc7b1331d7",
     "research/v3/describe_conversion.py": "260bd6f373f8e619a3bc9a3dc8f5d548f7b910620841222e59a61bf5942a9505",
+    "research/v3/integration_baseline.json": "2f945b4f030c51a394660abd8ee1db199ea266f0858b219710c58c49e87dd9e8",
     "research/v3/native_temporal_audit.py": "7e7e7e5d885d42e79f277543e975b1fe4e1545f1371c4c2e4dd767f9b9538bd1",
     "research/v3/prospective_proposal.json": "29b0fc864df5848ad0ae44d0cd344c492d1f6e2d1d8d9e780f74674148827924",
     "research/v3/protected_files.json": "45214b0c75c884ee68b66399434ed24c92f8d0a2b2589c0f6347b27187acc081",
@@ -61,8 +63,10 @@
     "research/v3/run_quality.py": "fe7b6c97e5f5984b6209bdec6c74b05778319535b646929cb85790bbe42de15e",
     "research/v3/shot_features.py": "4dd52c233086052bdacd7d3f3224407b0d77fe91d80492da83ae556a937e09a3",
     "research/v3/snapshots.py": "6eb1eb0c49fd98aa336ef3695e5a762e59d53ac1302c4905f48be50ee8e24226",
-    "research/v3/verify_delivery.py": "e957899945921b9b18cc8923199d7f6d300602af4089b20a35be2922df1febe8",
+    "research/v3/verify_delivery.py": "6f785027383e2b134351823315be06d569fd121dce795ea54602fb707e93bd93",
     "research/v3/write_report.py": "80c037ac407443724d52a6f05a52855c3f110590d66c6382164cc2827ff53d86",
-    "tests/test_v3_research.py": "aa7838ae2d944c62473b146bf7b090740038c0d7b425429ec90f95f6592295f4"
-  }
+    "tests/test_v3_research.py": "0c67c5d15cf57500fde561644abe48497f7c006f3e1baf7ebbfda29881936210"
+  },
+  "integration_base_commit": "c49aff9d098abdd0e95a3dc4f0fad60dde39e377",
+  "integration_date": "2026-11-09"
 }
