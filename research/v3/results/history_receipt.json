@@ -1,0 +1,11 @@
+{
+  "snapshot": "58b08b1cc6741093d0dc266d98b71e4d1ad7cf65b900aa5db87808089b161df2",
+  "source": "training_sources/33600add402010d993c79c0a566c6ba74564f181d2bd0cc767524e2d0d3b3652.csv.gz",
+  "source_entry": {
+    "asset_id": 695800261,
+    "bundle_sha256": "a8e716290e18cd8f9674e41db6f089fb6cb4a0ae6345bd2f1d5c115c75af1966",
+    "sha256": "bfcedf2876dbc81f4ef73fe4d09297095dc5256918f1d99b5c2928da4f33f826"
+  },
+  "workflow_run_id": "41312380543",
+  "selection": "latest training bundle asset id; dates validated in inventory"
+}
