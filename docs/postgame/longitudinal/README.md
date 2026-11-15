@@ -1,6 +1,6 @@
 # HENACHEL – apprentissage longitudinal post-match
 
-Dates couvertes : 38 (jusqu'au 2026-11-13).
+Dates couvertes : 39 (jusqu'au 2026-11-14).
 
 Les observations avec moins de 100 matchs sont exploratoires. Il n'y a pas de coefficient modifié.
 
