@@ -45,7 +45,7 @@ def extract(ledger):
             excluded["not_provably_pregame"]+=1;continue
         if (kickoff-ts).total_seconds()>7*86400:
             excluded["stale_capture"]+=1;continue
-        odds=positive_float(x.get("odds_decimal"),1.40)
+        odds=positive_float(x.get("odds_decimal"),1.35)
         probability=positive_float(x.get("model_probability"),0)
         if odds is None or probability is None or probability>1:
             excluded["bad_price_or_probability"]+=1;continue

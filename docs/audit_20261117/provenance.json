@@ -1,0 +1,1120 @@
+{
+  "source_commit": "da437adf8c6a08e35c81492897b8405a84917d04",
+  "retrieved_at": "2026-11-17",
+  "files": [
+    {
+      "path": "docs/postgame/results/2026-10-03-canonical-picks.csv",
+      "git_blob_sha": "e85e968ca4fc5ff15eb6e8d519c63fa26cece8d5"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-04-canonical-picks.csv",
+      "git_blob_sha": "9507cc259c42bdde05a5a577642c42865c498ebd"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-05-canonical-picks.csv",
+      "git_blob_sha": "d6cefad6df783f313622a9888c85f6a3ab61b358"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-08-canonical-picks.csv",
+      "git_blob_sha": "a938a9099beb1200cded9c2afe02aad4aea36625"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-09-canonical-picks.csv",
+      "git_blob_sha": "13920b9f6a4a2d9db8cc1065602f191e05fb77f6"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-10-canonical-picks.csv",
+      "git_blob_sha": "ffa88013e5b674442ad14f1a23a098860c192a98"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-11-canonical-picks.csv",
+      "git_blob_sha": "0d3bdf8f1b6f2784bb0f39778680e8fa59622d4f"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-12-canonical-picks.csv",
+      "git_blob_sha": "90e2575f761c3483e24b16f35d4db4a5eb4a2d81"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-13-canonical-picks.csv",
+      "git_blob_sha": "3325b5dd829a47b09a43c58ae914530ffb1a5a71"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-14-canonical-picks.csv",
+      "git_blob_sha": "737a26d5bed6a581d32f1d29b8f602a5da1a30a2"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-16-canonical-picks.csv",
+      "git_blob_sha": "224cbbdf4e03e6560cad435b57dd10c90d065c8c"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-17-canonical-picks.csv",
+      "git_blob_sha": "d889fd3821ad58ce97b1d0a9b730dfebf40e92b6"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-23-canonical-picks.csv",
+      "git_blob_sha": "ee96afd356ad5b62f9a665f2780ec049469f9251"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-24-canonical-picks.csv",
+      "git_blob_sha": "f1c9ca2db71aca9b6e59922f230f596a9d39ee60"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-25-canonical-picks.csv",
+      "git_blob_sha": "4f832063bcabd517b7791be71f539cdb75ed2ee1"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-26-canonical-picks.csv",
+      "git_blob_sha": "20147a1bbd6fd3382b79211fcd0055c5b066e877"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-27-canonical-picks.csv",
+      "git_blob_sha": "672ccc0cbd61f83e076d9783711f5571c5133df1"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-28-canonical-picks.csv",
+      "git_blob_sha": "afe8720c40dfd9b681b5fb8b02590a33b891bed4"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-29-canonical-picks.csv",
+      "git_blob_sha": "e45513a60fa454a3c79f7781b42f6126793480da"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-30-canonical-picks.csv",
+      "git_blob_sha": "9eff882e3b4baffed3f2cc0a84c39a8939e5fadf"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-31-canonical-picks.csv",
+      "git_blob_sha": "0c173d6920bc98bd7562f003ddf176107aea0f56"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-02-canonical-picks.csv",
+      "git_blob_sha": "01c6a3cc7903c5cabadba83879b8871f240495b2"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-03-canonical-picks.csv",
+      "git_blob_sha": "aa3bd7174a617a636f5066a323bcc7c78165a657"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-04-canonical-picks.csv",
+      "git_blob_sha": "9a1f36c41a9a0926a9175288c0fe18f7a62f812c"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-05-canonical-picks.csv",
+      "git_blob_sha": "5d9f31b1865e37e7ed0ebb0b6887f953f3d89702"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-06-canonical-picks.csv",
+      "git_blob_sha": "335e40d0b6058da0405ebdc2bee63389beeaeaca"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-07-canonical-picks.csv",
+      "git_blob_sha": "4929ebc87b1bdfa0e040c1ca859eade64a1d1934"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-08-canonical-picks.csv",
+      "git_blob_sha": "e7a2e79d597c62d9bffc6a1b6463ade54b8c1ab9"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-09-canonical-picks.csv",
+      "git_blob_sha": "69bc246a3d73382150f47f3ea19c870eb89e8756"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-10-canonical-picks.csv",
+      "git_blob_sha": "7f818c2286d9f077a66652af1e1f217d61a28452"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-11-canonical-picks.csv",
+      "git_blob_sha": "d63600bdc729c72437cf5263f1a789835ffadec1"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-12-canonical-picks.csv",
+      "git_blob_sha": "32513246e50bf68b137e430074171a712510dbe1"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-13-canonical-picks.csv",
+      "git_blob_sha": "2755b206e67a3f22c8f5a5fc118528f437018629"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-14-canonical-picks.csv",
+      "git_blob_sha": "08633f1a94144606574f95cb777dd1844b644873"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-15-canonical-picks.csv",
+      "git_blob_sha": "1a66ef38ca152dff9d07a7a51c272153f005dfa2"
+    },
+    {
+      "path": "docs/postgame/results/2026-11-16-canonical-picks.csv",
+      "git_blob_sha": "cb6823a40602853e6073ca231f922cf90fae43c8"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-18-canonical-picks.csv",
+      "git_blob_sha": "49696c815ccb7b8d1980433a38b8503bdff44eb0"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-19-canonical-picks.csv",
+      "git_blob_sha": "7d22255c6e4eeac31234da19bbb664d709df28d6"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-20-canonical-picks.csv",
+      "git_blob_sha": "00759184742721e8f584f33b795643fc0b5d9555"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-21-canonical-picks.csv",
+      "git_blob_sha": "a8494ff73325cf92e153064b611ec466e48713be"
+    },
+    {
+      "path": "docs/postgame/results/2026-10-22-canonical-picks.csv",
+      "git_blob_sha": "acb18dcb6f205abcc4c909581002972ab9ac15ba"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": 44104076189,
+      "jobs": {
+        "jobs": [
+          {
+            "id": 134111571908,
+            "name": "Resolve operational runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Resolve runtime config",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              }
+            ]
+          },
+          {
+            "id": 134111572725,
+            "name": "Intraday context only — no model or bookmaker execution",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run python -m pip install -r requirements.lock",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Restore same canonical archive",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run actions/cache@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Refresh contextual observations only",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Seal existing archive including contextual tables",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/cache@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          },
+          {
+            "id": 134111576475,
+            "name": "Apply explicitly reviewed history schema migration",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 134111577765,
+            "name": "Validate Henachel read-only access",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 134111736807,
+            "name": "Pipeline modèle POINTS",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 134112525581,
+            "name": "Preserve unpublished durable prospective backup",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 44104076189,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run python -m pip install requests==2.32.3",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run actions/download-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Back up archive and verify remote restoration",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": {
+        "artifacts": [
+          {
+            "id": 14338135516,
+            "name": "henachel-context-44104076189",
+            "size_in_bytes": 4459798,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14338135516",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14338135516/zip",
+            "expired": false,
+            "created_at": "2026-11-17T14:33:01Z",
+            "expires_at": "2026-11-24T14:32:58Z",
+            "updated_at": "2026-11-17T14:33:01Z",
+            "digest": "sha256:8e1207a775b16bb5b77b069fba967e0d4b673e3a5c86ca9aa21345067e9e0b71",
+            "workflow_run": {
+              "id": 44104076189,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "da437adf8c6a08e35c81492897b8405a84917d04"
+            }
+          },
+          {
+            "id": 14337606526,
+            "name": "henachel-canonical-history-f921bd05e68b0374",
+            "size_in_bytes": 82699157,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14337606526",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14337606526/zip",
+            "expired": false,
+            "created_at": "2026-11-17T14:32:57Z",
+            "expires_at": "2027-02-15T14:31:40Z",
+            "updated_at": "2026-11-17T14:32:57Z",
+            "digest": "sha256:a1e452fc802a1bcb077e99dd4504ab723ed678f28a1575a010dfdc0c8a6438fd",
+            "workflow_run": {
+              "id": 44104076189,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "da437adf8c6a08e35c81492897b8405a84917d04"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "run_id": 43957424774,
+      "jobs": {
+        "jobs": [
+          {
+            "id": 133636415445,
+            "name": "Resolve operational runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Resolve runtime config",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              }
+            ]
+          },
+          {
+            "id": 133636417311,
+            "name": "Apply explicitly reviewed history schema migration",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133636417911,
+            "name": "Intraday context only — no model or bookmaker execution",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133636418483,
+            "name": "Validate Henachel read-only access",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133636569304,
+            "name": "Pipeline modèle POINTS",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Checkout model repo",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Setup Python",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Install model dependencies",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Resolve model NHL date independently of scraper availability",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Restore final boxscore cache",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Restore canonical history",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Refresh upstream sources",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Refresh PP stats",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Build base match fusionnee",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Settle canonical bets after result refresh",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Append final results to existing prospective archive",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Refresh pregame standings",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              },
+              {
+                "name": "Build features",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14
+              },
+              {
+                "name": "Predict upcoming games",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Audit structural sustainability — research only",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Refit GOAL17 operational research before slate",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Audit GOAL structural sustainability — research only",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Collect verified public Unibet POINT markets",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Match model to Unibet odds",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Build daily bets",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              },
+              {
+                "name": "Rank GOAL research odds separately",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 22
+              },
+              {
+                "name": "Capture prospective PP evidence and existing probabilities",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23
+              },
+              {
+                "name": "Refresh separate contextual pick views",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24
+              },
+              {
+                "name": "Report experimental GOAL failure without changing POINT",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 25
+              },
+              {
+                "name": "Report GOAL structural audit status",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 26
+              },
+              {
+                "name": "Report prospective capture failure explicitly",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 27
+              },
+              {
+                "name": "Publish to Google Sheet",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 28
+              },
+              {
+                "name": "Verify prospective archive backup restore and hash",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 29
+              },
+              {
+                "name": "Preserve canonical history even after publication failure",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 30
+              },
+              {
+                "name": "Upload model outputs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 31
+              },
+              {
+                "name": "Post Restore final boxscore cache",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 60
+              },
+              {
+                "name": "Post Setup Python",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 61
+              },
+              {
+                "name": "Post Checkout model repo",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 62
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 63
+              }
+            ]
+          },
+          {
+            "id": 133656203174,
+            "name": "Preserve unpublished durable prospective backup",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43957424774,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run python -m pip install requests==2.32.3",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run actions/download-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Back up archive and verify remote restoration",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": {
+        "artifacts": [
+          {
+            "id": 14278390302,
+            "name": "henachel-model-outputs-2026-11-16",
+            "size_in_bytes": 194517696,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14278390302",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14278390302/zip",
+            "expired": false,
+            "created_at": "2026-11-16T22:20:21Z",
+            "expires_at": "2026-11-23T22:19:54Z",
+            "updated_at": "2026-11-16T22:20:21Z",
+            "digest": "sha256:91eab95aa3f7a264d3c01b01b94ad0e4a0eb0a0ad8260e829e51a46410edb8ad",
+            "workflow_run": {
+              "id": 43957424774,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "a7cf2bd90e724e3ecd4dcf5a3f57771b9d38fd28"
+            }
+          },
+          {
+            "id": 14276548221,
+            "name": "henachel-canonical-history-f921bd05e68b0374",
+            "size_in_bytes": 82699157,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14276548221",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14276548221/zip",
+            "expired": false,
+            "created_at": "2026-11-16T22:19:53Z",
+            "expires_at": "2027-02-14T21:10:59Z",
+            "updated_at": "2026-11-16T22:19:53Z",
+            "digest": "sha256:d02372c3988d3d48ed0a1d0787a3a710fa14aa514b29a1abff979832f25b4b75",
+            "workflow_run": {
+              "id": 43957424774,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "a7cf2bd90e724e3ecd4dcf5a3f57771b9d38fd28"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "run_id": 43858686077,
+      "jobs": {
+        "jobs": [
+          {
+            "id": 133269498415,
+            "name": "Resolve operational runtime",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Resolve runtime config",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              }
+            ]
+          },
+          {
+            "id": 133269498919,
+            "name": "Intraday context only — no model or bookmaker execution",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run python -m pip install -r requirements.lock",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Restore same canonical archive",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run actions/cache@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Refresh contextual observations only",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Seal existing archive including contextual tables",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/cache@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          },
+          {
+            "id": 133269500969,
+            "name": "Apply explicitly reviewed history schema migration",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133269501286,
+            "name": "Validate Henachel read-only access",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133269556630,
+            "name": "Pipeline modèle POINTS",
+            "status": "completed",
+            "conclusion": "skipped",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": null
+          },
+          {
+            "id": 133270003988,
+            "name": "Preserve unpublished durable prospective backup",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 43858686077,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run python -m pip install requests==2.32.3",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run actions/download-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Back up archive and verify remote restoration",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Post Run actions/setup-python@v5",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              }
+            ]
+          }
+        ]
+      },
+      "artifacts": {
+        "artifacts": [
+          {
+            "id": 14222886241,
+            "name": "henachel-context-43858686077",
+            "size_in_bytes": 4459798,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14222886241",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14222886241/zip",
+            "expired": false,
+            "created_at": "2026-11-16T11:33:40Z",
+            "expires_at": "2026-11-23T11:33:38Z",
+            "updated_at": "2026-11-16T11:33:40Z",
+            "digest": "sha256:1d63bd1a51819a600e780490303e1b7cc60d38dd9ed941e42a0d70a2ffe24ca0",
+            "workflow_run": {
+              "id": 43858686077,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "375030882be2419e0f0970284f2f0909f9e73a52"
+            }
+          },
+          {
+            "id": 14222641542,
+            "name": "henachel-canonical-history-f921bd05e68b0374",
+            "size_in_bytes": 82434871,
+            "url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14222641542",
+            "archive_download_url": "https://api.github.com/repos/mazalazop/nhl-value-betting-model/actions/artifacts/14222641542/zip",
+            "expired": false,
+            "created_at": "2026-11-16T11:33:38Z",
+            "expires_at": "2027-02-14T11:32:41Z",
+            "updated_at": "2026-11-16T11:33:38Z",
+            "digest": "sha256:cd757246d84bab1ed3da32dd3d01bb22298cde41ef533feb834f0eb05f7cd55a",
+            "workflow_run": {
+              "id": 43858686077,
+              "repository_id": 1180146012,
+              "head_repository_id": 1180146012,
+              "head_branch": "main",
+              "head_sha": "375030882be2419e0f0970284f2f0909f9e73a52"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
