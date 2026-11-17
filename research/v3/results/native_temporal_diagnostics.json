@@ -1,0 +1,19 @@
+{
+  "standings_lookup_date_pre": {
+    "known": 244309,
+    "strictly_after_game_date": 0,
+    "same_date": 0
+  },
+  "tirs_moy_5": {
+    "season_reset_compared": 253984,
+    "season_reset_differences_over_1e_6": 14104,
+    "native_across_seasons_compared": 257954,
+    "native_across_seasons_differences_over_1e_6": 0
+  },
+  "tirs_moy_10": {
+    "season_reset_compared": 253984,
+    "season_reset_differences_over_1e_6": 31042,
+    "native_across_seasons_compared": 257954,
+    "native_across_seasons_differences_over_1e_6": 0
+  }
+}
