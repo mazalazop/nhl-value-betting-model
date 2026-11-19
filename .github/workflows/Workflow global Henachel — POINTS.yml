@@ -1,11 +1,7 @@
 name: henachel-points-global
-# Manual production refresh requested 2026-11-04; push runs POINT and experimental GOAL.
+run-name: "${{ (inputs.context_only == true || github.event.schedule == '17 * * * *') && 'CONTEXT — no predictions' || 'PRODUCTION — delivery verification required' }}"
 
 on:
-  push:
-    branches: [astra/audit-remediation, main]
-    paths:
-      - '.github/workflows/Workflow global Henachel — POINTS.yml'
   workflow_dispatch:
     inputs:
       migrate_history_schema:
@@ -42,7 +38,8 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "30 11 * * *"
+    - cron: "30 12 * * *"
+      timezone: "Europe/Paris"
     - cron: "17 * * * *"
 
 concurrency:
@@ -56,13 +53,14 @@ permissions:
 env:
   TZ: Europe/Paris
   PYTHONUNBUFFERED: "1"
-  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || ((github.event_name == 'schedule' && github.event.schedule == '30 11 * * *') || (github.event_name == 'push' && github.ref == 'refs/heads/main')) }}
+  HENACHEL_GOAL_RESEARCH_ENABLED: ${{ inputs.goal_research_enabled == true || ((github.event_name == 'schedule' && github.event.schedule == '30 12 * * *')) }}
 
 jobs:
   scrape_points:
     name: Resolve operational runtime
     runs-on: ubuntu-24.04
     outputs:
+      already_verified: ${{ steps.receipt.outputs.already_verified }}
       run_date: ${{ steps.resolve.outputs.run_date }}
       publish_to_sheet: ${{ steps.resolve.outputs.publish_to_sheet }}
     steps:
@@ -75,6 +73,12 @@ jobs:
           INPUT_RUN_DATE: ${{ inputs.run_date }}
           INPUT_PUBLISH_TO_SHEET: ${{ inputs.publish_to_sheet }}
         run: python3 scripts/resolve_runtime.py
+      - name: Check prior verified production for this NHL date
+        id: receipt
+        if: ${{ inputs.context_only != true && github.event.schedule != '17 * * * *' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_production_receipt.py
 
   history_schema_migration:
     name: Apply explicitly reviewed history schema migration
@@ -132,7 +136,7 @@ jobs:
   model_points:
     name: Pipeline modèle POINTS
     needs: scrape_points
-    if: ${{ always() && !cancelled() && inputs.context_only != true && github.event.schedule != '17 * * * *' }}
+    if: ${{ always() && !cancelled() && needs.scrape_points.result == 'success' && needs.scrape_points.outputs.already_verified != 'true' && inputs.context_only != true && github.event.schedule != '17 * * * *' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
@@ -150,6 +154,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
+
+      - name: Record fresh output boundary
+        run: echo "PRODUCTION_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Install model dependencies
         shell: bash
@@ -284,6 +291,17 @@ jobs:
         if: ${{ steps.prospective.outcome == 'failure' }}
         run: echo "::warning::Prospective capture failed. No prospective validation can be claimed for this run. POINT output remains independent."
 
+      - name: Verify dated POINT and requested experimental GOAL outputs
+        env:
+          GOAL_ODDS_STATUS: ${{ steps.goal_odds.outcome }}
+          PROSPECTIVE_STATUS: ${{ steps.prospective.outcome }}
+        run: |
+          if [ "$HENACHEL_GOAL_RESEARCH_ENABLED" = true ]; then
+            test "$GOAL_ODDS_STATUS" = success
+            test "$PROSPECTIVE_STATUS" = success
+          fi
+          python scripts/validate_production.py --date "$RUN_DATE" --started "$PRODUCTION_STARTED_AT" --goal-required "$HENACHEL_GOAL_RESEARCH_ENABLED"
+
       - name: Publish to Google Sheet
         if: ${{ needs.scrape_points.outputs.publish_to_sheet == 'true' && github.ref != 'refs/heads/astra/audit-remediation' }}
         env:
@@ -326,10 +344,18 @@ jobs:
             data/final/
           retention-days: 7
 
+      - name: Preserve verified production receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: henachel-production-verified-${{ needs.scrape_points.outputs.run_date }}
+          path: outputs/production_verified.json
+          if-no-files-found: error
+          retention-days: 90
+
   prospective_backup:
     name: Preserve unpublished durable prospective backup
     needs: [model_points, context_update]
-    if: ${{ always() && !cancelled() && (needs.context_update.result == 'success' || (needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && vars.HENACHEL_GOAL_RESEARCH_ENABLED == 'true')))) }}
+    if: ${{ always() && !cancelled() && (needs.context_update.result == 'success' || (needs.model_points.result == 'success' && (inputs.goal_research_enabled == true || (github.event_name == 'schedule' && github.event.schedule == '30 12 * * *')))) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -408,3 +434,21 @@ jobs:
           name: henachel-context-${{ github.run_id }}
           path: outputs/context/
           retention-days: 7
+
+  production_status:
+    name: Production delivery status
+    needs: [scrape_points, model_points, prospective_backup]
+    if: ${{ always() && inputs.context_only != true && github.event.schedule != '17 * * * *' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Reject missing predictions or required backup
+        env:
+          ALREADY_VERIFIED: ${{ needs.scrape_points.outputs.already_verified }}
+          POINT_STATUS: ${{ needs.model_points.result }}
+          BACKUP_STATUS: ${{ needs.prospective_backup.result }}
+        run: |
+          if [ "$ALREADY_VERIFIED" = true ]; then exit 0; fi
+          test "$POINT_STATUS" = success
+          if [ "$HENACHEL_GOAL_RESEARCH_ENABLED" = true ]; then
+            test "$BACKUP_STATUS" = success
+          fi

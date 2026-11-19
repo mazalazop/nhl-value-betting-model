@@ -1,14 +1,7 @@
 name: Henachel dispatch POINT and GOAL
-# A push updating this dispatcher starts one full POINT + experimental GOAL run; daily schedule unchanged.
+# Manual recovery only. Daily schedule belongs exclusively to henachel-points-global.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/henachel-dispatch.yml'
-  schedule:
-    - cron: '30 12 * * *'
-      timezone: 'Europe/Paris'
 permissions:
   actions: write
   contents: read

@@ -78,7 +78,7 @@ def test_canonical_import_validates_pregame_identity_and_prices():
     assert out["2026-10-17"][0]["archive_provenance"]=="PREGAME_CANONICAL_LEDGER"
     assert out["2026-10-17"][0]["model_probability"]=="0.7"
     for reason,bad in [("not_provably_pregame",dict(base,captured_at="2026-10-17T19:05:00Z")),
-                       ("bad_price_or_probability",dict(base,odds_decimal="1.35")),
+                       ("bad_price_or_probability",dict(base,odds_decimal="1.34")),
                        ("not_recommended",dict(base,recommended_flag="0"))]:
         out,why=ledger.extract([bad])
         assert not out

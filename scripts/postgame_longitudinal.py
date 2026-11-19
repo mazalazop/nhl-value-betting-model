@@ -81,7 +81,7 @@ def metrics(rows):
     priced=[(int(x["official_win"]),number(x.get("odds")),x.get("captured_at"),
              x.get("start_time_utc")) for x in settled
             if eligible_pregame(x)]
-    priced=[(win,odds) for win,odds,cap,start in priced if odds is not None and odds>=1.40 and cap and start]
+    priced=[(win,odds) for win,odds,cap,start in priced if odds is not None and odds>=1.35 and cap and start]
     unit_roi=round(sum(win*odd-1 for win,odd in priced)/len(priced),4) if priced else None
     return dict(number=len(rows),settled=len(settled),wins=wins,
                 unresolved=len(rows)-len(settled),

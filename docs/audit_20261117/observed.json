@@ -1,0 +1,957 @@
+{
+  "sources": [
+    {
+      "path": "2026-10-03-canonical-picks.csv",
+      "sha256": "ad2654594ccc1eadebc5058f00a19af650a47089bdc435fd794ed77c7be29558"
+    },
+    {
+      "path": "2026-10-04-canonical-picks.csv",
+      "sha256": "5af2243308feecaa035fd37c1307eacbfda5f5b9fa06ad5d46f5d05c77a36bcd"
+    },
+    {
+      "path": "2026-10-05-canonical-picks.csv",
+      "sha256": "bf68018d2db9f4a80a4a82e76b2c1cdfb57635618f335db4eb132554df813ad2"
+    },
+    {
+      "path": "2026-10-08-canonical-picks.csv",
+      "sha256": "66485b73636c5ffd1ce2bf4edbd5578b7b929277cdbbf6471dfe2450e5c05dda"
+    },
+    {
+      "path": "2026-10-09-canonical-picks.csv",
+      "sha256": "721f54f135caa07dc211cf66da6640a96384b795bc7d3666a4ce609a3adece1a"
+    },
+    {
+      "path": "2026-10-10-canonical-picks.csv",
+      "sha256": "e68d98be4b1b8d65115eee155f357e42c76113079aa8cc3f70639d9903ab261d"
+    },
+    {
+      "path": "2026-10-11-canonical-picks.csv",
+      "sha256": "399fc3672acc1a68c51f5638aa40c578bd854e7756e0162056422bcdb16d46cb"
+    },
+    {
+      "path": "2026-10-12-canonical-picks.csv",
+      "sha256": "b749a9c306aad333052cf955609b5cdbc753af699bc5c2d4e897aef4a0bf33c4"
+    },
+    {
+      "path": "2026-10-13-canonical-picks.csv",
+      "sha256": "f078d06b2f783346268a492083c59677b7d53d8c5fe636abb611fd7f9f204886"
+    },
+    {
+      "path": "2026-10-14-canonical-picks.csv",
+      "sha256": "f77da8eaf7fa5d33921b9db3a3e2c3fd535255dbf22e9772413978b374438879"
+    },
+    {
+      "path": "2026-10-16-canonical-picks.csv",
+      "sha256": "bff998bc5333112e78c410aa465523d28e61b099aa83490453c6dcdb1408680b"
+    },
+    {
+      "path": "2026-10-17-canonical-picks.csv",
+      "sha256": "a979975df0b55d62758598264f19d42f096215eebf3dd8050029619bbf60c7e0"
+    },
+    {
+      "path": "2026-10-18-canonical-picks.csv",
+      "sha256": "d6ea2eb77606e640294df6d79d15c00000dd40a08e9c33f17850bd5961cf37a9"
+    },
+    {
+      "path": "2026-10-19-canonical-picks.csv",
+      "sha256": "8bf3a9a017bfb8c7771b64a21a96c00f1bc2c32240f5d2ee55bdb9825f653cdd"
+    },
+    {
+      "path": "2026-10-20-canonical-picks.csv",
+      "sha256": "26dbf62a49598558c3de9cc659139b1cf60648723c4152e216cf375cc88d8c24"
+    },
+    {
+      "path": "2026-10-21-canonical-picks.csv",
+      "sha256": "683c461dcba608a43dc22d832ee12215eb6d55b441efa46735dd430764ce9780"
+    },
+    {
+      "path": "2026-10-22-canonical-picks.csv",
+      "sha256": "098e866f8cb4cb330bd0e34dba6be444a62064aafc29a970b2fdbfaf6781d515"
+    },
+    {
+      "path": "2026-10-23-canonical-picks.csv",
+      "sha256": "55e78005607e5c2ffe8d3489b85c2a123455e2446ed05f42626b8e95b155cf70"
+    },
+    {
+      "path": "2026-10-24-canonical-picks.csv",
+      "sha256": "55e49e4bfe7adf559537d0ce9408689d8e95005554df3a441d8edc8ded9c2bfd"
+    },
+    {
+      "path": "2026-10-25-canonical-picks.csv",
+      "sha256": "556b649b9e425c312f9f6f829dd559610b5c0c5691051d856080f2173f1cdc0b"
+    },
+    {
+      "path": "2026-10-26-canonical-picks.csv",
+      "sha256": "74eb3b406de02cb5fd99866597e9ccc4e457034296d42be24555c350bb97e00c"
+    },
+    {
+      "path": "2026-10-27-canonical-picks.csv",
+      "sha256": "0d517f2b5c270bc4b5c4ca85ef7396049ee0d911eec4837369d87c0307f648d4"
+    },
+    {
+      "path": "2026-10-28-canonical-picks.csv",
+      "sha256": "8fbad04454438dfe34e457f145f79ccd210a8f84cae21ba1afb7148fb839be06"
+    },
+    {
+      "path": "2026-10-29-canonical-picks.csv",
+      "sha256": "2acd1fdeb642b4baebe3fd365bd157911c82493c6918c8553486ebcad092b5ce"
+    },
+    {
+      "path": "2026-10-30-canonical-picks.csv",
+      "sha256": "1cf5b129392a1858a91019063cb191489c19ae5a6f1d7004e84306fc5f7c302f"
+    },
+    {
+      "path": "2026-10-31-canonical-picks.csv",
+      "sha256": "5c3e8b7b795ddfb9db1d6ef9621019245caada09eba6647c1f6816f0e6b504a3"
+    },
+    {
+      "path": "2026-11-02-canonical-picks.csv",
+      "sha256": "667ee4cd1107e368247689a670804d44eda8f0e9ccc8ac4a4bb15f787021946c"
+    },
+    {
+      "path": "2026-11-03-canonical-picks.csv",
+      "sha256": "5723fb3132460cbe8c1cf923bf5dcaa14d9a5b07a227b4fd1472e485ca5d8b53"
+    },
+    {
+      "path": "2026-11-04-canonical-picks.csv",
+      "sha256": "0729ace06cacaa10ac05dc9e21913d95923fe646194ecf049646ec7a93c2d3e5"
+    },
+    {
+      "path": "2026-11-05-canonical-picks.csv",
+      "sha256": "4c3d76e18f869b32d9a32fc53291bc05abf2cdf20f0484807285459a24371711"
+    },
+    {
+      "path": "2026-11-06-canonical-picks.csv",
+      "sha256": "a4d993c9e4c490bc2f229d532e790626d0062b61487e50a9ed8b979a3a8400a0"
+    },
+    {
+      "path": "2026-11-07-canonical-picks.csv",
+      "sha256": "249e3b6bc851a575b62766be5a6d9be539f7900ccc6ee9fbd64ccb5cd000125f"
+    },
+    {
+      "path": "2026-11-08-canonical-picks.csv",
+      "sha256": "f697779f162d8cc83dcbea305989cea7e29013363db84f68dbdddace3f345141"
+    },
+    {
+      "path": "2026-11-09-canonical-picks.csv",
+      "sha256": "340f3f96331aaab2acdbb6c72bf9fc2cfa37cebbb0ed14d74d34a2f196e6e3e2"
+    },
+    {
+      "path": "2026-11-10-canonical-picks.csv",
+      "sha256": "f7e647347e89470a771d7a1aa16baab00950675219e5d83961e8a5d16bf0ff7e"
+    },
+    {
+      "path": "2026-11-11-canonical-picks.csv",
+      "sha256": "1cefe90a2969976d339b2736d7a98a0d97d2ded2526e4c9a71e5ad03923ab199"
+    },
+    {
+      "path": "2026-11-12-canonical-picks.csv",
+      "sha256": "921ffdded4e8e5ca1ec452c0380227c5cf3612641df7ba8113fac7827b79e302"
+    },
+    {
+      "path": "2026-11-13-canonical-picks.csv",
+      "sha256": "5f545caa33a481356148b8fdb88f4ce97e2d811763afe26ebbdccb184ac98c61"
+    },
+    {
+      "path": "2026-11-14-canonical-picks.csv",
+      "sha256": "807cdc98a4bac0996436b9d54e57a2b5cc28dedc0d72f5ab64b691ca93f0fc0a"
+    },
+    {
+      "path": "2026-11-15-canonical-picks.csv",
+      "sha256": "bc48a55efce3b4754f4e2a52cc97d2994647d1dd29873f2b07b3b6676c57e938"
+    },
+    {
+      "path": "2026-11-16-canonical-picks.csv",
+      "sha256": "94e286e2dc8d0591ea7aeb2ae807421b02f06d747bef7a1f32ae2c4307da0885"
+    }
+  ],
+  "date_min": "2026-10-03",
+  "date_max": "2026-11-16",
+  "method": "Observed canonical picks; unit-stake ROI simulation; 10000 circular 7-date bootstrap draws; exploratory, no multiplicity adjustment",
+  "limitations": [
+    "Full prediction universe unavailable in this cohort",
+    "Historical import excluded odds below 1.40: lowering to 1.35 cannot be evaluated here",
+    "Ranking simulations are within proposed picks, not original full-universe Top K",
+    "No evidence of actual stakes or executed bets"
+  ],
+  "markets": {
+    "POINT": {
+      "overall": {
+        "proposed": 444,
+        "settled": 440,
+        "unresolved": 4,
+        "wins": 259,
+        "hit_rate": 0.5886363636363636,
+        "mean_probability": 0.6062543539778138,
+        "calibration_gap": 0.017617990341450174,
+        "brier": 0.23754852240749527,
+        "log_loss": 0.6681291205262563,
+        "profit_units": -44.050000000000004,
+        "roi_simulated": -0.10011363636363638,
+        "mean_ev": -0.06764951724713165,
+        "roi_ci95_exploratory": [
+          -0.17324833499833497,
+          -0.025188812860546837
+        ]
+      },
+      "segments": {
+        "week": {
+          "2026-09-28/2026-10-04": {
+            "proposed": 22,
+            "settled": 22,
+            "unresolved": 0,
+            "wins": 13,
+            "hit_rate": 0.5909090909090909,
+            "mean_probability": 0.6271513342134573,
+            "calibration_gap": 0.03624224330436632,
+            "brier": 0.2472607304687587,
+            "log_loss": 0.6878006805716171,
+            "profit_units": -1.5599999999999996,
+            "roi_simulated": -0.0709090909090909,
+            "mean_ev": 0.022285425028154726
+          },
+          "2026-10-05/2026-10-11": {
+            "proposed": 50,
+            "settled": 49,
+            "unresolved": 1,
+            "wins": 24,
+            "hit_rate": 0.4897959183673469,
+            "mean_probability": 0.5791325261268249,
+            "calibration_gap": 0.08933660775947794,
+            "brier": 0.2614486660533218,
+            "log_loss": 0.7170872304661883,
+            "profit_units": -10.240000000000002,
+            "roi_simulated": -0.20897959183673473,
+            "mean_ev": -0.05919113009536345
+          },
+          "2026-10-12/2026-10-18": {
+            "proposed": 61,
+            "settled": 59,
+            "unresolved": 2,
+            "wins": 30,
+            "hit_rate": 0.5084745762711864,
+            "mean_probability": 0.5666933172318422,
+            "calibration_gap": 0.058218740960655824,
+            "brier": 0.2571679793808687,
+            "log_loss": 0.7088169780948601,
+            "profit_units": -12.370000000000001,
+            "roi_simulated": -0.20966101694915257,
+            "mean_ev": -0.11685294957156941
+          },
+          "2026-10-19/2026-10-25": {
+            "proposed": 86,
+            "settled": 86,
+            "unresolved": 0,
+            "wins": 48,
+            "hit_rate": 0.5581395348837209,
+            "mean_probability": 0.6069194845967056,
+            "calibration_gap": 0.048779949712984716,
+            "brier": 0.23281126523795473,
+            "log_loss": 0.6578972966919958,
+            "profit_units": -13.19,
+            "roi_simulated": -0.1533720930232558,
+            "mean_ev": -0.07262284768772448,
+            "roi_ci95_exploratory": [
+              -0.15337209302325586,
+              -0.1533720930232558
+            ]
+          },
+          "2026-10-26/2026-11-01": {
+            "proposed": 67,
+            "settled": 67,
+            "unresolved": 0,
+            "wins": 43,
+            "hit_rate": 0.6417910447761194,
+            "mean_probability": 0.6290804533958232,
+            "calibration_gap": -0.012710591380296177,
+            "brier": 0.23129447798449196,
+            "log_loss": 0.6556906753999677,
+            "profit_units": -1.7700000000000014,
+            "roi_simulated": -0.026417910447761213,
+            "mean_ev": -0.048755577245309066
+          },
+          "2026-11-02/2026-11-08": {
+            "proposed": 76,
+            "settled": 76,
+            "unresolved": 0,
+            "wins": 54,
+            "hit_rate": 0.7105263157894737,
+            "mean_probability": 0.621816349184524,
+            "calibration_gap": -0.08870996660494967,
+            "brier": 0.21234186182831372,
+            "log_loss": 0.6161885708859696,
+            "profit_units": 4.429999999999998,
+            "roi_simulated": 0.0582894736842105,
+            "mean_ev": -0.06913913792896348,
+            "roi_ci95_exploratory": [
+              0.0582894736842105,
+              0.05828947368421051
+            ]
+          },
+          "2026-11-09/2026-11-15": {
+            "proposed": 71,
+            "settled": 71,
+            "unresolved": 0,
+            "wins": 43,
+            "hit_rate": 0.6056338028169014,
+            "mean_probability": 0.6149290688968687,
+            "calibration_gap": 0.009295266079967335,
+            "brier": 0.23232797882765965,
+            "log_loss": 0.6574411330588557,
+            "profit_units": -5.940000000000003,
+            "roi_simulated": -0.08366197183098596,
+            "mean_ev": -0.07059401124152101,
+            "roi_ci95_exploratory": [
+              -0.08366197183098595,
+              -0.08366197183098593
+            ]
+          },
+          "2026-11-16/2026-11-22": {
+            "proposed": 11,
+            "settled": 10,
+            "unresolved": 1,
+            "wins": 4,
+            "hit_rate": 0.4,
+            "mean_probability": 0.5880714418110549,
+            "calibration_gap": 0.18807144181105484,
+            "brier": 0.29459515377604484,
+            "log_loss": 0.7868627456715298,
+            "profit_units": -3.41,
+            "roi_simulated": -0.341,
+            "mean_ev": -0.06824396826326976
+          }
+        },
+        "probability_bin": {
+          "(0.3, 0.4]": {
+            "proposed": 3,
+            "settled": 3,
+            "unresolved": 0,
+            "wins": 2,
+            "hit_rate": 0.6666666666666666,
+            "mean_probability": 0.3395048133417709,
+            "calibration_gap": -0.3271618533248957,
+            "brier": 0.34530230710271786,
+            "log_loss": 0.8942372818233374,
+            "profit_units": 1.65,
+            "roi_simulated": 0.5499999999999999,
+            "mean_ev": -0.28185343019565484
+          },
+          "(0.4, 0.5]": {
+            "proposed": 31,
+            "settled": 30,
+            "unresolved": 1,
+            "wins": 8,
+            "hit_rate": 0.26666666666666666,
+            "mean_probability": 0.4655484409587646,
+            "calibration_gap": 0.1988817742920979,
+            "brier": 0.23214021826363668,
+            "log_loss": 0.6572010747545204,
+            "profit_units": -15.86,
+            "roi_simulated": -0.5286666666666666,
+            "mean_ev": -0.14651275854914825,
+            "roi_ci95_exploratory": [
+              -0.5286666666666667,
+              -0.5286666666666666
+            ]
+          },
+          "(0.5, 0.6]": {
+            "proposed": 139,
+            "settled": 137,
+            "unresolved": 2,
+            "wins": 82,
+            "hit_rate": 0.5985401459854015,
+            "mean_probability": 0.5614763016408229,
+            "calibration_gap": -0.037063844344578656,
+            "brier": 0.24000927775808414,
+            "log_loss": 0.6730514721490195,
+            "profit_units": -6.139999999999999,
+            "roi_simulated": -0.044817518248175175,
+            "mean_ev": -0.10151908662189818,
+            "roi_ci95_exploratory": [
+              -0.11460064625850339,
+              0.03170794123295562
+            ]
+          },
+          "(0.6, 0.7]": {
+            "proposed": 261,
+            "settled": 260,
+            "unresolved": 1,
+            "wins": 160,
+            "hit_rate": 0.6153846153846154,
+            "mean_probability": 0.645045075922744,
+            "calibration_gap": 0.02966046053812854,
+            "brier": 0.23675139480465549,
+            "log_loss": 0.6665376227931638,
+            "profit_units": -23.75,
+            "roi_simulated": -0.09134615384615384,
+            "mean_ev": -0.04170995732749581,
+            "roi_ci95_exploratory": [
+              -0.19902216070517956,
+              0.0033340163934425945
+            ]
+          },
+          "(0.7, 0.8]": {
+            "proposed": 10,
+            "settled": 10,
+            "unresolved": 0,
+            "wins": 7,
+            "hit_rate": 0.7,
+            "mean_probability": 0.7132975016743661,
+            "calibration_gap": 0.013297501674366163,
+            "brier": 0.20846026880127083,
+            "log_loss": 0.6070235332808862,
+            "profit_units": 0.0499999999999996,
+            "roi_simulated": 0.00499999999999996,
+            "mean_ev": 0.02278592306724444,
+            "roi_ci95_exploratory": [
+              -0.20333333333333337,
+              0.17545454545454542
+            ]
+          }
+        },
+        "odds_bin": {
+          "[1.4, 1.5)": {
+            "proposed": 217,
+            "settled": 216,
+            "unresolved": 1,
+            "wins": 138,
+            "hit_rate": 0.6388888888888888,
+            "mean_probability": 0.6399861138172709,
+            "calibration_gap": 0.0010972249283820457,
+            "brier": 0.2288495445835966,
+            "log_loss": 0.6500075960074687,
+            "profit_units": -17.18000000000001,
+            "roi_simulated": -0.07953703703703709,
+            "mean_ev": -0.07806003993429093,
+            "roi_ci95_exploratory": [
+              -0.19369052172207513,
+              0.022945002427479013
+            ]
+          },
+          "[1.5, 1.6)": {
+            "proposed": 108,
+            "settled": 107,
+            "unresolved": 1,
+            "wins": 65,
+            "hit_rate": 0.6074766355140186,
+            "mean_probability": 0.6076019031476417,
+            "calibration_gap": 0.0001252676336230829,
+            "brier": 0.24317996771098987,
+            "log_loss": 0.6802933876549092,
+            "profit_units": -7.229999999999997,
+            "roi_simulated": -0.0675700934579439,
+            "mean_ev": -0.06437212838738605,
+            "roi_ci95_exploratory": [
+              -0.1806075757575757,
+              0.0653050964187327
+            ]
+          },
+          "[1.6, 2.0)": {
+            "proposed": 109,
+            "settled": 107,
+            "unresolved": 2,
+            "wins": 53,
+            "hit_rate": 0.4953271028037383,
+            "mean_probability": 0.5491053357727703,
+            "calibration_gap": 0.053778232969032,
+            "brier": 0.24277043905568788,
+            "log_loss": 0.6787170529699464,
+            "profit_units": -16.590000000000003,
+            "roi_simulated": -0.15504672897196264,
+            "mean_ev": -0.05826033587543138,
+            "roi_ci95_exploratory": [
+              -0.25948192934782605,
+              -0.042844483701846375
+            ]
+          },
+          "[2.0, 3.0)": {
+            "proposed": 10,
+            "settled": 10,
+            "unresolved": 0,
+            "wins": 3,
+            "hit_rate": 0.3,
+            "mean_probability": 0.47472406012234514,
+            "calibration_gap": 0.17472406012234515,
+            "brier": 0.3093154705206528,
+            "log_loss": 0.816105514707996,
+            "profit_units": -3.0500000000000007,
+            "roi_simulated": -0.30500000000000005,
+            "mean_ev": 0.021685471319037686
+          }
+        },
+        "edge_bin": {
+          "[-inf, -0.1)": {
+            "proposed": 56,
+            "settled": 55,
+            "unresolved": 1,
+            "wins": 29,
+            "hit_rate": 0.5272727272727272,
+            "mean_probability": 0.5266435678675552,
+            "calibration_gap": -0.0006291594051720528,
+            "brier": 0.23947209631048158,
+            "log_loss": 0.6721068565095247,
+            "profit_units": -10.87,
+            "roi_simulated": -0.1976363636363636,
+            "mean_ev": -0.1941542593343485,
+            "roi_ci95_exploratory": [
+              -0.3385714285714286,
+              -0.05000000000000002
+            ]
+          },
+          "[-0.1, 0.0)": {
+            "proposed": 319,
+            "settled": 316,
+            "unresolved": 3,
+            "wins": 192,
+            "hit_rate": 0.6075949367088608,
+            "mean_probability": 0.6124895415743434,
+            "calibration_gap": 0.004894604865482655,
+            "brier": 0.23379156837632645,
+            "log_loss": 0.6604439413653497,
+            "profit_units": -25.6,
+            "roi_simulated": -0.0810126582278481,
+            "mean_ev": -0.07080248363010884,
+            "roi_ci95_exploratory": [
+              -0.15359820166136443,
+              -0.0183627405985759
+            ]
+          },
+          "[0.0, 0.05)": {
+            "proposed": 61,
+            "settled": 61,
+            "unresolved": 0,
+            "wins": 36,
+            "hit_rate": 0.5901639344262295,
+            "mean_probability": 0.6416034868419669,
+            "calibration_gap": 0.05143955241573739,
+            "brier": 0.24281372254920883,
+            "log_loss": 0.6786608444580104,
+            "profit_units": -3.0500000000000016,
+            "roi_simulated": -0.050000000000000024,
+            "mean_ev": 0.033873844607387085,
+            "roi_ci95_exploratory": [
+              -0.16651327088212337,
+              0.04700092592592592
+            ]
+          },
+          "[0.05, 0.1)": {
+            "proposed": 6,
+            "settled": 6,
+            "unresolved": 0,
+            "wins": 2,
+            "hit_rate": 0.3333333333333333,
+            "mean_probability": 0.6511748167394639,
+            "calibration_gap": 0.31784148340613055,
+            "brier": 0.32438232857959126,
+            "log_loss": 0.8485384521734548,
+            "profit_units": -2.5300000000000002,
+            "roi_simulated": -0.4216666666666667,
+            "mean_ev": 0.12351508911902387
+          },
+          "[0.1, inf)": {
+            "proposed": 2,
+            "settled": 2,
+            "unresolved": 0,
+            "wins": 0,
+            "hit_rate": 0.0,
+            "mean_probability": 0.5974813911166346,
+            "calibration_gap": 0.5974813911166346,
+            "brier": 0.35715895416148963,
+            "log_loss": 0.9105541135495023,
+            "profit_units": -2.0,
+            "roi_simulated": -1.0,
+            "mean_ev": 0.23944322300043752
+          }
+        }
+      },
+      "rankings": {
+        "probability": {
+          "3": {
+            "proposed": 123,
+            "settled": 121,
+            "unresolved": 2,
+            "wins": 79,
+            "hit_rate": 0.6528925619834711,
+            "mean_probability": 0.6503393404693639,
+            "calibration_gap": -0.0025532215141071957,
+            "brier": 0.22540882682261065,
+            "log_loss": 0.6432158340320978,
+            "profit_units": -4.750000000000002,
+            "roi_simulated": -0.03925619834710745,
+            "mean_ev": -0.036264090317858204,
+            "roi_ci95_exploratory": [
+              -0.1668072863291658,
+              0.07529022151469987
+            ]
+          },
+          "5": {
+            "proposed": 205,
+            "settled": 203,
+            "unresolved": 2,
+            "wins": 129,
+            "hit_rate": 0.6354679802955665,
+            "mean_probability": 0.6361499239625497,
+            "calibration_gap": 0.0006819436669831536,
+            "brier": 0.23111359295208145,
+            "log_loss": 0.6551695792808023,
+            "profit_units": -11.590000000000003,
+            "roi_simulated": -0.057093596059113315,
+            "mean_ev": -0.050208513048592134,
+            "roi_ci95_exploratory": [
+              -0.15216939805358648,
+              0.027952193926350996
+            ]
+          },
+          "10": {
+            "proposed": 410,
+            "settled": 406,
+            "unresolved": 4,
+            "wins": 244,
+            "hit_rate": 0.6009852216748769,
+            "mean_probability": 0.609661549968052,
+            "calibration_gap": 0.008676328293175106,
+            "brier": 0.23708972137354264,
+            "log_loss": 0.6671817598655081,
+            "profit_units": -33.67000000000001,
+            "roi_simulated": -0.08293103448275864,
+            "mean_ev": -0.06511522100612613,
+            "roi_ci95_exploratory": [
+              -0.1504477991419037,
+              -0.015580866842452286
+            ]
+          }
+        },
+        "edge": {
+          "3": {
+            "proposed": 123,
+            "settled": 122,
+            "unresolved": 1,
+            "wins": 65,
+            "hit_rate": 0.5327868852459017,
+            "mean_probability": 0.6188433016776005,
+            "calibration_gap": 0.08605641643169881,
+            "brier": 0.2523238129828879,
+            "log_loss": 0.6987496886039879,
+            "profit_units": -17.96,
+            "roi_simulated": -0.14721311475409837,
+            "mean_ev": 0.0008879216061042324,
+            "roi_ci95_exploratory": [
+              -0.2911626520190822,
+              -0.0075389344262295445
+            ]
+          },
+          "5": {
+            "proposed": 205,
+            "settled": 203,
+            "unresolved": 2,
+            "wins": 112,
+            "hit_rate": 0.5517241379310345,
+            "mean_probability": 0.6163914979980499,
+            "calibration_gap": 0.06466736006701546,
+            "brier": 0.24796426250654025,
+            "log_loss": 0.6894841535661743,
+            "profit_units": -25.86,
+            "roi_simulated": -0.12738916256157634,
+            "mean_ev": -0.020398297387180696,
+            "roi_ci95_exploratory": [
+              -0.23625895767468078,
+              -0.03419268292682932
+            ]
+          },
+          "10": {
+            "proposed": 410,
+            "settled": 406,
+            "unresolved": 4,
+            "wins": 243,
+            "hit_rate": 0.5985221674876847,
+            "mean_probability": 0.6079406337453084,
+            "calibration_gap": 0.009418466257623659,
+            "brier": 0.23639707638192356,
+            "log_loss": 0.6657747767243132,
+            "profit_units": -33.39000000000001,
+            "roi_simulated": -0.08224137931034485,
+            "mean_ev": -0.061767615140007566,
+            "roi_ci95_exploratory": [
+              -0.15373009833654996,
+              -0.009727995110024512
+            ]
+          }
+        },
+        "ev": {
+          "3": {
+            "proposed": 123,
+            "settled": 121,
+            "unresolved": 2,
+            "wins": 65,
+            "hit_rate": 0.5371900826446281,
+            "mean_probability": 0.6224628010413246,
+            "calibration_gap": 0.08527271839669648,
+            "brier": 0.2537013054825452,
+            "log_loss": 0.7014686101902098,
+            "profit_units": -17.180000000000003,
+            "roi_simulated": -0.1419834710743802,
+            "mean_ev": 0.002538948068577298,
+            "roi_ci95_exploratory": [
+              -0.28720974576271185,
+              -0.0045505946381778324
+            ]
+          },
+          "5": {
+            "proposed": 205,
+            "settled": 203,
+            "unresolved": 2,
+            "wins": 115,
+            "hit_rate": 0.5665024630541872,
+            "mean_probability": 0.6202525977369159,
+            "calibration_gap": 0.05375013468272871,
+            "brier": 0.24490013354049653,
+            "log_loss": 0.6832395655217486,
+            "profit_units": -22.790000000000003,
+            "roi_simulated": -0.11226600985221676,
+            "mean_ev": -0.019973435414624204,
+            "roi_ci95_exploratory": [
+              -0.22000497512437814,
+              -0.021165853658536665
+            ]
+          },
+          "10": {
+            "proposed": 410,
+            "settled": 406,
+            "unresolved": 4,
+            "wins": 243,
+            "hit_rate": 0.5985221674876847,
+            "mean_probability": 0.6082295205486682,
+            "calibration_gap": 0.00970735306098347,
+            "brier": 0.2368505927833674,
+            "log_loss": 0.6666903906359948,
+            "profit_units": -33.32000000000001,
+            "roi_simulated": -0.0820689655172414,
+            "mean_ev": -0.061717225500699316,
+            "roi_ci95_exploratory": [
+              -0.15118927226475798,
+              -0.011875827953132516
+            ]
+          }
+        }
+      },
+      "thresholds": {
+        "1.35": {
+          "proposed": 444,
+          "settled": 440,
+          "unresolved": 4,
+          "wins": 259,
+          "hit_rate": 0.5886363636363636,
+          "mean_probability": 0.6062543539778138,
+          "calibration_gap": 0.017617990341450174,
+          "brier": 0.23754852240749527,
+          "log_loss": 0.6681291205262563,
+          "profit_units": -44.050000000000004,
+          "roi_simulated": -0.10011363636363638,
+          "mean_ev": -0.06764951724713165,
+          "roi_ci95_exploratory": [
+            -0.17324833499833497,
+            -0.025188812860546837
+          ]
+        },
+        "1.4": {
+          "proposed": 444,
+          "settled": 440,
+          "unresolved": 4,
+          "wins": 259,
+          "hit_rate": 0.5886363636363636,
+          "mean_probability": 0.6062543539778138,
+          "calibration_gap": 0.017617990341450174,
+          "brier": 0.23754852240749527,
+          "log_loss": 0.6681291205262563,
+          "profit_units": -44.050000000000004,
+          "roi_simulated": -0.10011363636363638,
+          "mean_ev": -0.06764951724713165,
+          "roi_ci95_exploratory": [
+            -0.17324833499833497,
+            -0.025188812860546837
+          ]
+        },
+        "1.5": {
+          "proposed": 227,
+          "settled": 224,
+          "unresolved": 3,
+          "wins": 121,
+          "hit_rate": 0.5401785714285714,
+          "mean_probability": 0.5737272998469088,
+          "calibration_gap": 0.03354872841833745,
+          "brier": 0.24593682245196896,
+          "log_loss": 0.6856034477408014,
+          "profit_units": -26.869999999999997,
+          "roi_simulated": -0.11995535714285713,
+          "mean_ev": -0.05761079894165664,
+          "roi_ci95_exploratory": [
+            -0.20318816518270666,
+            -0.025916919791172294
+          ]
+        },
+        "1.6": {
+          "proposed": 119,
+          "settled": 117,
+          "unresolved": 2,
+          "wins": 56,
+          "hit_rate": 0.47863247863247865,
+          "mean_probability": 0.5427479617855545,
+          "calibration_gap": 0.06411548315307586,
+          "brier": 0.24845804858260792,
+          "log_loss": 0.6904596565373011,
+          "profit_units": -19.64,
+          "roi_simulated": -0.16786324786324786,
+          "mean_ev": -0.051427360901545136,
+          "roi_ci95_exploratory": [
+            -0.2403325181312194,
+            -0.07121820175438609
+          ]
+        }
+      }
+    },
+    "GOAL": {
+      "overall": {
+        "proposed": 0,
+        "settled": 0,
+        "unresolved": 0,
+        "hit_rate": null,
+        "brier": null,
+        "log_loss": null,
+        "roi_simulated": null
+      },
+      "segments": {
+        "week": {},
+        "probability_bin": {},
+        "odds_bin": {},
+        "edge_bin": {}
+      },
+      "rankings": {
+        "probability": {
+          "3": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "5": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "10": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          }
+        },
+        "edge": {
+          "3": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "5": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "10": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          }
+        },
+        "ev": {
+          "3": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "5": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          },
+          "10": {
+            "proposed": 0,
+            "settled": 0,
+            "unresolved": 0,
+            "hit_rate": null,
+            "brier": null,
+            "log_loss": null,
+            "roi_simulated": null
+          }
+        }
+      },
+      "thresholds": {
+        "1.35": {
+          "proposed": 0,
+          "settled": 0,
+          "unresolved": 0,
+          "hit_rate": null,
+          "brier": null,
+          "log_loss": null,
+          "roi_simulated": null
+        },
+        "1.4": {
+          "proposed": 0,
+          "settled": 0,
+          "unresolved": 0,
+          "hit_rate": null,
+          "brier": null,
+          "log_loss": null,
+          "roi_simulated": null
+        },
+        "1.5": {
+          "proposed": 0,
+          "settled": 0,
+          "unresolved": 0,
+          "hit_rate": null,
+          "brier": null,
+          "log_loss": null,
+          "roi_simulated": null
+        },
+        "1.6": {
+          "proposed": 0,
+          "settled": 0,
+          "unresolved": 0,
+          "hit_rate": null,
+          "brier": null,
+          "log_loss": null,
+          "roi_simulated": null
+        }
+      }
+    }
+  }
+}

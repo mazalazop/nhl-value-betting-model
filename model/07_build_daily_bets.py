@@ -107,7 +107,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-odds",
         type=float,
-        default=1.40,
+        default=1.35,
         help="Cote minimale par défaut pour conserver un pick.",
     )
     parser.add_argument(
@@ -245,9 +245,9 @@ def build_daily_bets(
     df["is_value_bet"] = (df["value_gap"] >= value_threshold).astype(int)
 
     # Strict business eligibility: an exceptionally high model probability
-    # NEVER overrides a missing or sub-1.40 bookmaker price.
+    # NEVER overrides a missing or sub-1.35 bookmaker price.
     # The legacy override argument is retained only for CLI/API compatibility.
-    effective_min_odds = max(float(min_odds), 1.40)
+    effective_min_odds = max(float(min_odds), 1.35)
     # A missing or malformed quote is NOT a bet, even at P(model)=99.9%.
     df["odds_decimal"] = pd.to_numeric(df["odds_decimal"], errors="coerce")
     keep_mask = df["odds_decimal"].ge(effective_min_odds) & np.isfinite(df["odds_decimal"])
