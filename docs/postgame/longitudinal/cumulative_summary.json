@@ -147,7 +147,7 @@
             "low": 0.2801,
             "high": 0.7873
           },
-          "mean_shots": 2.273,
+          "mean_shots": 2.364,
           "mean_attempts": 5.091,
           "failed_with_activity": 3,
           "failed_with_low_activity": 2,
@@ -272,7 +272,7 @@
             "low": 0.4764,
             "high": 0.7021
           },
-          "mean_shots": 2.391,
+          "mean_shots": 2.406,
           "mean_attempts": 4.739,
           "failed_with_activity": 14,
           "failed_with_low_activity": 14,
@@ -409,7 +409,7 @@
             "low": 0.5449,
             "high": 0.6345
           },
-          "mean_shots": 2.46,
+          "mean_shots": 2.462,
           "mean_attempts": 5.096,
           "failed_with_activity": 92,
           "failed_with_low_activity": 96,
@@ -546,7 +546,7 @@
             "low": 0.5536,
             "high": 0.6555
           },
-          "mean_shots": 2.52,
+          "mean_shots": 2.523,
           "mean_attempts": 5.203,
           "failed_with_activity": 67,
           "failed_with_low_activity": 71,
