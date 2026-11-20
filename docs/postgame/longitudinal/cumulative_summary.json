@@ -148,8 +148,8 @@
             "low": 0.1682,
             "high": 0.6873
           },
-          "mean_shots": 2.2,
-          "mean_attempts": 6.2,
+          "mean_shots": 2.1,
+          "mean_attempts": 6.1,
           "failed_with_activity": 4,
           "failed_with_low_activity": 2,
           "missing_shot_data": 0,
@@ -273,8 +273,8 @@
             "low": 0.4338,
             "high": 0.6623
           },
-          "mean_shots": 2.348,
-          "mean_attempts": 4.942,
+          "mean_shots": 2.333,
+          "mean_attempts": 4.928,
           "failed_with_activity": 17,
           "failed_with_low_activity": 14,
           "missing_shot_data": 0,
@@ -410,8 +410,8 @@
             "low": 0.5413,
             "high": 0.63
           },
-          "mean_shots": 2.456,
-          "mean_attempts": 5.12,
+          "mean_shots": 2.454,
+          "mean_attempts": 5.118,
           "failed_with_activity": 96,
           "failed_with_low_activity": 98,
           "missing_shot_data": 0,
@@ -547,8 +547,8 @@
             "low": 0.5486,
             "high": 0.6493
           },
-          "mean_shots": 2.514,
-          "mean_attempts": 5.231,
+          "mean_shots": 2.511,
+          "mean_attempts": 5.228,
           "failed_with_activity": 71,
           "failed_with_low_activity": 73,
           "missing_shot_data": 0,
