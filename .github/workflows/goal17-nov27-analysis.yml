@@ -8,7 +8,7 @@ permissions:
   actions: read
 jobs:
   predict:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 100
     env:
       OMP_NUM_THREADS: 2
