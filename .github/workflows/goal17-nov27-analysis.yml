@@ -9,7 +9,7 @@ permissions:
 jobs:
   predict:
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    timeout-minutes: 180
     env:
       OMP_NUM_THREADS: 2
       OPENBLAS_NUM_THREADS: 1
@@ -25,7 +25,12 @@ jobs:
         run: |
           gh api repos/mazalazop/nhl-value-betting-model/actions/artifacts/15154471689/zip > "$RUNNER_TEMP/nhl-inputs.zip"
           unzip -oq "$RUNNER_TEMP/nhl-inputs.zip" 'data/raw/*.csv'
-      - run: python scripts/recover_pp_nov27.py
+      - name: Recover complete official NHL PP statistics (paginated)
+        run: |
+          START=$(python -c 'import pandas as pd; print(pd.read_csv("data/raw/base_match_fusionnee.csv", usecols=["date_match"]).date_match.min())')
+          END=$(python -c 'import pandas as pd; print(pd.read_csv("data/raw/base_match_fusionnee.csv", usecols=["date_match"]).date_match.max())')
+          test "$END" = '2026-11-25'
+          python model/00a_refresh_pp_stats.py --start-date "$START" --end-date "$END"
       - run: python model/01_build_base_features.py
       - run: python scripts/predict_goal_daily.py --target-date 2026-11-27
       - name: Validate November 27 slate
