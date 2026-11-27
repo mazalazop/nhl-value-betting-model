@@ -63,3 +63,51 @@ def test_invalid_pp_duration_is_not_observed(value):
     from henachel.quality import merge_pp
     source=pd.DataFrame({'id_match':[1],'id_joueur':[1]})
     with pytest.raises(ValueError):merge_pp(source,source.assign(temps_pp=value))
+
+
+def test_pp_pagination_recovers_all_rows(monkeypatch):
+    from datetime import date
+    from urllib.parse import urlparse, parse_qs
+    m = load_script('00a_refresh_pp_stats')
+    rows = [{"gameId": 2026020001 + i // 36, "playerId": 8470000 + i % 36,
+             "ppTimeOnIce": i % 120} for i in range(237)]
+    offsets = []
+    def fake_get(session, url):
+        q = parse_qs(urlparse(url).query)
+        start = int(q["start"][0])
+        assert q["limit"] == ["100"]
+        offsets.append(start)
+        return {"data": rows[start:start+100], "total": len(rows)}
+    monkeypatch.setattr(m, "safe_json_get", fake_get)
+    monkeypatch.setattr(m.time, "sleep", lambda _: None)
+    assert m.fetch_one_chunk(None, date(2026, 11, 1), date(2026, 11, 25), 2) == rows
+    assert offsets == [0, 100, 200]
+
+
+@pytest.mark.parametrize("failure", ["repeat", "empty", "total_change"])
+def test_pp_pagination_rejects_incomplete_or_duplicate_pages(monkeypatch, failure):
+    from datetime import date
+    from urllib.parse import urlparse, parse_qs
+    m = load_script('00a_refresh_pp_stats')
+    first = [{"gameId": 2026020001, "playerId": 8470000 + i, "ppTimeOnIce": 0}
+             for i in range(100)]
+    def fake_get(session, url):
+        start = int(parse_qs(urlparse(url).query)["start"][0])
+        if start == 0:
+            return {"data": first, "total": 200}
+        if failure == "repeat":
+            return {"data": first, "total": 200}
+        if failure == "empty":
+            return {"data": [], "total": 200}
+        return {"data": [], "total": 201}
+    monkeypatch.setattr(m, "safe_json_get", fake_get)
+    monkeypatch.setattr(m.time, "sleep", lambda _: None)
+    with pytest.raises(ValueError):
+        m.fetch_one_chunk(None, date(2026, 11, 1), date(2026, 11, 25), 2)
+
+
+def test_pp_pagination_accepts_empty_period(monkeypatch):
+    from datetime import date
+    m = load_script('00a_refresh_pp_stats')
+    monkeypatch.setattr(m, "safe_json_get", lambda *args: {"data": [], "total": 0})
+    assert m.fetch_one_chunk(None, date(2026, 8, 1), date(2026, 8, 31), 2) == []
