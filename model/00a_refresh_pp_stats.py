@@ -48,7 +48,7 @@ from urllib3.util.retry import Retry
 
 BASE_STATS_URL = "https://api.nhle.com/stats/rest/en/skater/powerplay"
 REQUEST_TIMEOUT = 45
-SLEEP_SECONDS = 0.25
+SLEEP_SECONDS = 0.6
 
 
 @dataclass
@@ -71,7 +71,8 @@ def build_session() -> requests.Session:
         total=5,
         read=5,
         connect=5,
-        backoff_factor=1.0,
+        backoff_factor=2.0,
+        respect_retry_after_header=True,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=frozenset(["GET"]),
     )
@@ -204,20 +205,45 @@ def fetch_one_chunk(
     end_date: date,
     game_type_id: int,
 ) -> List[Dict]:
-    url = build_url(start_date, end_date, game_type_id)
-    payload = safe_json_get(session, url)
+    # The NHL endpoint caps responses at 100 rows even with limit=-1.
+    # Stable unique ordering plus explicit offsets prevents silent truncation.
+    from urllib.parse import urlencode
 
-    if not isinstance(payload, dict):
-        raise ValueError("Réponse inattendue : payload non dict")
-
-    data = payload.get("data")
-    if not isinstance(data, list):
-        raise ValueError(
-            f"Réponse inattendue : clé 'data' absente ou non liste. "
-            f"Clés payload: {list(payload.keys())}"
-        )
-
-    return data
+    rows = []
+    seen = set()
+    expected = None
+    while expected is None or len(rows) < expected:
+        params = {
+            "isAggregate": "false", "isGame": "true",
+            "sort": json.dumps([
+                {"property": "gameId", "direction": "ASC"},
+                {"property": "playerId", "direction": "ASC"},
+            ], separators=(",", ":")),
+            "start": len(rows), "limit": 100,
+            "cayenneExp": build_cayenne_exp(start_date, end_date, game_type_id),
+        }
+        payload = safe_json_get(session, f"{BASE_STATS_URL}?{urlencode(params)}")
+        page = payload.get("data")
+        total = payload.get("total")
+        if not isinstance(page, list) or not isinstance(total, int) or total < 0:
+            raise ValueError("Invalid NHL PP pagination response")
+        if expected is None:
+            expected = total
+        elif total != expected:
+            raise ValueError("NHL PP total changed during pagination")
+        if len(page) > 100 or len(rows) + len(page) > expected:
+            raise ValueError("NHL PP page exceeds declared bounds")
+        if not page and len(rows) < expected:
+            raise ValueError("NHL PP pagination ended prematurely")
+        for row in page:
+            key = (int(row["gameId"]), int(row["playerId"]))
+            if key in seen:
+                raise ValueError(f"Duplicate NHL PP key during pagination: {key}")
+            seen.add(key)
+            rows.append(row)
+        if len(rows) < expected:
+            time.sleep(0.6)
+    return rows
 
 
 def ensure_dirs(repo_root: Path) -> Tuple[Path, Path]:
