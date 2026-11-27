@@ -1,0 +1,45 @@
+name: GOAL17 November 27 analysis
+on:
+  push:
+    branches: [analysis/goal17-2026-11-27]
+    paths: [.github/workflows/goal17-nov27-analysis.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      OMP_NUM_THREADS: 2
+      OPENBLAS_NUM_THREADS: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: python -m pip install -r requirements.lock
+      - name: Restore input data through the latest completed NHL games
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/mazalazop/nhl-value-betting-model/actions/artifacts/15154471689/zip > "$RUNNER_TEMP/nhl-inputs.zip"
+          unzip -oq "$RUNNER_TEMP/nhl-inputs.zip" 'data/raw/*.csv'
+      - run: python scripts/recover_pp_nov27.py
+      - run: python model/01_build_base_features.py
+      - run: python scripts/predict_goal_daily.py --target-date 2026-11-27
+      - name: Validate November 27 slate
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          p = pd.read_csv("outputs/predictions_upcoming_goal_research.csv")
+          assert p.game_id.nunique() == 15 and p.team.nunique() == 30
+          assert p.game_date.eq("2026-11-27").all()
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: goal17-research-2026-11-27
+          path: |
+            outputs/predictions_upcoming_goal_research.csv
+            outputs/goal_operational_summary.json
+          if-no-files-found: error
