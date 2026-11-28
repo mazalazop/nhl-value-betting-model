@@ -146,6 +146,21 @@ def main():
     if copy.exists():
         raise FileExistsError(f"Refusing to overwrite an existing working ledger: {copy}")
     shutil.copyfile(source, copy)
+    # Optional, immutable prospective evidence from the very same proven POINT job.
+    # Do NOT take a sqlite file from a different run/context-only artifact.
+    evidence = list(destination.rglob("prospective.sqlite3"))
+    if len(evidence) > 1:
+        raise RuntimeError(f"Ambiguous prospective archives in run {run_id}: {len(evidence)}")
+    if evidence:
+        prospective_copy = args.output_dir / "prospective.sqlite3"
+        if prospective_copy.exists():
+            raise FileExistsError(f"Refusing to overwrite prospect evidence: {prospective_copy}")
+        shutil.copyfile(evidence[0], prospective_copy)
+        health["prospective_archive_available"] = True
+        health["prospective_archive_sha256"] = hashlib.sha256(prospective_copy.read_bytes()).hexdigest()
+    else:
+        health["prospective_archive_available"] = False
+        health["prospective_archive_reason"] = "Source production run lacks immutable prospective evidence"
     args.status_path.parent.mkdir(parents=True, exist_ok=True)
     args.status_path.write_text(json.dumps(health, indent=2, ensure_ascii=False) + "\n",
                                 encoding="utf-8")
