@@ -1,0 +1,28 @@
+{
+  "status": "FRESH",
+  "original_rows": 485,
+  "eligible_pregame_picks": 485,
+  "first_eligible_date": "2026-10-03",
+  "last_eligible_date": "2026-11-27",
+  "latest_capture_utc": "2026-11-27T21:10:21.125386+00:00",
+  "lag_days_vs_as_of": 0,
+  "as_of_date": "2026-11-27",
+  "excluded_rows_by_reason": {},
+  "archived_pregame_ids_checked": 475,
+  "recent_dates_without_eligible_pregame_snapshot": [
+    "2026-11-20",
+    "2026-11-21",
+    "2026-11-22",
+    "2026-11-23",
+    "2026-11-24",
+    "2026-11-25",
+    "2026-11-26"
+  ],
+  "gap_interpretation": "Unverified missing source, NOT proven picks or losses; some dates may have no NHL games or no eligible bets.",
+  "source_run_id": 46061841547,
+  "artifact_id": 15234414882,
+  "artifact_created_at_utc": "2026-11-27T22:18:52Z",
+  "ledger_sha256": "d9d3852a6f4050b4ab48c78b8ea0f69989bb142d56c468a0ca154338db087ff1",
+  "prospective_archive_available": true,
+  "prospective_archive_sha256": "ef54fbe745f112bdd85f701f92002a286c66330bc1f8c8b93443f917d2071964"
+}

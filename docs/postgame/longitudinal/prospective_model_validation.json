@@ -1,0 +1,120 @@
+{
+  "status": "RESEARCH_ONLY_NO_MODEL_PROMOTION",
+  "source_type": "immutable pregame prediction batches + later NHL refreshed FINAL outcome batches",
+  "source_archive": "/tmp/henachel-postgame-history/prospective.sqlite3",
+  "evidence_warning": "NHL-derived archive, not independent review of every boxscore",
+  "unverified_absences_never_counted_as_losses": true,
+  "issues": {
+    "conflicting_official_identity_count": 8,
+    "unique_pregame_picks": 20678,
+    "unique_final_outcomes": 8031
+  },
+  "markets": {
+    "POINT": {
+      "unique_pregame": 10339,
+      "distinct_dates": 34,
+      "newest_capture_day": "2026-11-27",
+      "settled": 8029,
+      "unresolved": 2310,
+      "games_with_final_outcomes": 225,
+      "observed_participation_fraction": 0.791268,
+      "outcomes": {
+        "1": 2837,
+        "0": 5192
+      },
+      "probabilities": {
+        "model": {
+          "n": 8029,
+          "game_dates": 33,
+          "hit_rate": 0.353344,
+          "mean_probability": 0.356117,
+          "brier": 0.201412,
+          "log_loss": 0.589509
+        }
+      }
+    },
+    "GOAL": {
+      "unique_pregame": 10339,
+      "distinct_dates": 34,
+      "newest_capture_day": "2026-11-27",
+      "settled": 8029,
+      "unresolved": 2310,
+      "games_with_final_outcomes": 225,
+      "observed_participation_fraction": 0.791268,
+      "outcomes": {
+        "1": 1242,
+        "0": 6787
+      },
+      "probabilities": {
+        "model": {
+          "n": 8029,
+          "game_dates": 33,
+          "hit_rate": 0.154689,
+          "mean_probability": 0.153612,
+          "brier": 0.122319,
+          "log_loss": 0.398844
+        },
+        "frozen_probability": {
+          "n": 8029,
+          "game_dates": 33,
+          "hit_rate": 0.154689,
+          "mean_probability": 0.138776,
+          "brier": 0.123622,
+          "log_loss": 0.403578
+        },
+        "player_smoothed_probability": {
+          "n": 8029,
+          "game_dates": 33,
+          "hit_rate": 0.154689,
+          "mean_probability": 0.154949,
+          "brier": 0.125686,
+          "log_loss": 0.411913
+        }
+      },
+      "paired_comparisons": {
+        "frozen_probability": {
+          "paired_n": 8029,
+          "dates": 33,
+          "delta_log_loss": -0.004734,
+          "delta_brier": -0.001303,
+          "ci_family_adjusted95": [
+            -0.006242,
+            -0.003103
+          ],
+          "bootstrap_unit": "circular 7 observed NHL dates",
+          "superiority_certified_on_this_observational_subset": true
+        },
+        "player_smoothed_probability": {
+          "paired_n": 8029,
+          "dates": 33,
+          "delta_log_loss": -0.013069,
+          "delta_brier": -0.003367,
+          "ci_family_adjusted95": [
+            -0.017382,
+            -0.008293
+          ],
+          "bootstrap_unit": "circular 7 observed NHL dates",
+          "superiority_certified_on_this_observational_subset": true
+        }
+      }
+    }
+  },
+  "goal_promotion_blockers": [
+    "promotion_locked_in_protocol",
+    "insufficient_settled_participations",
+    "insufficient_independent_game_dates",
+    "insufficient_positive_outcomes",
+    "unverified_participation_or_result_coverage",
+    "conflicting_final_outcomes_require_independent_review"
+  ],
+  "goal_promotion_authorized": false,
+  "notes": [
+    "Market GOAL and POINT remain separate; not added to canonical bet outcomes.",
+    "No success claimed on nonparticipants or missing finished games.",
+    "Paired numerical improvement is not sufficient for promotion; prospective protocol is binding.",
+    "The same player/game often occurs in both markets; cohorts are not independent.",
+    "The final eligibility decision requires an explicit future locked review.",
+    "PP1, probable goalies and xG are excluded unless independently evidenced before puckdrop.",
+    "No payout/ROI is computed without verified market odds frozen pregame."
+  ]
+}
