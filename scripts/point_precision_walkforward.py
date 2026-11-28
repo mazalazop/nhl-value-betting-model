@@ -201,6 +201,17 @@ def build_report(records, rejected):
                 if value["walk_forward_conservative_gate"]["approved_releases"]["settled"] >= 40
                 and value["walk_forward_conservative_gate"]["approved_releases"]["wilson95"] is not None
                 and value["walk_forward_conservative_gate"]["approved_releases"]["wilson95"]["low"] > TARGET_PRECISION]
+    # Economic bins are DESCRIPTIVE ONLY. Historical observed results were already
+    # inspected; they are not a prospective rule search or an automatic value gate.
+    economic = {
+        "all_frozen_pregame": describe(records),
+        "model_ev_nonnegative": describe([
+            r for r in records if r["p"] * r["odds"] >= 1.0]),
+        "model_ev_at_least_5pct": describe([
+            r for r in records if r["p"] * r["odds"] >= 1.05]),
+        "model_ev_negative": describe([
+            r for r in records if r["p"] * r["odds"] < 1.0]),
+    }
     return {
         "status": "RESEARCH_ONLY_NO_PRODUCTION_MODEL_CHANGE",
         "through_date": max(r["date"] for r in records),
@@ -213,6 +224,8 @@ def build_report(records, rejected):
         "minimum_prior_dates": MIN_PRIOR_DATES,
         "validated_above_80pct_rule_names": approved,
         "rules": rules,
+        "model_edge_economic_diagnostic_retrospective_only": economic,
+        "betting_promotion_authorized": False,
         "limitations": [
             "The original all-picks dataset is a selected cohort, not all NHL skaters.",
             "Walk-forward gate learns ONLY from outcomes of earlier match dates.",
@@ -223,6 +236,7 @@ def build_report(records, rejected):
             "Do not retrain POINT/GOAL or claim an 80% hit rate from retrospective subsets.",
             "Absent or unresolved players are not losses and never train the gate.",
             "Prices are pregame archival odds, NOT actual personal wagers.",
+            "A positive model edge is NOT proven profitable; do not activate an EV gate from these same outcomes.",
         ],
     }
 
