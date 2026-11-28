@@ -131,3 +131,23 @@ def test_wilson_100_percent_ten_is_not_certified_eighty():
     bound = precision.wilson(10, 10)
     assert bound["low"] < 0.8
     assert precision.wilson(275, 469)["high"] < 0.7
+
+
+def test_economic_edge_is_descriptive_and_cannot_enable_betting():
+    records = [
+        {"date": "2026-10-17", "bet_id": "one", "p": .7,
+         "odds": 1.5, "outcome": 0, "top_one": True},
+        {"date": "2026-10-18", "bet_id": "two", "p": .6,
+         "odds": 1.4, "outcome": 1, "top_one": True},
+        {"date": "2026-10-19", "bet_id": "three", "p": .8,
+         "odds": 1.5, "outcome": None, "top_one": True},
+    ]
+    report = precision.build_report(records, {})
+    diagnostics = report["model_edge_economic_diagnostic_retrospective_only"]
+    assert report["betting_promotion_authorized"] is False
+    assert diagnostics["all_frozen_pregame"]["settled"] == 2
+    assert diagnostics["model_ev_nonnegative"]["selected"] == 2
+    assert diagnostics["model_ev_nonnegative"]["unresolved"] == 1
+    assert diagnostics["model_ev_nonnegative"]["unit_stake_simulated_roi"] == -1.0
+    assert diagnostics["model_ev_negative"]["wins"] == 1
+    assert report["validated_above_80pct_rule_names"] == []
