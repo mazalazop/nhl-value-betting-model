@@ -6,92 +6,92 @@
   "unverified_absences_never_counted_as_losses": true,
   "issues": {
     "conflicting_official_identity_count": 8,
-    "unique_pregame_picks": 20678,
-    "unique_final_outcomes": 8031
+    "unique_pregame_picks": 21874,
+    "unique_final_outcomes": 8175
   },
   "markets": {
     "POINT": {
-      "unique_pregame": 10339,
-      "distinct_dates": 34,
-      "newest_capture_day": "2026-11-27",
-      "settled": 8029,
-      "unresolved": 2310,
-      "games_with_final_outcomes": 225,
-      "observed_participation_fraction": 0.791268,
+      "unique_pregame": 10937,
+      "distinct_dates": 35,
+      "newest_capture_day": "2026-11-28",
+      "settled": 8173,
+      "unresolved": 2764,
+      "games_with_final_outcomes": 229,
+      "observed_participation_fraction": 0.790502,
       "outcomes": {
-        "1": 2837,
-        "0": 5192
+        "1": 2882,
+        "0": 5291
       },
       "probabilities": {
         "model": {
-          "n": 8029,
-          "game_dates": 33,
-          "hit_rate": 0.353344,
-          "mean_probability": 0.356117,
-          "brier": 0.201412,
-          "log_loss": 0.589509
+          "n": 8173,
+          "game_dates": 34,
+          "hit_rate": 0.352624,
+          "mean_probability": 0.355678,
+          "brier": 0.200922,
+          "log_loss": 0.588359
         }
       }
     },
     "GOAL": {
-      "unique_pregame": 10339,
-      "distinct_dates": 34,
-      "newest_capture_day": "2026-11-27",
-      "settled": 8029,
-      "unresolved": 2310,
-      "games_with_final_outcomes": 225,
-      "observed_participation_fraction": 0.791268,
+      "unique_pregame": 10937,
+      "distinct_dates": 35,
+      "newest_capture_day": "2026-11-28",
+      "settled": 8173,
+      "unresolved": 2764,
+      "games_with_final_outcomes": 229,
+      "observed_participation_fraction": 0.790502,
       "outcomes": {
-        "1": 1242,
-        "0": 6787
+        "1": 1261,
+        "0": 6912
       },
       "probabilities": {
         "model": {
-          "n": 8029,
-          "game_dates": 33,
-          "hit_rate": 0.154689,
-          "mean_probability": 0.153612,
-          "brier": 0.122319,
-          "log_loss": 0.398844
+          "n": 8173,
+          "game_dates": 34,
+          "hit_rate": 0.154289,
+          "mean_probability": 0.153368,
+          "brier": 0.122016,
+          "log_loss": 0.398056
         },
         "frozen_probability": {
-          "n": 8029,
-          "game_dates": 33,
-          "hit_rate": 0.154689,
-          "mean_probability": 0.138776,
-          "brier": 0.123622,
-          "log_loss": 0.403578
+          "n": 8173,
+          "game_dates": 34,
+          "hit_rate": 0.154289,
+          "mean_probability": 0.138589,
+          "brier": 0.12331,
+          "log_loss": 0.402696
         },
         "player_smoothed_probability": {
-          "n": 8029,
-          "game_dates": 33,
-          "hit_rate": 0.154689,
-          "mean_probability": 0.154949,
-          "brier": 0.125686,
-          "log_loss": 0.411913
+          "n": 8173,
+          "game_dates": 34,
+          "hit_rate": 0.154289,
+          "mean_probability": 0.154869,
+          "brier": 0.125401,
+          "log_loss": 0.411333
         }
       },
       "paired_comparisons": {
         "frozen_probability": {
-          "paired_n": 8029,
-          "dates": 33,
-          "delta_log_loss": -0.004734,
-          "delta_brier": -0.001303,
+          "paired_n": 8173,
+          "dates": 34,
+          "delta_log_loss": -0.00464,
+          "delta_brier": -0.001295,
           "ci_family_adjusted95": [
-            -0.006242,
-            -0.003103
+            -0.006123,
+            -0.003082
           ],
           "bootstrap_unit": "circular 7 observed NHL dates",
           "superiority_certified_on_this_observational_subset": true
         },
         "player_smoothed_probability": {
-          "paired_n": 8029,
-          "dates": 33,
-          "delta_log_loss": -0.013069,
-          "delta_brier": -0.003367,
+          "paired_n": 8173,
+          "dates": 34,
+          "delta_log_loss": -0.013277,
+          "delta_brier": -0.003386,
           "ci_family_adjusted95": [
-            -0.017382,
-            -0.008293
+            -0.01786,
+            -0.008514
           ],
           "bootstrap_unit": "circular 7 observed NHL dates",
           "superiority_certified_on_this_observational_subset": true
