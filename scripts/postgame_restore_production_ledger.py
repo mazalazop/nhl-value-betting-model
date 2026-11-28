@@ -157,7 +157,8 @@ def main():
             raise FileExistsError(f"Refusing to overwrite prospect evidence: {prospective_copy}")
         shutil.copyfile(evidence[0], prospective_copy)
         health["prospective_archive_available"] = True
-        health["prospective_archive_sha256"] = hashlib.sha256(prospective_copy.read_bytes()).hexdigest()
+        with prospective_copy.open("rb") as stream:
+            health["prospective_archive_sha256"] = hashlib.file_digest(stream, "sha256").hexdigest()
     else:
         health["prospective_archive_available"] = False
         health["prospective_archive_reason"] = "Source production run lacks immutable prospective evidence"
