@@ -6,6 +6,8 @@ on:
       - research/postgame-quality-20261018
     paths:
       - scripts/postgame_pick_diagnostics.py
+      - docs/postgame/official_absences/**
+      - tests/test_official_postgame_absence.py
       - scripts/postgame_import_ledger.py
       - scripts/postgame_restore_production_ledger.py
       - scripts/audit_prospective_models.py
@@ -37,7 +39,7 @@ jobs:
         with:
           persist-credentials: true
       - name: Python offline regression tests
-        run: python -m pip install pytest && python -m pytest tests/test_postgame_quality.py tests/test_postgame_oct03_backfill.py tests/test_postgame_restore_production.py tests/test_point_precision_walkforward.py tests/test_audit_prospective_models.py -q
+        run: python -m pip install pytest && python -m pytest tests/test_postgame_quality.py tests/test_postgame_oct03_backfill.py tests/test_postgame_restore_production.py tests/test_point_precision_walkforward.py tests/test_audit_prospective_models.py tests/test_official_postgame_absence.py -q
       - name: Restore newest verified POINT production ledger
         env:
           GH_TOKEN: ${{ github.token }}
