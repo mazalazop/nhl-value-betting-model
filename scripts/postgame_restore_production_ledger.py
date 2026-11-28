@@ -126,8 +126,7 @@ def main():
     def get_jobs(run_id):
         return json.loads(gh("run", "view", run_id, "--json", "jobs"))["jobs"]
     def get_artifacts(run_id):
-        return json.loads(gh("api", f"repos/{repo}/actions/runs/{run_id}/artifacts",
-                             "-f", "per_page=100"))["artifacts"]
+        return json.loads(gh("api", f"repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100"))["artifacts"]
     run_id, artifact = choose_production_run(runs, get_jobs, get_artifacts)
     destination = args.output_dir / f"run-{run_id}"
     destination.mkdir(parents=True, exist_ok=True)
