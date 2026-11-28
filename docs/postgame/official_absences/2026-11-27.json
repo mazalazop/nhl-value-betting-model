@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-27",
+  "schema_version": 1,
+  "scope": "postgame_only_not_pregame_eligibility",
+  "verification": "Human cross-check of official NHL match recap and club injury reserve release; player absent from final NHL boxscore.",
+  "records": [
+    {
+      "game_id": "2026020411",
+      "player_id": "8474141",
+      "player_name": "Patrick Kane",
+      "team": "CHI",
+      "absence_confirmed": true,
+      "reason": "Lower-body injury; placed on injured reserve by Chicago Blackhawks on 2026-11-27; did not play NYR at CHI.",
+      "official_match_recap_url": "https://www.nhl.com/news/new-york-rangers-chicago-blackhawks-game-recap-november-27-2026",
+      "official_injury_release_url": "https://www.nhl.com/blackhawks/news/topic/press-release/release-blackhawks-recall-forward-landon-slaggert-from-rockford-place-forward-patrick-kane-on-ir",
+      "verified_on": "2026-11-28",
+      "proof_grade": "A"
+    }
+  ]
+}
