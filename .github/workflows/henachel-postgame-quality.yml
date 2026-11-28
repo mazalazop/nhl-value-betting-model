@@ -2,11 +2,14 @@ name: HENACHEL postgame quality audit (research)
 on:
   push:
     branches:
+      - main
       - research/postgame-quality-20261018
     paths:
       - scripts/postgame_pick_diagnostics.py
       - scripts/postgame_import_ledger.py
       - scripts/postgame_restore_production_ledger.py
+      - scripts/audit_prospective_models.py
+      - tests/test_audit_prospective_models.py
       - tests/test_postgame_restore_production.py
       - scripts/postgame_longitudinal.py
       - scripts/point_precision_walkforward.py
@@ -34,7 +37,7 @@ jobs:
         with:
           persist-credentials: true
       - name: Python offline regression tests
-        run: python -m pip install pytest && python -m pytest tests/test_postgame_quality.py tests/test_postgame_oct03_backfill.py tests/test_postgame_restore_production.py tests/test_point_precision_walkforward.py -q
+        run: python -m pip install pytest && python -m pytest tests/test_postgame_quality.py tests/test_postgame_oct03_backfill.py tests/test_postgame_restore_production.py tests/test_point_precision_walkforward.py tests/test_audit_prospective_models.py -q
       - name: Restore newest verified POINT production ledger
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,6 +63,23 @@ jobs:
           python scripts/point_precision_walkforward.py \
             --results-dir docs/postgame/results \
             --output docs/postgame/longitudinal/point_precision_walkforward.json
+      - name: Audit immutable prospective GOAL and POINT evidence without promotion
+        shell: bash
+        run: |
+          if [ -f /tmp/henachel-postgame-history/prospective.sqlite3 ]; then
+            python scripts/audit_prospective_models.py \
+              --archive /tmp/henachel-postgame-history/prospective.sqlite3 \
+              --protocol configs/but_v2_prospective.json \
+              --output docs/postgame/longitudinal/prospective_model_validation.json
+          else
+            echo '::warning::Verified POINT artifact lacks prospective sqlite; no model improvement claim'
+            python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/postgame/longitudinal/prospective_model_validation.json')
+          p.parent.mkdir(parents=True,exist_ok=True)
+          p.write_text(json.dumps({'status':'MISSING_VERIFIED_PROSPECTIVE_ARCHIVE','goal_promotion_authorized':False},indent=2)+'\n')
+          PY
+          fi
       - name: Upload reproducible research artifacts
         if: always()
         uses: actions/upload-artifact@v4
