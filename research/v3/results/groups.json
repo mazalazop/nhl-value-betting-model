@@ -1,0 +1,52 @@
+[
+  {
+    "group": "CANONICAL",
+    "market": "POINT",
+    "n": 174,
+    "settled": 174,
+    "wins": 99,
+    "unresolved": 0,
+    "brier_allowed": true,
+    "roi_allowed": true
+  },
+  {
+    "group": "CLASSEUR",
+    "market": "GOAL",
+    "n": 28,
+    "settled": 27,
+    "wins": 8,
+    "unresolved": 1,
+    "brier_allowed": false,
+    "roi_allowed": false
+  },
+  {
+    "group": "CLASSEUR",
+    "market": "POINT",
+    "n": 28,
+    "settled": 27,
+    "wins": 11,
+    "unresolved": 1,
+    "brier_allowed": false,
+    "roi_allowed": false
+  },
+  {
+    "group": "EXTRA",
+    "market": "GOAL",
+    "n": 1,
+    "settled": 1,
+    "wins": 0,
+    "unresolved": 0,
+    "brier_allowed": false,
+    "roi_allowed": false
+  },
+  {
+    "group": "EXTRA",
+    "market": "POINT",
+    "n": 2,
+    "settled": 2,
+    "wins": 2,
+    "unresolved": 0,
+    "brier_allowed": false,
+    "roi_allowed": false
+  }
+]

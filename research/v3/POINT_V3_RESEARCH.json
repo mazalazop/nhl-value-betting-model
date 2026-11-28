@@ -1,0 +1,11 @@
+{
+  "version": "POINT_V3_RESEARCH",
+  "enabled": false,
+  "promotion_allowed": false,
+  "protocol": "research/v3/protocol.json",
+  "main_candidate": "full_sigmoid",
+  "selection": "research comparator, not a selected production winner",
+  "features": "research/v3/core.py:FAMILIES",
+  "training": "strict chronological fit/calibration/test",
+  "odds_floor": 1.4
+}
