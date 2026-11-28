@@ -65,7 +65,34 @@ def extract_attempts(pbp,pid):
         dist=round(math.hypot(89-abs(x),y),1) if isinstance(x,(int,float)) and isinstance(y,(int,float)) else None
         r.append({"type":typ,"dist_ft_proxy":dist,"period":(play.get("periodDescriptor") or {}).get("number")})
     return r
-def collect(day,input_csv,outdir,archive_id=""):
+def verified_absence_evidence(day, evidence_dir):
+    """Only manually reviewed OFFICIAL NHL reports, never an inferred scratch.
+
+    Strict IDs and match/game date; no absence without a final boxscore showing
+    the player did not participate. This annotation is POSTGAME evidence, not
+    knowledge available to the original prediction.
+    """
+    filename=pathlib.Path(evidence_dir)/(day+".json")
+    if not filename.exists():return {}
+    document=json.loads(filename.read_text(encoding="utf-8"))
+    if document.get("date")!=day or document.get("scope")!="postgame_only_not_pregame_eligibility":
+        raise ValueError(f"Invalid official absence evidence scope/date in {filename}")
+    result={}
+    for x in document.get("records",[]):
+        source=x.get("official_match_recap_url","")
+        release=x.get("official_injury_release_url","")
+        if (x.get("absence_confirmed") is not True or
+                x.get("proof_grade")!="A" or
+                not source.startswith("https://www.nhl.com/") or
+                not release.startswith("https://www.nhl.com/") or
+                not all(str(x.get(k,"")).strip() for k in ("game_id","player_id","team"))):
+            raise ValueError(f"Unverified or malformed absence record in {filename}")
+        identity=(str(x["game_id"]),str(x["player_id"]),str(x["team"]).upper())
+        if identity in result:raise ValueError(f"Duplicate official absence evidence {identity}")
+        result[identity]=x
+    return result
+
+def collect(day,input_csv,outdir,archive_id="",absence_evidence_dir=None):
     if archive_id and (not archive_id.replace("_","").isalnum() or len(archive_id)>35):
         raise ValueError("Invalid archive ID")
     slate=fetch(f"{API}/score/{day}")
@@ -82,6 +109,9 @@ def collect(day,input_csv,outdir,archive_id=""):
                  (p.get("id_match"),p.get("id_joueur") or norm(p.get("player")),p.get("team"))) for p in picks]
     if len(identities)!=len(set(identities)):raise ValueError("Duplicate pick identity")
     captured=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    if absence_evidence_dir is None:
+        absence_evidence_dir=pathlib.Path(__file__).resolve().parents[1]/"docs/postgame/official_absences"
+    official_absences=verified_absence_evidence(day,absence_evidence_dir)
     cache={};out=[]
     for pick in picks:
         if pick["date"]!=day:continue
@@ -111,7 +141,19 @@ def collect(day,input_csv,outdir,archive_id=""):
             row["status"]="BOXSCORE_ID_OR_STATE_MISMATCH";out.append(row);continue
         player,method=lookup_player(box,row["team"],row["player"],str(row.get("id_joueur") or "").strip())
         if player is None:
-            row["status"]=method;out.append(row);continue
+            row["status"]=method
+            if method=="PLAYER_ID_NOT_IN_TEAM_BOXSCORE":
+                proof=official_absences.get((str(gid),str(row.get("id_joueur") or ""),row["team"].upper()))
+                if proof:
+                    # Final NHL boxscore establishes non-participation; linked
+                    # NHL news/release establishes documented injury absence.
+                    row["status"]="ABSENT_CONFIRMED"
+                    row["settlement_status"]="ABSENT_CONFIRMED"
+                    row["proof_grade"]="A"
+                    row["absence_reason"]=proof.get("reason","")
+                    row["absence_official_match_recap_url"]=proof["official_match_recap_url"]
+                    row["absence_official_injury_release_url"]=proof["official_injury_release_url"]
+            out.append(row);continue
         observed_toi=minute(player.get("toi") or player.get("timeOnIce"))
         if observed_toi is not None and observed_toi<=0:
             row["status"]="NO_ICE_TIME";out.append(row);continue
