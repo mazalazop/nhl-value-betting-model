@@ -1,5 +1,6 @@
 name: henachel-points-global
 # Manual production refresh requested 2026-11-04; push runs POINT and experimental GOAL.
+# One-off manual production refresh trigger 2026-11-28 (POINT + research GOAL); no workflow logic changed.
 
 on:
   push:
